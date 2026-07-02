@@ -199,6 +199,22 @@ section{padding-top:15vh;padding-bottom:6vh}
 }
 .work-row:hover .watch{color:var(--l1);border-color:var(--l1)}
 
+/* the locker — floating merch board */
+.locker{position:relative;min-height:100svh;overflow:hidden;padding-bottom:4vh}
+.locker-head{position:relative;z-index:6;pointer-events:none}
+.locker-sub{font-family:'Space Mono';font-size:14px;color:var(--l2);max-width:46ch;margin-top:-24px}
+.locker-sub b{color:var(--l1);font-weight:400;border-bottom:1px dotted var(--l3)}
+#lockerStage{position:absolute;inset:0;z-index:1}
+.fcard{position:absolute;top:0;left:0;will-change:transform;cursor:grab;touch-action:none;
+  border-radius:9px;overflow:hidden;border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 18px 46px rgba(0,0,0,.55);background:#101014}
+html.light .fcard{border-color:rgba(0,0,0,.14);box-shadow:0 18px 46px rgba(0,0,0,.2)}
+.fcard:active{cursor:grabbing}
+.fcard img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.fcard .cap{position:absolute;left:7px;bottom:7px;font-family:'Space Mono';font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:#fff;background:rgba(0,0,0,.6);padding:2px 8px;border-radius:99px;opacity:0;transition:opacity .2s;pointer-events:none}
+.fcard:hover .cap{opacity:1}
+
 /* lightbox */
 #lightbox{
   position:fixed;inset:0;z-index:150;background:rgba(5,5,7,.9);
@@ -258,6 +274,7 @@ footer{
     <nav>
       <button class="hov desktop-only" onclick="document.getElementById('capabilities').scrollIntoView()">Capabilities</button>
       <button class="hov desktop-only" onclick="document.getElementById('work').scrollIntoView()">Work</button>
+      <button class="hov desktop-only" onclick="document.getElementById('locker').scrollIntoView()">Locker</button>
       <button class="hov desktop-only" onclick="document.getElementById('contact').scrollIntoView()">Contact</button>
       <button class="hov" id="themeBtn" aria-label="Toggle theme">Theme[D]</button>
       <button class="hov" id="soundBtn" aria-label="Toggle sound">Sound[&gt;]</button>
@@ -396,8 +413,16 @@ footer{
     </div>
   </section>
 
+  <section class="locker pad" id="locker">
+    <div class="locker-head">
+      <p class="sec-label">04 — The Locker</p>
+      <p class="locker-sub">NFL × Nike × Shoe Gallery — the full Dade County drop, from the varsity jacket to the koozies. <b>Grab and toss the merch.</b></p>
+    </div>
+    <div id="lockerStage" aria-hidden="true"></div>
+  </section>
+
   <section class="cta pad" id="contact">
-    <p class="sec-label">04 — Contact</p>
+    <p class="sec-label">05 — Contact</p>
     <a class="big" href="mailto:nastysaibot@me.com">Create something<br>unforgettable</a><br>
     <a class="mail" href="mailto:nastysaibot@me.com">nastysaibot@me.com</a>
   </section>
@@ -530,6 +555,99 @@ document.querySelectorAll('.work-row').forEach(r=>{
     if(v)openVideo(v);else if(img)openImage(img);else r.classList.toggle('open');
   });
 });
+
+/* ============ the locker — floating merch physics ============ */
+(function(){
+  const stage=document.getElementById('lockerStage');
+  if(!stage)return;
+  const DATA=[
+    ['jacket.jpg','Varsity Jacket',250],
+    ['photo1.jpg','The Drop',235],
+    ['helmet.jpg','The Helmet',180],
+    ['photo2.jpg','Game Day',235],
+    ['flag.jpg','Rivalries Flag',215],
+    ['hands.jpg','Dade Hands',175],
+    ['towel.jpg','Rally Towel',165],
+    ['stickers.jpg','Sticker Pack',165],
+    ['blimp.jpg','305 Blimp',235],
+    ['napkin.jpg','Napkins',195],
+    ['koozie.jpg','Koozie',150],
+    ['cup.jpg','Game Cup',155],
+  ];
+  const cards=[];
+  let W=stage.clientWidth||innerWidth, H=stage.clientHeight||innerHeight;
+  const small=innerWidth<760;
+  DATA.forEach((d,i)=>{
+    const el=document.createElement('div');el.className='fcard';
+    const im=new Image();im.src='assets/locker/'+d[0];im.alt='';
+    const cap=document.createElement('span');cap.className='cap';cap.textContent=d[1];
+    el.appendChild(im);el.appendChild(cap);stage.appendChild(el);
+    const bw=d[2]*(small?0.62:1);
+    const c={el,im,x:0,y:0,vx:0,vy:0,w:bw,h:bw*0.72,rot:Math.sin(i*99.7)*26,vr:(Math.sin(i*41.3)-0.4)*0.12,drag:false};
+    im.onload=()=>{const r=Math.max(0.5,Math.min(1.5,im.naturalHeight/im.naturalWidth||0.72));c.h=c.w*r;el.style.height=c.h+'px';};
+    el.style.width=c.w+'px';el.style.height=c.h+'px';
+    cards.push(c);
+  });
+  function scatter(){
+    W=stage.clientWidth||innerWidth;H=stage.clientHeight||innerHeight;
+    const cols=small?3:4;
+    cards.forEach((c,i)=>{
+      const cw=W/cols, rows=Math.ceil(cards.length/cols), ch=(H*0.82)/rows;
+      const gx=(i%cols)*cw, gy=Math.floor(i/cols)*ch+H*0.16;
+      c.x=Math.max(8,Math.min(W-c.w-8, gx+cw/2-c.w/2 + Math.sin(i*7.1)*cw*0.16));
+      c.y=Math.max(8,Math.min(H-c.h-8, gy+ch/2-c.h/2 + Math.cos(i*4.7)*ch*0.12));
+    });
+  }
+  scatter();addEventListener('resize',scatter);
+
+  let mx=-9999,my=-9999;
+  stage.addEventListener('pointermove',e=>{const r=stage.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top;});
+  stage.addEventListener('pointerleave',()=>{mx=my=-9999;});
+
+  let drag=null,offX=0,offY=0,lx=0,ly=0,dvx=0,dvy=0;
+  cards.forEach(c=>{
+    c.el.addEventListener('pointerdown',e=>{
+      e.preventDefault();drag=c;c.drag=true;
+      try{c.el.setPointerCapture(e.pointerId)}catch(_){}
+      const r=stage.getBoundingClientRect();offX=(e.clientX-r.left)-c.x;offY=(e.clientY-r.top)-c.y;
+      lx=e.clientX;ly=e.clientY;dvx=dvy=0;c.el.style.zIndex=999;
+    });
+    c.el.addEventListener('pointermove',e=>{
+      if(drag!==c)return;
+      const r=stage.getBoundingClientRect();
+      c.x=(e.clientX-r.left)-offX;c.y=(e.clientY-r.top)-offY;
+      dvx=e.clientX-lx;dvy=e.clientY-ly;lx=e.clientX;ly=e.clientY;
+    });
+    const up=()=>{if(drag===c){c.drag=false;drag=null;c.vx=Math.max(-30,Math.min(30,dvx));c.vy=Math.max(-30,Math.min(30,dvy));c.vr+=dvx*0.05;c.el.style.zIndex='';}};
+    c.el.addEventListener('pointerup',up);c.el.addEventListener('pointercancel',up);
+  });
+
+  let t=0,run=false;
+  function frame(){
+    if(!run)return;
+    t++;
+    for(const c of cards){
+      if(!c.drag){
+        c.vx+=Math.cos(t*0.01+c.h*0.3)*0.012;
+        c.vy+=Math.sin(t*0.011+c.w*0.3)*0.012;
+        const cx=c.x+c.w/2,cy=c.y+c.h/2,dx=cx-mx,dy=cy-my,d2=dx*dx+dy*dy,R=200;
+        if(d2<R*R){const d=Math.sqrt(d2)||1,f=(1-d/R)*2.6;c.vx+=dx/d*f;c.vy+=dy/d*f;c.vr+=(dx>0?1:-1)*(1-d/R)*0.5;}
+        c.x+=c.vx;c.y+=c.vy;c.vx*=0.93;c.vy*=0.93;
+        if(c.x<6){c.x=6;c.vx=Math.abs(c.vx)*0.6;}
+        if(c.x+c.w>W-6){c.x=W-c.w-6;c.vx=-Math.abs(c.vx)*0.6;}
+        if(c.y<6){c.y=6;c.vy=Math.abs(c.vy)*0.6;}
+        if(c.y+c.h>H-6){c.y=H-c.h-6;c.vy=-Math.abs(c.vy)*0.6;}
+        c.rot+=c.vr;c.vr*=0.95;
+      }
+      c.el.style.transform=`translate(${c.x}px,${c.y}px) rotate(${c.rot}deg)`;
+    }
+    requestAnimationFrame(frame);
+  }
+  new IntersectionObserver((es)=>{es.forEach(e=>{
+    if(e.isIntersecting){if(!run){run=true;scatter();requestAnimationFrame(frame);}}
+    else{run=false;}
+  })},{threshold:.04}).observe(document.getElementById('locker'));
+})();
 
 /* ============ generative ambient sound ============ */
 let actx=null,soundOn=false;
