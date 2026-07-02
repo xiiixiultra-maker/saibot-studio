@@ -149,6 +149,16 @@ section{padding-top:15vh;padding-bottom:6vh}
 .profile .facts h3{font-size:12px;text-transform:uppercase;color:var(--l2);font-weight:400;margin-bottom:10px;font-family:'Space Mono'}
 .profile .facts p{font-size:14px;line-height:1.55;color:var(--l1)}
 
+/* capabilities */
+.caps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2px}
+.cap{background:var(--bg-elevated);padding:28px 26px;transition:background .4s var(--ease);position:relative;overflow:hidden}
+.cap::after{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--grad);opacity:0;transition:opacity .3s}
+.cap:hover::after{opacity:1}
+.cap h3{font-family:'Syne';font-weight:700;font-size:clamp(19px,2.1vw,27px);line-height:1.1;margin-bottom:14px}
+.cap p{font-size:14px;line-height:1.62;color:var(--l2)}
+.cap .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.cap .tags span{font-family:'Space Mono';font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--l1);border:1px dotted var(--l3);padding:4px 11px;border-radius:99px}
+
 /* work list */
 .work-row{
   display:grid;grid-template-columns:56px 96px 1fr auto;gap:18px;align-items:baseline;
@@ -246,6 +256,7 @@ footer{
   <div class="row">
     <a class="brand hov" href="#top"><span>saibot</span><span class="dim">.studio</span></a>
     <nav>
+      <button class="hov desktop-only" onclick="document.getElementById('capabilities').scrollIntoView()">Capabilities</button>
       <button class="hov desktop-only" onclick="document.getElementById('work').scrollIntoView()">Work</button>
       <button class="hov desktop-only" onclick="document.getElementById('contact').scrollIntoView()">Contact</button>
       <button class="hov" id="themeBtn" aria-label="Toggle theme">Theme[D]</button>
@@ -281,17 +292,47 @@ footer{
 
   <section class="profile pad" id="studio">
     <p class="sec-label">01 — Profile</p>
-    <p class="statement">Saibot Studio turns sneakers, scent and street culture into <span class="grad-text">events people line up for</span> and films people replay. Culture-first campaigns for Nike, Shoe Gallery and beyond.</p>
-    <div class="facts">
-      <div><h3>Directed Events</h3><p>Live activations built around participation. People leave with something they made.</p></div>
-      <div><h3>Film &amp; Campaigns</h3><p>Narrative sneaker films. Story before spec sheet, always.</p></div>
-      <div><h3>3D &amp; Motion</h3><p>Full-CG product worlds, from rainy Miami beaches to CRT dreamscapes.</p></div>
-      <div><h3>Web3 &amp; Beyond</h3><p>NFT projects with purpose, on Ethereum since 2021. Fragrance in development.</p></div>
+    <p class="statement">Saibot Studio turns sneakers, scent and street culture into <span class="grad-text">events people line up for</span> and films people replay. Today that same eye powers <span class="grad-text">AI-driven video</span> and ad performance that moves the numbers.</p>
+  </section>
+
+  <section class="caps pad" id="capabilities">
+    <p class="sec-label">02 — Capabilities</p>
+    <div class="caps-grid">
+      <div class="cap">
+        <h3>AI Video &amp; Generative Content</h3>
+        <p>Custom AI-generated films built with the newest generative video models and finished frame by frame. Narrative mini-series, explainer series, viral short-form, product reveals, and talking-head spots with synced voice.</p>
+        <div class="tags"><span>Mini-series</span><span>Explainers</span><span>Viral shorts</span><span>Product films</span><span>Lip-sync VO</span></div>
+      </div>
+      <div class="cap">
+        <h3>Amazon Advertising</h3>
+        <p>PPC management and account recovery for brands losing money on ad spend. I audit wasted budget, rebuild campaign structure, and lift ROAS across Sponsored Products, Brands, and Display.</p>
+        <div class="tags"><span>PPC management</span><span>Account recovery</span><span>ROAS lift</span><span>New-launch strategy</span></div>
+      </div>
+      <div class="cap">
+        <h3>Social Content Systems</h3>
+        <p>End-to-end content engines. Monthly calendars, recurring reel series, and character-driven serials, scripted, generated, captioned, and scheduled. Bilingual EN and ES on request.</p>
+        <div class="tags"><span>Content calendars</span><span>Reel series</span><span>Karaoke captions</span><span>EN / ES</span></div>
+      </div>
+      <div class="cap">
+        <h3>3D &amp; Motion</h3>
+        <p>Full-CG product worlds and motion design, photoreal or stylized, from concept to final render. Sneakers, packaging, and brand objects brought to life.</p>
+        <div class="tags"><span>Product CG</span><span>Motion design</span><span>Animation</span></div>
+      </div>
+      <div class="cap">
+        <h3>Directed Events &amp; Activations</h3>
+        <p>Live brand activations built around participation. Screen printing, customization, watch parties, and launch events with global brands and their partners.</p>
+        <div class="tags"><span>Activations</span><span>Launch events</span><span>Experiential</span></div>
+      </div>
+      <div class="cap">
+        <h3>Creative Direction &amp; Campaigns</h3>
+        <p>Culture-first creative direction. Concept, story, and art direction for release campaigns, brand films, and product launches.</p>
+        <div class="tags"><span>Concept</span><span>Art direction</span><span>Campaign films</span></div>
+      </div>
     </div>
   </section>
 
   <section class="pad" id="work">
-    <p class="sec-label">02 — Selected Work</p>
+    <p class="sec-label">03 — Selected Work</p>
 
     <div class="work-row" data-video="yt:4dR68h-e8tc">
       <span class="idx">001</span><span class="type">Event</span>
@@ -344,7 +385,7 @@ footer{
   </section>
 
   <section class="cta pad" id="contact">
-    <p class="sec-label">03 — Contact</p>
+    <p class="sec-label">04 — Contact</p>
     <a class="big" href="mailto:nastysaibot@me.com">Create something<br>unforgettable</a><br>
     <a class="mail" href="mailto:nastysaibot@me.com">nastysaibot@me.com</a>
   </section>
