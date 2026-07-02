@@ -207,7 +207,7 @@ section{padding-top:15vh;padding-bottom:6vh}
 }
 #lightbox.on{display:flex}
 #lightbox .frame{position:relative;width:min(1100px,94vw);aspect-ratio:16/9;background:#000}
-#lightbox iframe,#lightbox video{width:100%;height:100%;border:0;display:block;object-fit:contain}
+#lightbox iframe,#lightbox video,#lightbox img{width:100%;height:100%;border:0;display:block;object-fit:contain}
 #lightbox .close{
   position:absolute;top:-42px;right:0;background:none;border:0;color:#fff;
   font-family:'Space Mono';font-size:13px;letter-spacing:.15em;cursor:pointer;text-transform:uppercase;
@@ -346,38 +346,50 @@ footer{
       <p class="desc">Artistry meets activism at Shoe Gallery. Three artists, three South Florida threats — nuclear catastrophe, hurricanes, rising seas — told through interactive screen printing and water-dye design.</p>
       <div class="thumb t-apoc">AA</div>
     </div>
+    <div class="work-row" data-image="assets/nfl-jacket.jpg">
+      <span class="idx">003</span><span class="type">Apparel</span>
+      <span class="title">NFL × Nike: Dade County Varsity Jacket<span class="watch">◉ View</span></span><span class="year">2025</span>
+      <p class="desc">Design and art direction for a Miami varsity jacket under Nike's NBHD NFL Rivalries program. Black wool body, navy leather sleeves, flame sleeve, a Dade County Dolphins back hit, and a full custom patch system with Shoe Gallery, produced with Settlemier's Jackets.</p>
+      <div class="thumb t-img" style="background-image:url('assets/nfl-jacket.jpg');background-position:22% center"></div>
+    </div>
+    <div class="work-row" data-image="assets/nfl-opening.jpg">
+      <span class="idx">004</span><span class="type">Capsule</span>
+      <span class="title">The Opening: Nike × NFL Capsule<span class="watch">◉ View</span></span><span class="year">2025</span>
+      <p class="desc">Custom capsule branding and event assets for Nike × NFL "The Opening," the high-school football showcase. Grunge wordmark, a chrome-and-green Nike helmet, Dade County graphics, and collateral across the tour.</p>
+      <div class="thumb t-img" style="background-image:url('assets/nfl-opening.jpg')"></div>
+    </div>
     <div class="work-row" data-video="yt:PLi4puZ8SGU">
-      <span class="idx">003</span><span class="type">Film</span>
+      <span class="idx">005</span><span class="type">Film</span>
       <span class="title">Neymar × Nike Shox<span class="watch">▶ Watch</span></span><span class="year">23K+</span>
       <p class="desc">A visual story bridging Neymar's soccer roots and the Shox's basketball heritage on a Miami court. Shoe Gallery's most-watched release film to date.</p>
       <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/PLi4puZ8SGU/hqdefault.jpg')"></div>
     </div>
     <div class="work-row" data-video="yt:ideKaPnCofE">
-      <span class="idx">004</span><span class="type">Film</span>
+      <span class="idx">006</span><span class="type">Film</span>
       <span class="title">Fear of God 1: Freestyle Remake<span class="watch">▶ Watch</span></span><span class="year">Nike</span>
       <p class="desc">A street-level remake of Nike's classic Freestyle commercial — featuring Luis "Trikz" Da Silva Jr., an original Freestyle performer who walked into Shoe Gallery days before the shoot.</p>
       <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/ideKaPnCofE/hqdefault.jpg')"></div>
     </div>
     <div class="work-row" data-video="yt:DygCj4e9Kxw">
-      <span class="idx">005</span><span class="type">3D</span>
+      <span class="idx">007</span><span class="type">3D</span>
       <span class="title">Uno AF1: A 3D Revival<span class="watch">▶ Watch</span></span><span class="year">SG</span>
       <p class="desc">A rainy Miami beach collapses into a vibrant vortex revealing the Uno AF1 — the card game reborn as a sneaker world. The studio's entry into 3D advertising.</p>
       <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/DygCj4e9Kxw/hqdefault.jpg')"></div>
     </div>
     <div class="work-row" data-video="yt:3e0-DylbfOA">
-      <span class="idx">006</span><span class="type">3D</span>
+      <span class="idx">008</span><span class="type">3D</span>
       <span class="title">Air Kukini: "Glitch" Game<span class="watch">▶ Watch</span></span><span class="year">Nike</span>
       <p class="desc">Laceless icon, rubber cage, CRT glow. A 3D animation weaving the Kukini's design language through retro gaming and analog-TV aesthetics.</p>
       <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/3e0-DylbfOA/hqdefault.jpg')"></div>
     </div>
     <div class="work-row" data-video="assets/sneaker-grades.mp4">
-      <span class="idx">007</span><span class="type">Web3</span>
+      <span class="idx">009</span><span class="type">Web3</span>
       <span class="title">Sneaker Grades NFT<span class="watch">▶ Watch</span></span><span class="year">2021</span>
       <p class="desc">A non-profit NFT initiative on Ethereum connecting digital art with academic recognition — proceeds reward high-performing students. Modeled, textured and rendered in-house.</p>
       <div class="thumb t-img" style="background-image:url('assets/sneaker-grades-poster.jpg')"></div>
     </div>
     <div class="work-row" data-video="assets/unseen-film.mp4">
-      <span class="idx">008</span><span class="type">Scent</span>
+      <span class="idx">010</span><span class="type">Scent</span>
       <span class="title">Unseen: Perfumes<span class="watch">▶ Watch</span></span><span class="year">Soon</span>
       <p class="desc">Scent as storytelling — an experiment in designing what you can't look at. Coming into focus.</p>
       <div class="thumb t-img" style="background-image:url('assets/unseen-poster.jpg')"></div>
@@ -497,6 +509,15 @@ function openVideo(spec){
   lbFrame.appendChild(btn);
   lb.classList.add('on');
 }
+function openImage(src){
+  lbFrame.innerHTML='';
+  const im=document.createElement('img');im.src=src;im.alt='';
+  lbFrame.appendChild(im);
+  const btn=document.createElement('button');
+  btn.className='close';btn.textContent='Close [Esc]';btn.onclick=closeVideo;
+  lbFrame.appendChild(btn);
+  lb.classList.add('on');
+}
 function closeVideo(){lb.classList.remove('on');lbFrame.innerHTML=''}
 lb.addEventListener('click',e=>{if(e.target===lb)closeVideo()});
 addEventListener('keydown',e=>{if(e.key==='Escape')closeVideo()});
@@ -505,8 +526,8 @@ const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.targ
 document.querySelectorAll('.work-row').forEach(r=>{
   io.observe(r);
   r.addEventListener('click',()=>{
-    const v=r.dataset.video;
-    if(v)openVideo(v);else r.classList.toggle('open');
+    const v=r.dataset.video,img=r.dataset.image;
+    if(v)openVideo(v);else if(img)openImage(img);else r.classList.toggle('open');
   });
 });
 
