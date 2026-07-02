@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAIBOT©2026</title>
+<meta name="description" content="Saibot Studio — Creative Direction, Film, 3D & Events. Miami, FL.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-deep:10,10,12;
+  --bg-elevated:#17171c;
+  --label:255,255,255;
+  --label-d:230,232,232;
+  --pink:#ff2e88;
+  --orange:#ff6b2b;
+  --violet:#7a5cff;
+  --cyan:#29d8ff;
+  --grad:linear-gradient(100deg,var(--pink),var(--orange) 45%,var(--violet) 80%);
+  --ease:cubic-bezier(.66,0,.01,1);
+  --aurora-opacity:.55;
+}
+html.light{
+  --bg-deep:251,250,244;
+  --bg-elevated:#efede7;
+  --label:12,12,14;
+  --label-d:54,54,48;
+  --aurora-opacity:.28;
+}
+:root{
+  --b1:rgb(var(--bg-deep));
+  --l1:rgba(var(--label),1);
+  --l2:rgba(var(--label-d),.6);
+  --l3:rgba(var(--label-d),.32);
+  --l4:rgba(var(--label-d),.14);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+::selection{background:var(--pink);color:var(--b1)}
+html{scroll-behavior:smooth}
+body{
+  background:var(--b1);color:var(--l1);
+  font-family:'Space Mono',monospace;font-size:15px;line-height:1.6;
+  transition:background .4s var(--ease),color .4s var(--ease);
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---------- grain ---------- */
+.grain{
+  position:fixed;inset:-50%;width:200%;height:200%;
+  pointer-events:none;z-index:9998;opacity:.06;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain 8s steps(10) infinite;
+}
+@keyframes grain{
+  0%,100%{transform:translate(0,0)}10%{transform:translate(-5%,-8%)}
+  30%{transform:translate(3%,-6%)}50%{transform:translate(-7%,4%)}
+  70%{transform:translate(6%,8%)}90%{transform:translate(-3%,3%)}
+}
+
+/* ---------- custom cursor ---------- */
+.cursor{
+  position:fixed;top:0;left:0;width:14px;height:14px;border-radius:50%;
+  background:#fff;pointer-events:none;z-index:9999;
+  mix-blend-mode:difference;transform:translate(-50%,-50%);
+  transition:width .25s,height .25s;
+}
+.cursor.big{width:64px;height:64px}
+@media (hover:none){body{cursor:auto}.cursor{display:none}}
+
+/* ---------- boot loader ---------- */
+#boot{
+  position:fixed;inset:0;z-index:200;background:var(--b1);
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .5s var(--ease);
+}
+#boot.done{opacity:0;pointer-events:none}
+#boot .bar{width:150px;height:6px;border-radius:99px;background:var(--l4);overflow:hidden}
+#boot .fill{height:100%;width:0%;border-radius:99px;background:var(--grad);transition:width .5s cubic-bezier(.22,1,.36,1)}
+
+/* ---------- dotted hover ---------- */
+.hov{position:relative;padding:8px;cursor:pointer}
+.hov::before{content:"";position:absolute;inset:0;border:2px dotted transparent;pointer-events:none;transition:border-color .2s}
+.hov:hover::before{border-color:var(--l1)}
+
+/* ---------- HUD ---------- */
+header{
+  position:fixed;inset:0;z-index:50;pointer-events:none;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:16px clamp(16px,4vw,56px) 20px;
+  text-transform:uppercase;font-size:14px;
+}
+header .row{display:flex;justify-content:space-between;align-items:center}
+header a,header button{pointer-events:auto}
+.brand{font-family:'Syne';font-weight:800;letter-spacing:.06em}
+.brand .dim{color:var(--l2)}
+nav{display:flex;gap:14px;align-items:center}
+nav button{background:none;border:0;color:inherit;font:inherit;text-transform:uppercase}
+.hud-bottom{display:flex;justify-content:space-between;align-items:center;color:var(--l2)}
+#coords{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:var(--l2);pointer-events:none;font-size:13px;text-transform:uppercase}
+@media(max-width:820px){nav .desktop-only{display:none}#coords{display:none}}
+
+/* ---------- canvases ---------- */
+#aurora{position:fixed;inset:0;z-index:0;width:100%;height:100%;filter:blur(70px) saturate(1.3);opacity:var(--aurora-opacity);pointer-events:none;transition:opacity .4s var(--ease)}
+#gl{position:fixed;inset:0;z-index:1;pointer-events:none}
+
+/* ---------- layout ---------- */
+main{position:relative;z-index:10}
+.pad{padding-left:clamp(16px,4vw,56px);padding-right:clamp(16px,4vw,56px)}
+
+/* hero */
+.hero{height:100svh;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:11vh;position:relative;z-index:5;pointer-events:none}
+.hero *{pointer-events:auto}
+.hero .fallback{
+  font-family:'Syne';font-weight:800;text-transform:uppercase;
+  font-size:clamp(52px,11vw,170px);line-height:.9;letter-spacing:-.01em;display:none;
+}
+.hero.no-gl .fallback{display:block}
+.hero.no-gl .fallback span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-meta{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-top:4vh}
+.hero-meta h1{font-family:'Syne';font-weight:700;font-size:clamp(20px,2.8vw,38px);line-height:1.15;max-width:19ch}
+.hero-meta h1 em{font-style:normal;color:var(--l2)}
+.hero-meta .side{color:var(--l2);font-size:13px;text-transform:uppercase;text-align:right;line-height:1.9}
+
+/* marquee */
+.marquee{border-top:1px solid var(--l4);border-bottom:1px solid var(--l4);overflow:hidden;padding:16px 0;position:relative;z-index:10;background:rgba(var(--label),.02)}
+.marquee-track{display:flex;width:max-content;animation:scroll 28s linear infinite}
+.marquee span{font-family:'Space Mono';font-weight:700;font-size:14px;letter-spacing:.3em;text-transform:uppercase;white-space:nowrap;padding:0 22px;color:var(--l2)}
+.marquee span b{color:var(--l1);font-weight:700}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* section scaffolding */
+section{padding-top:15vh;padding-bottom:6vh}
+.sec-label{color:var(--l2);text-transform:uppercase;font-size:13px;letter-spacing:.12em;margin-bottom:44px;display:flex;gap:12px;align-items:baseline}
+.sec-label::after{content:"";flex:1;border-top:1px solid var(--l4)}
+
+/* profile */
+.profile p.statement{
+  font-family:'Syne';font-weight:700;
+  font-size:clamp(24px,3.6vw,52px);line-height:1.22;max-width:26ch;letter-spacing:-.01em;
+}
+.profile .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:2px;margin-top:9vh}
+.profile .facts div{background:var(--bg-elevated);padding:20px;transition:background .4s var(--ease);position:relative;overflow:hidden}
+.profile .facts div::after{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--grad);opacity:0;transition:opacity .3s}
+.profile .facts div:hover::after{opacity:1}
+.profile .facts h3{font-size:12px;text-transform:uppercase;color:var(--l2);font-weight:400;margin-bottom:10px;font-family:'Space Mono'}
+.profile .facts p{font-size:14px;line-height:1.55;color:var(--l1)}
+
+/* work list */
+.work-row{
+  display:grid;grid-template-columns:56px 96px 1fr auto;gap:18px;align-items:baseline;
+  padding:22px 8px;border-bottom:1px dotted var(--l4);
+  position:relative;cursor:pointer;
+  opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--ease),background .25s;
+}
+.work-row.show{opacity:1;transform:none}
+.work-row:hover{background:var(--bg-elevated)}
+.work-row::before{content:"";position:absolute;inset:0;border:2px dotted transparent;pointer-events:none;transition:border-color .2s;z-index:2}
+.work-row:hover::before{border-color:var(--l1)}
+.work-row .idx,.work-row .type{color:var(--l2);font-size:13px;text-transform:uppercase}
+.work-row .title{font-family:'Syne';font-weight:700;font-size:clamp(18px,2.4vw,30px);line-height:1.15;transition:transform .35s var(--ease)}
+.work-row:hover .title{transform:translateX(12px)}
+.work-row .year{color:var(--l2);font-size:13px}
+.work-row .desc{grid-column:3/5;color:var(--l2);font-size:14px;line-height:1.6;max-width:70ch;
+  max-height:0;overflow:hidden;transition:max-height .5s var(--ease),margin .5s var(--ease)}
+.work-row:hover .desc,.work-row.open .desc{max-height:220px;margin-top:10px}
+.work-row .thumb{
+  position:absolute;right:8%;top:50%;transform:translateY(-50%) scale(.6) rotate(-6deg);
+  width:230px;height:150px;border-radius:10px;opacity:0;pointer-events:none;z-index:5;
+  transition:opacity .3s,transform .45s var(--ease);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne';font-weight:800;font-size:44px;color:rgba(10,10,12,.85);
+}
+.work-row:hover .thumb{opacity:1;transform:translateY(-50%) scale(1) rotate(-3deg)}
+@media(max-width:920px){
+  .work-row{grid-template-columns:40px 1fr auto}
+  .work-row .type{display:none}
+  .work-row .desc{grid-column:2/4}
+  .work-row .thumb{display:none}
+}
+.thumb.t-img{background-size:cover;background-position:center;color:transparent}
+.watch{
+  display:inline-block;margin-left:14px;font-family:'Space Mono';font-weight:400;font-size:12px;
+  letter-spacing:.15em;color:var(--l2);border:1px dotted var(--l3);padding:3px 10px;border-radius:99px;
+  vertical-align:middle;white-space:nowrap;text-transform:uppercase;transition:color .2s,border-color .2s;
+}
+.work-row:hover .watch{color:var(--l1);border-color:var(--l1)}
+
+/* lightbox */
+#lightbox{
+  position:fixed;inset:0;z-index:150;background:rgba(5,5,7,.9);
+  display:none;align-items:center;justify-content:center;padding:4vw;
+  backdrop-filter:blur(10px);
+}
+#lightbox.on{display:flex}
+#lightbox .frame{position:relative;width:min(1100px,94vw);aspect-ratio:16/9;background:#000}
+#lightbox iframe,#lightbox video{width:100%;height:100%;border:0;display:block;object-fit:contain}
+#lightbox .close{
+  position:absolute;top:-42px;right:0;background:none;border:0;color:#fff;
+  font-family:'Space Mono';font-size:13px;letter-spacing:.15em;cursor:pointer;text-transform:uppercase;
+}
+.t-wotherspoon{background:linear-gradient(135deg,#ff6b2b,#ffd23f 55%,#3ec96f)}
+.t-apoc{background:linear-gradient(135deg,#29d8ff,#7a5cff 60%,#0a0a0c)}
+.t-neymar{background:linear-gradient(135deg,#3ec96f,#ffd23f)}
+.t-fog{background:linear-gradient(135deg,#d8d4cb,#8d8a83)}
+.t-uno{background:linear-gradient(135deg,#ff2e88,#ff6b2b)}
+.t-kukini{background:linear-gradient(135deg,#7a5cff,#29d8ff)}
+.t-sg{background:linear-gradient(135deg,#ffd23f,#ff2e88)}
+.t-unseen{background:linear-gradient(135deg,#1b1b22,#4a4657);color:rgba(244,241,234,.8)}
+
+/* cta */
+.cta{padding-bottom:10vh}
+.cta .big{
+  font-family:'Syne';font-weight:800;text-transform:uppercase;
+  font-size:clamp(32px,6.8vw,110px);line-height:.98;letter-spacing:-.01em;display:inline-block;max-width:100%;
+  background-image:var(--grad);-webkit-background-clip:text;background-clip:text;
+  transition:color .4s;
+}
+.cta .big:hover{color:transparent}
+.cta .mail{display:inline-block;margin-top:4vh;color:var(--l2);border-bottom:1px dotted var(--l3);padding-bottom:2px}
+.cta .mail:hover{color:var(--l1);border-color:var(--l1)}
+
+/* footer */
+footer{
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  padding:24px clamp(16px,4vw,56px) 90px;
+  border-top:1px solid var(--l4);
+  color:var(--l2);font-size:13px;text-transform:uppercase;position:relative;z-index:10;
+}
+.scr{white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="cursor" id="cursor"></div>
+<div id="boot"><div class="bar"><div class="fill" id="bootFill"></div></div></div>
+
+<canvas id="aurora"></canvas>
+<canvas id="gl"></canvas>
+
+<header>
+  <div class="row">
+    <a class="brand hov" href="#top"><span>saibot</span><span class="dim">.studio</span></a>
+    <nav>
+      <button class="hov desktop-only" onclick="document.getElementById('work').scrollIntoView()">Work</button>
+      <button class="hov desktop-only" onclick="document.getElementById('contact').scrollIntoView()">Contact</button>
+      <button class="hov" id="themeBtn" aria-label="Toggle theme">Theme[D]</button>
+      <button class="hov" id="soundBtn" aria-label="Toggle sound">Sound[&gt;]</button>
+    </nav>
+  </div>
+  <div class="hud-bottom">
+    <span id="clock">GMT-4 MIA --:--:--</span>
+    <span class="desktop-only">EST.MMXVIII</span>
+  </div>
+</header>
+<span id="coords">0000 X 0000 Y</span>
+
+<main id="top">
+
+  <div class="hero pad" id="hero">
+    <div class="fallback"><span>Saibot<br>Studio</span></div>
+    <div class="hero-meta">
+      <h1 class="scr" data-text="Creative direction & craft. Film, 3D, events — culture-first.">Creative direction &amp; craft. Film, 3D, events — culture-first.</h1>
+      <div class="side">
+        Miami, FL<br>
+        Saibot Studio — Remmy Rivera<br>
+        Scroll to dissolve ↓
+      </div>
+    </div>
+  </div>
+
+  <div class="marquee">
+    <div class="marquee-track" id="mtrack">
+      <span><b>Nike</b> ✦ Shoe Gallery ✦ <b>Sean Wotherspoon</b> ✦ Web3 ✦ <b>3D Worlds</b> ✦ Directed Events ✦ <b>Miami</b> ✦ Unseen Perfumes ✦ </span>
+    </div>
+  </div>
+
+  <section class="profile pad" id="studio">
+    <p class="sec-label">01 — Profile</p>
+    <p class="statement">Saibot Studio turns sneakers, scent and street culture into <span class="grad-text">events people line up for</span> and films people replay. Culture-first campaigns for Nike, Shoe Gallery and beyond.</p>
+    <div class="facts">
+      <div><h3>Directed Events</h3><p>Live activations built around participation. People leave with something they made.</p></div>
+      <div><h3>Film &amp; Campaigns</h3><p>Narrative sneaker films. Story before spec sheet, always.</p></div>
+      <div><h3>3D &amp; Motion</h3><p>Full-CG product worlds, from rainy Miami beaches to CRT dreamscapes.</p></div>
+      <div><h3>Web3 &amp; Beyond</h3><p>NFT projects with purpose, on Ethereum since 2021. Fragrance in development.</p></div>
+    </div>
+  </section>
+
+  <section class="pad" id="work">
+    <p class="sec-label">02 — Selected Work</p>
+
+    <div class="work-row" data-video="yt:4dR68h-e8tc">
+      <span class="idx">001</span><span class="type">Event</span>
+      <span class="title">Air Max Day: Sean Wotherspoon AM1/97<span class="watch">▶ Watch</span></span><span class="year">2018</span>
+      <p class="desc">Live screen-printing activation for the Wotherspoon release with Nike, Shoe Gallery and AAO Print Shop. Faux thrift-store tees, licensed Nike × SW graphics — everyday shoppers turned into artists for a day.</p>
+      <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/4dR68h-e8tc/hqdefault.jpg')"></div>
+    </div>
+    <div class="work-row">
+      <span class="idx">002</span><span class="type">Event</span>
+      <span class="title">Apocalypse Awareness</span><span class="year">2018</span>
+      <p class="desc">Artistry meets activism at Shoe Gallery. Three artists, three South Florida threats — nuclear catastrophe, hurricanes, rising seas — told through interactive screen printing and water-dye design.</p>
+      <div class="thumb t-apoc">AA</div>
+    </div>
+    <div class="work-row" data-video="yt:PLi4puZ8SGU">
+      <span class="idx">003</span><span class="type">Film</span>
+      <span class="title">Neymar × Nike Shox<span class="watch">▶ Watch</span></span><span class="year">23K+</span>
+      <p class="desc">A visual story bridging Neymar's soccer roots and the Shox's basketball heritage on a Miami court. Shoe Gallery's most-watched release film to date.</p>
+      <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/PLi4puZ8SGU/hqdefault.jpg')"></div>
+    </div>
+    <div class="work-row" data-video="yt:ideKaPnCofE">
+      <span class="idx">004</span><span class="type">Film</span>
+      <span class="title">Fear of God 1: Freestyle Remake<span class="watch">▶ Watch</span></span><span class="year">Nike</span>
+      <p class="desc">A street-level remake of Nike's classic Freestyle commercial — featuring Luis "Trikz" Da Silva Jr., an original Freestyle performer who walked into Shoe Gallery days before the shoot.</p>
+      <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/ideKaPnCofE/hqdefault.jpg')"></div>
+    </div>
+    <div class="work-row" data-video="yt:DygCj4e9Kxw">
+      <span class="idx">005</span><span class="type">3D</span>
+      <span class="title">Uno AF1: A 3D Revival<span class="watch">▶ Watch</span></span><span class="year">SG</span>
+      <p class="desc">A rainy Miami beach collapses into a vibrant vortex revealing the Uno AF1 — the card game reborn as a sneaker world. The studio's entry into 3D advertising.</p>
+      <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/DygCj4e9Kxw/hqdefault.jpg')"></div>
+    </div>
+    <div class="work-row" data-video="yt:3e0-DylbfOA">
+      <span class="idx">006</span><span class="type">3D</span>
+      <span class="title">Air Kukini: "Glitch" Game<span class="watch">▶ Watch</span></span><span class="year">Nike</span>
+      <p class="desc">Laceless icon, rubber cage, CRT glow. A 3D animation weaving the Kukini's design language through retro gaming and analog-TV aesthetics.</p>
+      <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/3e0-DylbfOA/hqdefault.jpg')"></div>
+    </div>
+    <div class="work-row" data-video="assets/sneaker-grades.mp4">
+      <span class="idx">007</span><span class="type">Web3</span>
+      <span class="title">Sneaker Grades NFT<span class="watch">▶ Watch</span></span><span class="year">2021</span>
+      <p class="desc">A non-profit NFT initiative on Ethereum connecting digital art with academic recognition — proceeds reward high-performing students. Modeled, textured and rendered in-house.</p>
+      <div class="thumb t-img" style="background-image:url('assets/sneaker-grades-poster.jpg')"></div>
+    </div>
+    <div class="work-row" data-video="assets/unseen-film.mp4">
+      <span class="idx">008</span><span class="type">Scent</span>
+      <span class="title">Unseen: Perfumes<span class="watch">▶ Watch</span></span><span class="year">Soon</span>
+      <p class="desc">Scent as storytelling — an experiment in designing what you can't look at. Coming into focus.</p>
+      <div class="thumb t-img" style="background-image:url('assets/unseen-poster.jpg')"></div>
+    </div>
+  </section>
+
+  <section class="cta pad" id="contact">
+    <p class="sec-label">03 — Contact</p>
+    <a class="big" href="mailto:nastysaibot@me.com">Create something<br>unforgettable</a><br>
+    <a class="mail" href="mailto:nastysaibot@me.com">nastysaibot@me.com</a>
+  </section>
+
+</main>
+
+<div id="lightbox" aria-hidden="true"><div class="frame"></div></div>
+
+<footer>
+  <span>© 2026 Saibot Studio</span>
+  <span>Miami, FL</span>
+  <span>Design &amp; Direction: Remmy Rivera</span>
+</footer>
+
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script>
+/* ============ boot loader ============ */
+const bootFill=document.getElementById('bootFill');
+let bootP=0;
+const bootTick=setInterval(()=>{bootP=Math.min(bootP+Math.random()*14,92);bootFill.style.width=bootP+'%'},180);
+function bootDone(){
+  clearInterval(bootTick);bootFill.style.width='100%';
+  setTimeout(()=>{document.getElementById('boot').classList.add('done');scrambleAll()},450);
+}
+window.addEventListener('load',()=>setTimeout(bootDone,600));
+setTimeout(bootDone,6000);
+
+/* ============ theme ============ */
+const themeBtn=document.getElementById('themeBtn');
+if(localStorage.getItem('saibot-theme')==='light')document.documentElement.classList.add('light');
+updateThemeLabel();
+themeBtn.addEventListener('click',()=>{
+  document.documentElement.classList.toggle('light');
+  localStorage.setItem('saibot-theme',document.documentElement.classList.contains('light')?'light':'dark');
+  updateThemeLabel();
+});
+function updateThemeLabel(){themeBtn.textContent=document.documentElement.classList.contains('light')?'THEME[L]':'THEME[D]'}
+
+/* ============ clock (Miami) ============ */
+const clockEl=document.getElementById('clock');
+function tickClock(){
+  const now=new Date();
+  const t=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(now);
+  const off=-(new Date(now.toLocaleString('en-US',{timeZone:'UTC'})) - new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'})))/3600000;
+  clockEl.textContent=`GMT${off>=0?'+':''}${off} MIA ${t}`;
+}
+setInterval(tickClock,1000);tickClock();
+
+/* ============ cursor + coords ============ */
+const cursor=document.getElementById('cursor');
+const coords=document.getElementById('coords');
+let mx=innerWidth/2,my=innerHeight/2,cx=mx,cy=my;
+addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  coords.textContent=String(Math.round(mx)).padStart(4,'0')+' X '+String(Math.round(my)).padStart(4,'0')+' Y';
+});
+(function moveCursor(){cx+=(mx-cx)*.2;cy+=(my-cy)*.2;cursor.style.transform=`translate(${cx}px,${cy}px) translate(-50%,-50%)`;requestAnimationFrame(moveCursor)})();
+document.querySelectorAll('a,button,.work-row').forEach(el=>{
+  el.addEventListener('mouseenter',()=>cursor.classList.add('big'));
+  el.addEventListener('mouseleave',()=>cursor.classList.remove('big'));
+});
+
+/* ============ marquee ============ */
+const mt=document.getElementById('mtrack');
+mt.innerHTML+=mt.innerHTML;
+
+/* ============ scramble text ============ */
+const CHARS='!<>-_\\/[]{}—=+*^?#________';
+function scramble(el){
+  const target=el.dataset.text||el.textContent;
+  const total=Math.min(target.length*2,60);
+  let frame=0,done=false;
+  function step(){
+    if(done)return;
+    frame++;
+    let out='';
+    for(let i=0;i<target.length;i++){
+      const reveal=(i/target.length)*total*.9;
+      out+=frame>reveal?target[i]:(target[i]===' '?' ':CHARS[Math.floor(Math.random()*CHARS.length)]);
+    }
+    el.textContent=out;
+    if(frame>=total){el.textContent=target;done=true;return}
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+  /* guarantee final text even if frames are throttled */
+  setTimeout(()=>{if(!done){done=true;el.textContent=target}},3000);
+}
+function scrambleAll(){document.querySelectorAll('.scr').forEach(scramble)}
+
+/* ============ work rows + video lightbox ============ */
+const lb=document.getElementById('lightbox');
+const lbFrame=lb.querySelector('.frame');
+function openVideo(spec){
+  lbFrame.innerHTML='';
+  if(spec.startsWith('yt:')){
+    const f=document.createElement('iframe');
+    f.src='https://www.youtube.com/embed/'+spec.slice(3)+'?autoplay=1&rel=0';
+    f.allow='autoplay; fullscreen; encrypted-media';
+    f.allowFullscreen=true;
+    lbFrame.appendChild(f);
+  }else{
+    const v=document.createElement('video');
+    v.src=spec;v.controls=true;v.autoplay=true;v.playsInline=true;
+    lbFrame.appendChild(v);
+  }
+  const btn=document.createElement('button');
+  btn.className='close';btn.textContent='Close [Esc]';btn.onclick=closeVideo;
+  lbFrame.appendChild(btn);
+  lb.classList.add('on');
+}
+function closeVideo(){lb.classList.remove('on');lbFrame.innerHTML=''}
+lb.addEventListener('click',e=>{if(e.target===lb)closeVideo()});
+addEventListener('keydown',e=>{if(e.key==='Escape')closeVideo()});
+
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');io.unobserve(e.target)}}),{threshold:.1});
+document.querySelectorAll('.work-row').forEach(r=>{
+  io.observe(r);
+  r.addEventListener('click',()=>{
+    const v=r.dataset.video;
+    if(v)openVideo(v);else r.classList.toggle('open');
+  });
+});
+
+/* ============ generative ambient sound ============ */
+let actx=null,soundOn=false;
+const soundBtn=document.getElementById('soundBtn');
+soundBtn.addEventListener('click',()=>{
+  if(!actx){
+    actx=new (window.AudioContext||window.webkitAudioContext)();
+    const master=actx.createGain();master.gain.value=0;master.connect(actx.destination);
+    [110,164.81,220,329.63].forEach((f,i)=>{
+      const o=actx.createOscillator();o.type='sine';o.frequency.value=f;
+      const g=actx.createGain();g.gain.value=.05;
+      const lfo=actx.createOscillator();lfo.frequency.value=.05+i*.03;
+      const lg=actx.createGain();lg.gain.value=.04;
+      lfo.connect(lg);lg.connect(g.gain);
+      o.connect(g);g.connect(master);o.start();lfo.start();
+    });
+    actx._master=master;
+  }
+  soundOn=!soundOn;
+  actx.resume();
+  actx._master.gain.linearRampToValueAtTime(soundOn?.6:0,actx.currentTime+1.2);
+  soundBtn.innerHTML=soundOn?'SOUND[||]':'SOUND[&gt;]';
+});
+
+/* ============ aurora background (2D canvas) ============ */
+(function(){
+  const cv=document.getElementById('aurora'),ctx=cv.getContext('2d');
+  const blobs=[
+    {x:.2,y:.75,r:.35,c:'#ff2e88',s:1.0},
+    {x:.65,y:.35,r:.4,c:'#7a5cff',s:1.4},
+    {x:.85,y:.8,r:.3,c:'#ff6b2b',s:.8},
+    {x:.45,y:.15,r:.28,c:'#29d8ff',s:1.2},
+  ];
+  function size(){cv.width=innerWidth;cv.height=innerHeight}
+  size();addEventListener('resize',size);
+  let t=0;
+  (function draw(){
+    t+=.004;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.globalCompositeOperation='lighter';
+    blobs.forEach((b,i)=>{
+      const x=(b.x+Math.sin(t*b.s+i*2)*.09)*cv.width;
+      const y=(b.y+Math.cos(t*b.s*.8+i)*.09)*cv.height;
+      const r=b.r*Math.max(cv.width,cv.height)*.6;
+      const g=ctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,b.c+'aa');g.addColorStop(1,b.c+'00');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  })();
+})();
+
+/* ============ gradient particle headline (three.js) ============ */
+(function(){
+  const heroEl=document.getElementById('hero');
+  if(!window.THREE){heroEl.classList.add('no-gl');return}
+  let renderer;
+  try{
+    renderer=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),alpha:true,antialias:false});
+  }catch(e){heroEl.classList.add('no-gl');return}
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,1,3000);
+  cam.position.z=900;
+
+  /* Miami gradient stops for particle colors */
+  const STOPS=[
+    [1.0,.18,.53],   /* #ff2e88 */
+    [1.0,.42,.17],   /* #ff6b2b */
+    [.48,.36,1.0],   /* #7a5cff */
+    [.16,.85,1.0],   /* #29d8ff */
+  ];
+  function gradAt(u){
+    const seg=Math.min(Math.floor(u*3),2);
+    const f=u*3-seg;
+    const a=STOPS[seg],b=STOPS[seg+1];
+    return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f];
+  }
+
+  let pts=null,homes=null,vels=null,count=0,TEXTW=1200;
+  function buildText(){
+    const oc=document.createElement('canvas');
+    /* measure first so wide glyphs never get clipped during sampling */
+    const meas=oc.getContext('2d');
+    meas.font='800 225px Syne, sans-serif';
+    const W=Math.ceil(Math.max(meas.measureText('SAIBOT').width,meas.measureText('STUDIO').width))+80;
+    const H=560;oc.width=W;oc.height=H;TEXTW=W;
+    const c=oc.getContext('2d');
+    c.fillStyle='#fff';
+    c.font='800 225px Syne, sans-serif';
+    c.textAlign='center';c.textBaseline='middle';
+    c.fillText('SAIBOT',W/2,H*0.27);
+    c.fillText('STUDIO',W/2,H*0.73);
+    const data=c.getImageData(0,0,W,H).data;
+    const positions=[],colors=[];
+    const gap=3;
+    for(let y=0;y<H;y+=gap)for(let x=0;x<W;x+=gap){
+      if(data[(y*W+x)*4+3]>128){
+        positions.push(x-W/2,-(y-H/2),0);
+        /* gradient sweeps diagonally across the wordmark */
+        const u=Math.max(0,Math.min(1,(x/W)*.85+(y/H)*.15));
+        const col=gradAt(u);
+        colors.push(col[0],col[1],col[2]);
+      }
+    }
+    count=positions.length/3;
+    homes=new Float32Array(positions);
+    pts=new Float32Array(positions);
+    vels=new Float32Array(count*3);
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(pts,3));
+    geo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(colors),3));
+    const mat=new THREE.PointsMaterial({size:2.6,transparent:true,opacity:.95,vertexColors:true});
+    const cloud=new THREE.Points(geo,mat);
+    scene.add(cloud);
+    window._geo=geo;window._mat=mat;window._cloud=cloud;
+    applyScale();
+  }
+  document.fonts.load('800 225px Syne').then(()=>document.fonts.ready).then(buildText).catch(buildText);
+
+  /* scale the wordmark so it always fits the viewport */
+  let pscale=1;
+  function applyScale(){
+    if(!window._cloud)return;
+    const visH=2*cam.position.z*Math.tan(THREE.MathUtils.degToRad(45/2));
+    const visW=visH*cam.aspect;
+    pscale=Math.min(1.15,(visW*.92)/TEXTW,(visH*.72)/560);
+    window._cloud.scale.set(pscale,pscale,pscale);
+    /* keep point size sensible as the mark shrinks */
+    window._mat.size=Math.max(1.6,2.6*Math.sqrt(pscale));
+  }
+  function size(){renderer.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();applyScale()}
+  size();addEventListener('resize',size);
+
+  function mouseWorld(){
+    const nx=(mx/innerWidth)*2-1,ny=-(my/innerHeight)*2+1;
+    const v=new THREE.Vector3(nx,ny,.5).unproject(cam);
+    const d=v.sub(cam.position).normalize();
+    const t=-cam.position.z/d.z;
+    return cam.position.clone().add(d.multiplyScalar(t));
+  }
+
+  let t=0;
+  function loop(){
+    requestAnimationFrame(loop);
+    t+=.01;
+    if(pts){
+      const mw=mouseWorld();
+      /* convert mouse to the cloud's local (scaled) space */
+      mw.x/=pscale;mw.y/=pscale;
+      const rad=110/pscale,rad2=rad*rad;
+      const scroll=Math.min(scrollY/(innerHeight*.9),1);
+      window._mat.opacity=.95*(1-scroll*.92);
+      for(let i=0;i<count;i++){
+        const ix=i*3;
+        let hx=homes[ix],hy=homes[ix+1],hz=homes[ix+2];
+        if(scroll>0){
+          const r1=Math.sin(i*12.9898)*43758.5453,rnd=(r1-Math.floor(r1));
+          hx+=(rnd-.5)*900*scroll;
+          hy+=(rnd*700+200)*scroll;
+          hz+=(rnd-.5)*600*scroll;
+        }
+        vels[ix]+=(hx-pts[ix])*.02;
+        vels[ix+1]+=(hy-pts[ix+1])*.02;
+        vels[ix+2]+=(hz-pts[ix+2])*.02;
+        vels[ix]+=Math.sin(t+pts[ix+1]*.01)*.05;
+        vels[ix+1]+=Math.cos(t+pts[ix]*.01)*.05;
+        const dx=pts[ix]-mw.x,dy=pts[ix+1]-mw.y;
+        const d2=dx*dx+dy*dy;
+        if(d2<rad2){
+          const f=(1-d2/rad2)*3.2;
+          const d=Math.sqrt(d2)||1;
+          vels[ix]+=dx/d*f;vels[ix+1]+=dy/d*f;
+        }
+        vels[ix]*=.86;vels[ix+1]*=.86;vels[ix+2]*=.86;
+        pts[ix]+=vels[ix];pts[ix+1]+=vels[ix+1];pts[ix+2]+=vels[ix+2];
+      }
+      window._geo.attributes.position.needsUpdate=true;
+      cam.position.x+=((mx-innerWidth/2)*.06-cam.position.x)*.05;
+      cam.position.y+=(-(my-innerHeight/2)*.06-cam.position.y)*.05;
+      cam.lookAt(0,0,0);
+    }
+    renderer.render(scene,cam);
+  }
+  loop();
+})();
+</script>
+</body>
+</html>
