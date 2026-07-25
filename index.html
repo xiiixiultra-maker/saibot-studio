@@ -420,6 +420,12 @@ footer{
       <p class="desc">Scent as storytelling — an experiment in designing what you can't look at. Coming into focus.</p>
       <div class="thumb t-img" style="background-image:url('assets/unseen-poster.jpg')"></div>
     </div>
+    <div class="work-row" data-page="pressed-culture/">
+      <span class="idx">011</span><span class="type">3D</span>
+      <span class="title">Pressed Culture: Procedural Jar<span class="watch">◈ Launch</span></span><span class="year">2026</span>
+      <p class="desc">A jar rebuilt from five photographs, entirely in code. Every surface is drawn at runtime — no imported meshes, no downloaded textures, no scans. Lathe-revolved glass, swept helical threads, three canvas-drawn labels. The cap is a real screw: it can't lift without turning.</p>
+      <div class="thumb t-img" style="background-image:url('assets/jar-3d.jpg')"></div>
+    </div>
   </section>
 
   <section class="pad" id="archive">
@@ -570,8 +576,9 @@ const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.targ
 document.querySelectorAll('.work-row').forEach(r=>{
   io.observe(r);
   r.addEventListener('click',()=>{
-    const v=r.dataset.video,img=r.dataset.image;
-    if(v)openVideo(v);else if(img)openImage(img);else r.classList.toggle('open');
+    const v=r.dataset.video,img=r.dataset.image,page=r.dataset.page;
+    if(page)location.href=page;
+    else if(v)openVideo(v);else if(img)openImage(img);else r.classList.toggle('open');
   });
 });
 
