@@ -15,7 +15,10 @@
  * exposes the named nodes, sockets, colliders and the open state.
  */
 import * as THREE from 'three';
-import { buildBodyLabel, buildSkirtLabel, buildTopLabel, buildRosinMaps, mulberry32 } from './labelTextures.js';
+import { buildTopLabel, buildRosinMaps, mulberry32 } from './labelTextures.js';
+// Body and skirt wraps were rebuilt from the close-up reference set, which showed
+// three whole label zones the first pass never saw. See labelArt.js.
+import { buildBodyLabel2 as buildBodyLabel, buildSkirtLabel2 as buildSkirtLabel } from './labelArt.js';
 
 // ------------------------------------------------------------- dimensions
 /**
