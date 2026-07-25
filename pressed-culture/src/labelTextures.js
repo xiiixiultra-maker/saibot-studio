@@ -721,7 +721,9 @@ export function buildTopLabel(S = 2048) {
     a.fillText(text, cx, y); a.restore(); a.globalAlpha = 1;
     a.restore();
   };
-  bubble('PRESSED', S * 0.145, PAL.sunOrange, S * 0.125);
+  // RESIN is 5 characters against CULTURE's 7, so it needs a larger size to carry
+  // the same optical width — matched at the same size it reads noticeably weaker.
+  bubble('RESIN', S * 0.145, PAL.sunOrange, S * 0.170);
   bubble('CULTURE', S * 0.855, PAL.teal, S * 0.135);
   a.save(); a.textAlign = 'center';
   foilCaps(a, 'HASH CLUB', cx, S * 0.945, S * 0.042, S * 0.012);
