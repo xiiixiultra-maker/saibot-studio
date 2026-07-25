@@ -277,17 +277,15 @@ const PAN_BOX = new THREE.Box3(
 function clampTarget() { PAN_BOX.clampPoint(controls.target, controls.target); }
 
 /**
- * Clear the latch AND flush OrbitControls' in-flight pan inertia. Without the
- * flush, releasing the latch while a damped pan is still gliding lets that
- * residual offset move the target on the very next frame, which re-arms the
- * latch instantly and makes "Reset view" look like it did nothing.
+ * Hand the framing back to the auto-frame.
+ *
+ * Measured, not assumed: OrbitControls' damped pan offset keeps nudging the target
+ * on EVERY subsequent frame (89/89 frames after a release, decaying from 0.28 mm and
+ * never reaching zero). So the latch is armed by the pan GESTURE, not by watching the
+ * target move — target-watching re-armed it forever after a reset.
  */
 function releasePanLatch() {
   userPanned = false;
-  const damping = controls.enableDamping;
-  controls.enableDamping = false;
-  controls.update();            // with damping off this zeroes the pending panOffset
-  controls.enableDamping = damping;
   resetBtn.classList.remove('on');
 }
 
@@ -325,6 +323,22 @@ document.getElementById('look').addEventListener('click', () => {
                fromT: controls.target.clone(), toT: new THREE.Vector3(0, 12, 0), t: 0 };
 });
 
+// Arm the pan latch from the gesture itself: right-button drag, or a second
+// simultaneous pointer (two-finger). This is exactly the mapping configured on
+// controls.mouseButtons / controls.touches above.
+const activePointers = new Set();
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  activePointers.add(e.pointerId);
+  if (e.button === 2 || activePointers.size >= 2) {
+    userPanned = true;
+    resetBtn.classList.add('on');
+    idle = false;
+  }
+}, true);
+const dropPointer = (e) => activePointers.delete(e.pointerId);
+renderer.domElement.addEventListener('pointerup', dropPointer, true);
+renderer.domElement.addEventListener('pointercancel', dropPointer, true);
+
 // twist the cap off by dragging it
 const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
 let dragging = false, dragX = 0, dragOpen = 0;
@@ -355,7 +369,6 @@ renderer.domElement.addEventListener('pointercancel', endDrag);
 // -------------------------------------------------------------- loop
 let camTween = null;
 const clock = new THREE.Clock();
-const tmpTarget = new THREE.Vector3();
 
 function tick() {
   requestAnimationFrame(tick);
@@ -381,17 +394,8 @@ function tick() {
     autoFrame(Math.min(1, dt * 3));
   }
 
-  // Orbit and dolly leave the target alone — only a pan moves it. So if the target
-  // shifts across controls.update(), the visitor panned, and the auto-frame steps
-  // aside for good. Skipped while a tween owns the camera, or it self-triggers.
-  const before = tmpTarget.copy(controls.target);
   controls.update();
   clampTarget();
-  if (!userPanned && !tweening && before.distanceToSquared(controls.target) > 1e-5) {
-    userPanned = true;
-    resetBtn.classList.add('on');
-  }
-
   renderer.render(scene, camera);
 }
 
