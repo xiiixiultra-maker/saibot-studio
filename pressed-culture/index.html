@@ -92,6 +92,8 @@ button{
 button:hover{color:var(--l1);border-color:var(--l2)}
 button.primary{border-color:transparent;background:var(--grad);color:#0a0a0c;font-weight:700}
 button.primary:hover{filter:brightness(1.12)}
+#reset{opacity:.4}
+#reset.on{opacity:1;border-color:var(--l3)}
 
 #hint{
   position:fixed;right:24px;bottom:26px;z-index:6;text-align:right;
@@ -142,11 +144,13 @@ button.primary:hover{filter:brightness(1.12)}
     <button id="toggle" class="primary">Twist it open</button>
     <button id="look">Look inside</button>
     <button id="spin">Spin</button>
+    <button id="reset">Reset view</button>
   </div>
 </div>
 
 <div id="hint">
   <b>Drag</b> to orbit · <b>scroll</b> to zoom<br>
+  <b>Right-drag</b> or <b>two fingers</b> to pan · <b>double-click</b> to reset<br>
   <b>Drag the cap</b> to twist it off
 </div>
 
@@ -191,7 +195,16 @@ controls.dampingFactor = .07;
 controls.minDistance = 52;
 controls.maxDistance = 300;
 controls.maxPolarAngle = Math.PI * .9;
-controls.enablePan = false;
+controls.enablePan = true;
+controls.screenSpacePanning = true;   // pan in the view plane, not along the ground
+controls.panSpeed = .85;
+// right-drag (or two-finger) pans; left-drag still orbits and the cap still grabs first
+controls.mouseButtons = {
+  LEFT: THREE.MOUSE.ROTATE,
+  MIDDLE: THREE.MOUSE.DOLLY,
+  RIGHT: THREE.MOUSE.PAN,
+};
+controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 
 scene.add(createJarLights());
 
@@ -237,12 +250,17 @@ function applyNow(v) {                       // synchronous: no dependence on rA
  * The cap travels 58 mm to camera-left as it comes off and would leave the shot.
  * Pan the orbit target and widen the FOV rather than moving the camera — both
  * compose with the visitor's own orbit and zoom instead of fighting them.
- * `k` is the lerp rate; 1 snaps (used when the slider is dragged).
+ *
+ * It does NOT compose with panning, though: both write the orbit target, so once
+ * the visitor pans they own the framing and this stops touching it. "Reset view"
+ * hands it back. `k` is the lerp rate; 1 snaps (used when the slider is dragged).
  */
+let userPanned = false;
 function autoFrame(k) {
+  if (userPanned) return;
   const f = THREE.MathUtils.smoothstep(openCurrent, .85, 2);
   controls.target.x += (-26 * f - controls.target.x) * k;
-  controls.target.y += ((19 - 5 * f) - controls.target.y) * k;
+  controls.target.y += ((19 - 3 * f) - controls.target.y) * k;
   const wantFov = 34 * (1 + .17 * f);
   if (Math.abs(camera.fov - wantFov) > .01) {
     camera.fov += (wantFov - camera.fov) * k;
@@ -250,12 +268,45 @@ function autoFrame(k) {
   }
 }
 
+// Keep the pan inside a sane box so nobody can shove the jar off-screen and get lost.
+const PAN_BOX = new THREE.Box3(
+  new THREE.Vector3(-110, -20, -110),
+  new THREE.Vector3(70, 90, 110),
+);
+function clampTarget() { PAN_BOX.clampPoint(controls.target, controls.target); }
+
+function resetView() {
+  userPanned = false;
+  camTween = {
+    from: camera.position.clone(), to: new THREE.Vector3(70, 54, 112),
+    fromT: controls.target.clone(), toT: new THREE.Vector3(0, 19, 0), t: 0,
+  };
+  document.getElementById('reset').classList.remove('on');
+}
+
 slider.addEventListener('input', () => { idle = false; applyNow(parseFloat(slider.value)); });
-toggle.addEventListener('click', () => { idle = false; apply(openTarget > .5 ? 0 : 2); updateHud(); });
+toggle.addEventListener('click', () => {
+  idle = false;
+  const opening = openTarget <= .5;
+  apply(opening ? 2 : 0);
+  updateHud();
+  // Clicking the button means "show me this open" — so ride up to an angle that
+  // actually looks into the jar. Twisting the cap off by hand does NOT do this:
+  // there you're driving, and yanking the camera would fight you.
+  userPanned = false; resetBtn.classList.remove('on');
+  camTween = opening
+    ? { from: camera.position.clone(), to: new THREE.Vector3(56, 96, 126),
+        fromT: controls.target.clone(), toT: new THREE.Vector3(-14, 15, 0), t: 0 }
+    : { from: camera.position.clone(), to: new THREE.Vector3(70, 54, 112),
+        fromT: controls.target.clone(), toT: new THREE.Vector3(0, 19, 0), t: 0 };
+});
 document.getElementById('spin').addEventListener('click', () => { spinning = !spinning; idle = false; });
+document.getElementById('reset').addEventListener('click', () => { idle = false; resetView(); });
+renderer.domElement.addEventListener('dblclick', () => { idle = false; resetView(); });
 document.getElementById('look').addEventListener('click', () => {
-  idle = false; apply(2); updateHud();
-  camTween = { from: camera.position.clone(), to: new THREE.Vector3(5, 100, 32),
+  idle = false; userPanned = false; resetBtn.classList.remove('on');
+  apply(2); updateHud();
+  camTween = { from: camera.position.clone(), to: new THREE.Vector3(4, 92, 30),
                fromT: controls.target.clone(), toT: new THREE.Vector3(0, 12, 0), t: 0 };
 });
 
@@ -263,6 +314,9 @@ document.getElementById('look').addEventListener('click', () => {
 const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
 let dragging = false, dragX = 0, dragOpen = 0;
 renderer.domElement.addEventListener('pointerdown', (e) => {
+  // LEFT button only. Right-drag is pan, and grabbing it here would disable
+  // OrbitControls and start a twist instead of panning.
+  if (e.button !== 0) return;
   ptr.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   ray.setFromCamera(ptr, camera);
   if (ray.intersectObject(runtime.nodes['lid-assembly'], true).length) {
@@ -286,6 +340,8 @@ renderer.domElement.addEventListener('pointercancel', endDrag);
 // -------------------------------------------------------------- loop
 let camTween = null;
 const clock = new THREE.Clock();
+const tmpTarget = new THREE.Vector3();
+const resetBtn = document.getElementById('reset');
 
 function tick() {
   requestAnimationFrame(tick);
@@ -300,17 +356,28 @@ function tick() {
   if (spinning) jar.rotation.y += dt * .35;
   if (idle) jar.rotation.y += dt * .12;          // slow drift until the visitor touches it
 
-  if (!camTween) autoFrame(Math.min(1, dt * 3));
-
-  if (camTween) {
+  const tweening = !!camTween;
+  if (tweening) {
     camTween.t = Math.min(1, camTween.t + dt * .9);
     const e = camTween.t * camTween.t * (3 - 2 * camTween.t);
     camera.position.lerpVectors(camTween.from, camTween.to, e);
     controls.target.lerpVectors(camTween.fromT, camTween.toT, e);
     if (camTween.t >= 1) camTween = null;
+  } else {
+    autoFrame(Math.min(1, dt * 3));
   }
 
+  // Orbit and dolly leave the target alone — only a pan moves it. So if the target
+  // shifts across controls.update(), the visitor panned, and the auto-frame steps
+  // aside for good. Skipped while a tween owns the camera, or it self-triggers.
+  const before = tmpTarget.copy(controls.target);
   controls.update();
+  clampTarget();
+  if (!userPanned && !tweening && before.distanceToSquared(controls.target) > 1e-5) {
+    userPanned = true;
+    resetBtn.classList.add('on');
+  }
+
   renderer.render(scene, camera);
 }
 

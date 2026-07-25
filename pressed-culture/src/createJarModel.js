@@ -7,7 +7,7 @@
  * Geometry strategy (proceduralStrategy in the spec):
  *   jar body / cap        LatheGeometry over one continuous 2-D profile
  *   threads               TubeGeometry swept along a CatmullRom helix
- *   contents              displaced icosahedron, carved to a crescent
+ *   contents              lathe hugging the bore, displaced top surface
  *   labels                open-ended cylinder shells + CanvasTexture artwork
  *
  * The cap is rigged as a real screw: rotationY and positionY are coupled by the
@@ -15,7 +15,6 @@
  * exposes the named nodes, sockets, colliders and the open state.
  */
 import * as THREE from 'three';
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { buildBodyLabel, buildSkirtLabel, buildTopLabel, buildRosinMaps, mulberry32 } from './labelTextures.js';
 
 // ------------------------------------------------------------- dimensions
@@ -47,6 +46,9 @@ export const DIM = {
   LABEL_BODY_H: 21.8,   // body wrap height
   LABEL_BODY_Y: 1.60,   // body wrap lower edge
   LABEL_SKIRT_H: 15.40, // cap wrap height
+  FILL_Y: 28.0,         // top of the product — packed full, not the part-used reference.
+                        // High enough to clear the bore wall and stay visible from a
+                        // three-quarter view, with headroom before the neck taper at 31.
 };
 DIM.LIFT = DIM.PITCH * DIM.TURNS;   // 8.1 mm of thread travel
 
@@ -150,43 +152,79 @@ function valueNoise3(seed) {
 }
 
 /**
- * The pale batter: a settled pour. Flattened sphere, carved back to a crescent on
- * one side so bare floor shows, then vertex-displaced. Normals are recomputed after
- * displacement, otherwise the wet highlights sit on flat shading.
+ * The pale batter, filled.
+ *
+ * The reference jar is part-used — a low crescent covering ~65% of the floor with
+ * bare glass beside it. This is deliberately NOT that: it is the same jar packed
+ * full, which is what the piece wants to show. Departure from the reference is
+ * recorded in the spec (contents-fill-state).
+ *
+ * Built as a lathe that hugs the bore profile inset by 0.18 mm, so the product
+ * meets the glass exactly instead of floating inside it, then the top disc alone
+ * is displaced: a shallow dome, pour ridges, and a meniscus lip that climbs where
+ * the wax wets the wall. Normals are recomputed after displacement, otherwise the
+ * wet speckle highlights sit on flat shading.
  */
 function rosinGeometry() {
-  // IcosahedronGeometry is NON-INDEXED: computeVertexNormals on it yields face
-  // normals and the mound renders faceted. Weld first, then displace, then
-  // recompute — otherwise the wet speckles sit on flat shading and the whole
-  // "poured wax" read collapses into a low-poly rock.
-  const g = mergeVertices(new THREE.IcosahedronGeometry(1, 6), 1e-4);
+  const fillY = DIM.FILL_Y;            // world-space top of the product
+  const inset = 0.18;                  // clearance from the bore wall
+
+  // bore radius as a function of height, read off jarProfile()
+  const bore = [
+    [DIM.Y_FLOOR, 0.0], [DIM.Y_FLOOR, 10.0], [6.15, 13.5], [6.45, 16.0],
+    [7.30, 17.2], [9.10, 17.8], [12.00, 18.0], [20.00, 17.85], [31.00, 17.5],
+  ];
+  const boreR = (y) => {
+    for (let i = 1; i < bore.length; i++) {
+      if (y <= bore[i][0]) {
+        const [y0, r0] = bore[i - 1], [y1, r1] = bore[i];
+        const t = y1 === y0 ? 1 : (y - y0) / (y1 - y0);
+        return r0 + (r1 - r0) * t;
+      }
+    }
+    return bore[bore.length - 1][1];
+  };
+
+  // profile: axis at the floor -> out along the floor -> up the wall -> across the top
+  const pts = [];
+  pts.push(new THREE.Vector2(0.0001, DIM.Y_FLOOR));
+  for (const [y, r] of bore) {
+    if (y > fillY) break;
+    if (r > 0.5) pts.push(new THREE.Vector2(Math.max(0.5, r - inset), y));
+  }
+  const rTop = boreR(fillY) - inset;
+  pts.push(new THREE.Vector2(rTop, fillY));
+  // The top disc needs FINE radial subdivision. With only a handful of rings the
+  // triangles near the axis become long and thin and the specular highlight runs
+  // straight down them — the surface reads as a pinwheel of streaks rather than wax.
+  const RINGS = 26;
+  for (let i = 1; i <= RINGS; i++) {
+    const f = Math.pow(1 - i / RINGS, 0.85);        // denser toward the rim
+    pts.push(new THREE.Vector2(Math.max(0.0001, rTop * f), fillY));
+  }
+
+  const g = new THREE.LatheGeometry(pts, 128);
   const noise = valueNoise3(0x20511);
   const pos = g.attributes.position;
   const v = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
-    const up = Math.max(0, v.y);
-    // self-levelling: flatten the crown
-    v.y = v.y > 0 ? v.y * 0.30 : v.y * 0.16;
-    // crescent carve on the -Z / +X side
-    const dir = (v.x * 0.35 + v.z * 0.94);
-    const carve = THREE.MathUtils.smoothstep(dir, 0.15, 0.85);
-    const shrink = 1 - carve * 0.55;
-    v.x *= shrink; v.z *= shrink;
-    v.y *= 1 - carve * 0.65;
-    // pour ridges + lumps
-    const n = noise(v.x * 2.6 + 8, v.y * 5.5 + 3, v.z * 2.6 + 5) - 0.5;
-    const n2 = noise(v.x * 7.0 + 2, v.y * 9.0, v.z * 7.0 + 9) - 0.5;
-    const amp = 0.10 * (0.4 + up);
-    v.x *= 1 + n * 0.09; v.z *= 1 + n * 0.09;
-    v.y += n * amp + n2 * amp * 0.35;
+    if (v.y < fillY - 0.01) continue;              // only the surface moves
+    const r = Math.hypot(v.x, v.z);
+    const rn = Math.min(1, r / rTop);
+    const dome = 0.70 * (1 - rn * rn);             // settled, very slightly domed
+    const lip = 0.55 * THREE.MathUtils.smoothstep(rn, 0.80, 1.0);   // wets the wall
+    // Three octaves, all sampled in x/z so nothing is radially symmetric — a purely
+    // radial height field would re-create the same streaking the tessellation caused.
+    const n1 = noise(v.x * 0.19 + 8, 3.1, v.z * 0.19 + 5) - 0.5;    // broad pour swells
+    const n2 = noise(v.x * 0.55 + 2, 7.7, v.z * 0.55 + 9) - 0.5;    // ridges
+    const n3 = noise(v.x * 1.45 + 4, 1.3, v.z * 1.45 + 3) - 0.5;    // fine skin texture
+    v.y = fillY + dome + lip + n1 * 1.25 + n2 * 0.55 + n3 * 0.18;
     pos.setXYZ(i, v.x, v.y, v.z);
   }
   pos.needsUpdate = true;
   g.computeVertexNormals();
-  // sized to cover ~65% of the bore floor, as measured in the top-down reference
-  g.scale(16.6, 10.2, 15.4);
-  g.translate(-1.2, 2.5, 0.6);
+  g.translate(0, -DIM.Y_FLOOR, 0);                 // contents group already sits at the floor
   return g;
 }
 
@@ -412,22 +450,8 @@ export function createPressedCultureRosinJarModel(options = {}) {
   contents.add(rosin);
   meshes['rosin-mound'] = rosin;
 
-  if (showMaterials) {                       // dark flecked residue on the bare floor
-    const resGeo = new THREE.CircleGeometry(6.4, 36);
-    disposables.push(resGeo);
-    const resMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#2A2C26'), roughness: 0.82, metalness: 0.0,
-      transparent: true, opacity: 0.55, envMapIntensity: 0.12,
-      depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2,
-    });
-    const res = new THREE.Mesh(resGeo, resMat);
-    res.name = 'rosin-residue-smear';
-    res.rotation.x = -Math.PI / 2;
-    res.position.set(2.0, 0.04, 8.0);   // on the bare-floor crescent the pour left
-    res.scale.set(1.25, 1.0, 0.7);
-    contents.add(res);
-    meshes['rosin-residue-smear'] = res;
-  }
+  // NOTE: the reference's floor residue decal is gone — it lived on the bare-floor
+  // crescent beside the part-used mound, and a full jar has no bare floor to show.
 
   // =========================================================== CAP
   const cap = new THREE.Group();
