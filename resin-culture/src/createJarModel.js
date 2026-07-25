@@ -1,5 +1,5 @@
 /**
- * Pressed Culture rosin jar — procedural Three.js reconstruction.
+ * Resin Culture rosin jar — procedural Three.js reconstruction.
  *
  * Built from spec.json (ObjectSculptSpec 2.1). Units are millimetres, Y up,
  * origin at the centre of the standing heel so the jar sits on y = 0.
@@ -271,7 +271,7 @@ function orangePeelNormal(size = 256, seed = 0x0A9E) {
  * @param {{pass?: 'blockout'|'structural'|'form'|'material'|'full', anisotropy?: number,
  *          textureSize?: number}} options
  */
-export function createPressedCultureRosinJarModel(options = {}) {
+export function createResinCultureJarModel(options = {}) {
   const pass = options.pass ?? 'full';
   const showMaterials = pass === 'material' || pass === 'full';
   const showForm = showMaterials || pass === 'form';

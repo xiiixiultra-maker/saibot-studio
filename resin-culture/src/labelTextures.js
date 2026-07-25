@@ -1,5 +1,5 @@
 /**
- * Procedural label artwork for the Pressed Culture rosin jar.
+ * Procedural label artwork for the Resin Culture rosin jar.
  *
  * Every printed surface on the reference jar is drawn here in canvas 2D — no
  * external art, no photo projection. The reference wraps are photographed on a
