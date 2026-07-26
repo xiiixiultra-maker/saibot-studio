@@ -24,13 +24,43 @@ import {
 } from './labelArtRodman.js';
 
 /**
- * A label pack is the only thing that differs between releases. The jar itself
- * is one mould, so the geometry, the thread, the contents and the glass are all
- * shared and only these three canvases change.
+ * Contents tint, per release.
  *
- *   body   the wrap below the seam
- *   skirt  the wrap on the cap
- *   top    the emblem printed in the 0.35 mm recess on the lid
+ * `color` is the surface and `attenuation` is what light picks up crossing the
+ * mass. They have to be chosen together: a warm attenuation drags a pale
+ * surface back to amber however light you make it, so cooling the product
+ * means moving both.
+ *
+ * Values are tuned against the render, not picked off a swatch. The mass sits
+ * close to blown out, so clearcoat and env wash most of the colour out and the
+ * material carries far more saturation than the result shows. Measured on the
+ * diffuse body (darkest 60% of the mass, specular excluded):
+ *
+ *                  warmBlonde          paleCold
+ *   diffuse        230 225 206         226 227 213
+ *   R-B            +24.4               +12.8
+ *   saturation     10.6%               6.1%
+ *   hue            R > G, amber        G > R, cool
+ *
+ * The flip from R>G to G>R is what reads as colder — the tell for warmth is
+ * red leading green, not the red-blue gap on its own. Halving the saturation
+ * is what reads as paler. Pushed past this (#E5E3D4/#C0C4B8 was tried) it
+ * falls to 2.5% and reads as white paint rather than concentrate.
+ */
+export const CONTENTS = {
+  warmBlonde: { color: '#E4D3A4', attenuation: '#C9B37E', blockout: 0xd8d2bc },
+  paleCold: { color: '#D5DCB4', attenuation: '#9CA982', blockout: 0xd2d6c0 },
+};
+
+/**
+ * A label pack is what differs between releases. The jar is one mould, so the
+ * geometry, the thread, the screw rig and the glass are all shared; a pack
+ * changes the three printed canvases and the tint of what is inside.
+ *
+ *   body      the wrap below the seam
+ *   skirt     the wrap on the cap
+ *   top       the emblem printed in the 0.35 mm recess on the lid
+ *   contents  which CONTENTS tint the product uses
  */
 export const LABELS = {
   'sour-diesel-bx2': {
@@ -38,12 +68,14 @@ export const LABELS = {
     body: buildBodyLabel2,
     skirt: buildSkirtLabel2,
     top: buildTopLabel,
+    contents: CONTENTS.warmBlonde,
   },
   rodman: {
     name: 'Rodman — Gary Payton x Rainbow Guava',
     body: buildBodyLabelRodman,
     skirt: buildSkirtLabelRodman,
     top: buildTopLabelRodman,
+    contents: CONTENTS.paleCold,
   },
 };
 
@@ -378,45 +410,28 @@ export function createResinCultureJarModel(options = {}) {
       })
     : blockMat;
 
+  // Sour Diesel stays the warm blonde it shipped as; only Rodman runs cold.
+  // A pack that forgets to declare a tint gets the warm one, which is the
+  // original and the safer default of the two.
+  const tint = label.contents ?? CONTENTS.warmBlonde;
+
   let rosinMat;
   if (showMaterials) {
     const rm = buildRosinMaps(1024);
     const rr = canvasTexture(rm.roughness);
     const rn = canvasTexture(rm.normal);
     disposables.push(rr, rn);
-    // Pale and cold rather than the warm blonde of the first pass.
-    //
-    // Tuned against the render, not picked off a swatch, because the mass is
-    // near blown out: clearcoat and env wash most of the colour out, so the
-    // material has to carry far more saturation than the result shows. The
-    // diffuse body (darkest 60% of the mass, excluding specular) measures:
-    //
-    //             was #E4D3A4/#C9B37E      now #D5DCB4/#9CA982
-    //   diffuse   230 225 206              226 227 213
-    //   R-B       +24.4                    +12.8
-    //   sat       10.6%                    6.1%
-    //   hue       R > G, amber             G > R, cool
-    //
-    // The flip from R>G to G>R is what actually reads as "colder" — the label
-    // for warmth here is red leading green, not the red-blue gap on its own.
-    // Halving the saturation is what reads as "paler".
-    //
-    // Both values had to move. Lifting the base alone does almost nothing,
-    // because attenuationColor is what light picks up crossing the mass and a
-    // warm tan there drags the interior back to amber however pale the surface
-    // is. Pushed further than this (tried #E5E3D4/#C0C4B8) it desaturates to
-    // 2.5% and reads as white paint rather than concentrate.
     rosinMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#D5DCB4'),
+      color: new THREE.Color(tint.color),
       roughnessMap: rr, roughness: 1.0, metalness: 0.0,
       normalMap: rn, normalScale: new THREE.Vector2(0.55, 0.55),
       clearcoat: 0.72, clearcoatRoughness: 0.09,
       transmission: 0.14, ior: 1.47, thickness: 1.2,
-      attenuationColor: new THREE.Color('#9CA982'), attenuationDistance: 4.5,
+      attenuationColor: new THREE.Color(tint.attenuation), attenuationDistance: 4.5,
       envMapIntensity: 0.75,
     });
   } else {
-    rosinMat = new THREE.MeshStandardMaterial({ color: 0xd2d6c0, roughness: 0.6 });
+    rosinMat = new THREE.MeshStandardMaterial({ color: tint.blockout, roughness: 0.6 });
   }
 
   /**
