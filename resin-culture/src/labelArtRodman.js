@@ -14,19 +14,21 @@
  *   - the "colour" of a foil is mostly the environment it reflects, so the
  *     albedo stays dark and the roughness map does the heavy lifting. The
  *     diagonal roughness banding is what makes it flash as the jar turns
- *   - the fine horizontal scanlines and the vertical data rules are real
- *     printed structure on the foil, visible in every reference shot
+ *   - the ground is Matrix rain: fine columns of glyphs falling DOWN the jar,
+ *     bright at the head and trailing off behind. Not fat vertical bars, and
+ *     not horizontal banding; matrixRain() records why both were wrong
  *
  * Body wrap, going around:
  *   0.50  RODMAN                    arched varsity caps, red/pink chrome
  *   0.75  RESIN CULTURE + portrait  gold holo over a stylised figure
  *   0.00  SMALL BATCH / SINGLE SOURCE
- *   0.25  GARY PAYTON / RAINBOW GUAVA in green chips
- *   plus green divider bands, and a green product strip along the bottom
+ *   0.25  bare foil, so the hero has room either side
+ *   plus ONE green spec strip running the full circumference along the bottom,
+ *   which carries all of the product copy in a single line
  *
  * Cap skirt wrap:
  *   the top of the RODMAN arch crosses the seam, so the skirt carries the
- *   upper third of the hero lettering plus the green chips and the rule work
+ *   upper third of the hero lettering, HASH CLUB, and the rule work
  *
  * Cap top:
  *   the sun/moon emblem — a ringed eye between two solar faces, RESIN down
@@ -94,64 +96,149 @@ function tooth(ctx, w, h, rnd, amount = 10) {
 
 const at = (f, W) => (((f % 1) + 1) % 1) * W;
 
+/**
+ * The spec line. One strip along the bottom of the body wrap carrying every
+ * piece of product copy, rather than scattering it across chips and bands.
+ * y0 and h are fractions of the wrap height; rows are the rule positions that
+ * have to stay clear of it and of the content zones at 0.34..0.68.
+ */
+const STRIP = {
+  y0: 0.826,
+  h: 0.122,
+  rows: [0.070, 0.232, 0.775],
+  text: 'GARY PAYTON X RAINBOW GUAVA  ·  2G  ·  COLD CURE  ·  '
+      + 'PREMIUM LIVE ROSIN  ·  90-139U  ·  SMALL BATCH  ·  SINGLE SOURCE',
+};
+
+/**
+ * Gloss variation for a roughness map, as fine vertical columns so the sheen
+ * runs WITH the rain rather than across it.
+ *
+ * Many thin columns, never a few wide ones. Width is capped at 0.6% of the
+ * map: wide bars here read as a picket fence down the side of the jar even
+ * when the albedo underneath is behaving.
+ */
+function glossBands(ctx, w, h, rnd, n) {
+  ctx.save();
+  for (let i = 0; i < n; i++) {
+    const x = rnd() * w;
+    const bw = w * (0.0012 + rnd() * 0.0048);
+    const v = 30 + Math.floor(rnd() * 62);
+    const g = ctx.createLinearGradient(x, 0, x + bw, 0);
+    g.addColorStop(0.0, 'rgba(0,0,0,0)');
+    g.addColorStop(0.5, `rgba(${v},${v},${v},0.75)`);
+    g.addColorStop(1.0, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x, 0, bw, h);
+  }
+  ctx.restore();
+}
+
 // ---------------------------------------------------------------- foil base
 
 /**
- * Dark foil ground: a near-black field, broad iridescent washes, then the
- * printed horizontal scanline structure.
+ * Matrix rain: fine columns of falling glyphs, brightest at the leading
+ * character and trailing off behind it.
  *
- * The washes go into the ALBEDO only as a hint. Real holographic flash comes
- * from the roughness banding built later — painting a rainbow into the albedo
- * and calling it done gives you a sticker that looks the same from every
- * angle, which is exactly what a hologram is not.
+ * COLUMNS, running down the jar. Two earlier passes got this wrong in opposite
+ * directions and it is worth writing down why:
+ *
+ *   1. fillRect(x, 0, w, H) under a diagonal gradient. That is a full-height
+ *      bar, so it wrapped as a fat green pillar up the side. Stripes, not rain.
+ *   2. over-correcting to full-WIDTH bars, which ring the jar. Horizontal
+ *      banding, also not rain.
+ *
+ * The distinction is not "vertical vs horizontal" but "a few fat bars vs many
+ * fine columns of glyphs". It reads as vertical because the trails fall, not
+ * because anything is a solid stripe.
+ */
+function matrixRain(ctx, W, H, rnd) {
+  const COLS = 190;                       // around the circumference
+  const cw = W / COLS;
+  const cell = H / 26;                    // glyph pitch down the column
+  const gw = cw * 0.62;
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+
+  for (let c = 0; c < COLS; c++) {
+    const x = c * cw + (cw - gw) * 0.5;
+    const runs = rnd() < 0.62 ? 1 : 2;
+
+    for (let k = 0; k < runs; k++) {
+      const len = 5 + Math.floor(rnd() * 16);
+      const headY = rnd() * (H + cell * 12) - cell * 6;
+      const bright = 0.55 + rnd() * 0.45;   // some columns burn hotter
+
+      for (let i = 0; i < len; i++) {
+        const y = headY - i * cell;
+        if (y < -cell || y > H) continue;
+        const t = i / len;                  // 0 at the head, 1 at the tail
+        const fade = (1 - t) * (1 - t);
+        const al = fade * bright * 0.55;
+        if (al < 0.012) continue;
+
+        // the head glyph burns near-white, the trail stays green
+        if (i === 0) ctx.fillStyle = 'rgba(214,255,206,' + Math.min(0.85, al * 1.9) + ')';
+        else if (i < 3) ctx.fillStyle = 'rgba(150,244,140,' + (al * 1.25) + ')';
+        else ctx.fillStyle = 'rgba(52,190,74,' + al + ')';
+
+        // varied marks, so a column reads as characters not as a dashed line
+        const r = rnd();
+        const gh = cell * 0.62;
+        if (r < 0.34) {
+          ctx.fillRect(x, y, gw, gh * 0.24);
+          ctx.fillRect(x + gw * 0.30, y + gh * 0.40, gw * 0.40, gh * 0.24);
+        } else if (r < 0.62) {
+          ctx.fillRect(x + gw * 0.22, y, gw * 0.30, gh);
+          ctx.fillRect(x, y + gh * 0.34, gw, gh * 0.22);
+        } else if (r < 0.84) {
+          ctx.fillRect(x, y, gw, gh * 0.22);
+          ctx.fillRect(x, y + gh * 0.62, gw, gh * 0.24);
+          ctx.fillRect(x + gw * 0.34, y + gh * 0.22, gw * 0.30, gh * 0.42);
+        } else {
+          ctx.fillRect(x + gw * 0.16, y + gh * 0.18, gw * 0.62, gh * 0.58);
+        }
+      }
+    }
+  }
+  ctx.restore();
+}
+
+/**
+ * Dark foil ground: a near-black field, a broad green wash, then the rain.
+ *
+ * The wash goes into the ALBEDO only as a hint. Real holographic flash comes
+ * from the roughness map built later — painting a rainbow into the albedo and
+ * calling it done gives a sticker that looks the same from every angle, which
+ * is exactly what a hologram is not.
  */
 function foilGround(ctx, W, H, rnd) {
   ctx.fillStyle = PR.base;
   ctx.fillRect(0, 0, W, H);
 
-  // broad green/gold sheen, brightest across the middle band
   const sheen = ctx.createLinearGradient(0, 0, 0, H);
   sheen.addColorStop(0.00, 'rgba(12,22,14,0.0)');
-  sheen.addColorStop(0.34, 'rgba(58,132,66,0.30)');
-  sheen.addColorStop(0.52, 'rgba(126,190,96,0.20)');
-  sheen.addColorStop(0.70, 'rgba(40,104,52,0.26)');
+  sheen.addColorStop(0.34, 'rgba(48,110,56,0.15)');
+  sheen.addColorStop(0.52, 'rgba(104,160,80,0.10)');
+  sheen.addColorStop(0.70, 'rgba(34,88,44,0.13)');
   sheen.addColorStop(1.00, 'rgba(10,18,12,0.0)');
   ctx.fillStyle = sheen;
   ctx.fillRect(0, 0, W, H);
 
-  // diagonal iridescent streaks, low alpha, wandering hue
+  matrixRain(ctx, W, H, rnd);
+
+  // a few magenta shimmer columns, the giveaway that it is a rainbow foil
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < 26; i++) {
-    const x = rnd() * W;
-    const w = W * (0.010 + rnd() * 0.035);
-    const hue = 90 + rnd() * 90;            // green through gold
-    const g = ctx.createLinearGradient(x, 0, x + w, H);
+  for (let i = 0; i < 9; i++) {
+    const x = rnd() * W, w = W * (0.0015 + rnd() * 0.0045);
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
     g.addColorStop(0.0, 'rgba(0,0,0,0)');
-    g.addColorStop(0.5, `hsla(${hue},70%,${34 + rnd() * 22}%,${0.10 + rnd() * 0.16})`);
+    g.addColorStop(0.5, 'rgba(224,96,180,' + (0.05 + rnd() * 0.07) + ')');
     g.addColorStop(1.0, 'rgba(0,0,0,0)');
     ctx.fillStyle = g;
     ctx.fillRect(x, 0, w, H);
-  }
-  // a couple of magenta ones, the giveaway that it is a rainbow foil
-  for (let i = 0; i < 5; i++) {
-    const x = rnd() * W, w = W * (0.006 + rnd() * 0.016);
-    const g = ctx.createLinearGradient(x, 0, x + w, H);
-    g.addColorStop(0.0, 'rgba(0,0,0,0)');
-    g.addColorStop(0.5, `rgba(224,96,180,${0.08 + rnd() * 0.10})`);
-    g.addColorStop(1.0, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(x, 0, w, H);
-  }
-  ctx.restore();
-
-  // printed scanlines
-  ctx.save();
-  ctx.strokeStyle = PR.scan;
-  ctx.lineWidth = Math.max(1, H * 0.0045);
-  const step = H / 46;
-  for (let y = step * 0.5; y < H; y += step) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
   }
   ctx.restore();
 }
@@ -162,31 +249,31 @@ function foilGround(ctx, W, H, rnd) {
  * small to resolve at any sane texture size, so this renders it as the bars
  * it actually reads as rather than as fake lorem ipsum.
  */
-function dataRules(ctx, W, H, rnd, positions) {
+function dataRows(ctx, W, H, rnd, rows) {
   ctx.save();
-  for (const f of positions) {
-    const x = at(f, W);
-    ctx.strokeStyle = 'rgba(88,196,102,0.30)';
-    ctx.lineWidth = Math.max(1.4, W * 0.0007);
-    ctx.beginPath(); ctx.moveTo(x, H * 0.06); ctx.lineTo(x, H * 0.94); ctx.stroke();
+  for (const f of rows) {
+    const y = f * H;
+    ctx.strokeStyle = 'rgba(88,196,102,0.16)';
+    ctx.lineWidth = Math.max(1.1, H * 0.0035);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
 
-    // corner ticks
-    ctx.lineWidth = Math.max(1.6, W * 0.0009);
-    const tk = W * 0.006;
-    for (const y of [H * 0.06, H * 0.94]) {
+    // ticks hanging off the rule
+    ctx.lineWidth = Math.max(1.1, H * 0.004);
+    const pitch = W / 56;
+    for (let x = pitch * 0.5; x < W; x += pitch) {
+      const up = (((x / pitch) | 0) % 3 === 0) ? -1 : 1;
       ctx.beginPath();
       ctx.moveTo(x, y);
-      ctx.lineTo(x + (y < H / 2 ? tk : -tk), y);
+      ctx.lineTo(x, y + up * H * 0.026 * (0.4 + rnd() * 0.6));
       ctx.stroke();
     }
 
-    // micro-print bars
+    // micro-print bars riding the rule
     ctx.fillStyle = 'rgba(110,200,122,0.16)';
-    const n = 5 + Math.floor(rnd() * 5);
+    const n = 16 + Math.floor(rnd() * 12);
     for (let i = 0; i < n; i++) {
-      const bw = W * (0.004 + rnd() * 0.012);
-      const by = H * (0.14 + rnd() * 0.70);
-      ctx.fillRect(x + W * 0.004, by, bw, Math.max(1.2, H * 0.012));
+      const bw = W * (0.006 + rnd() * 0.020);
+      ctx.fillRect(rnd() * W, y + H * 0.014, bw, Math.max(1.2, H * 0.011));
     }
   }
   ctx.restore();
@@ -394,87 +481,63 @@ function goldWord(ctx, text, cx, cy, size, opts = {}) {
   ctx.restore();
 }
 
-/** Text running bottom-to-top, for the green divider bands. */
-function verticalText(ctx, text, x, cy, size, color, opts = {}) {
-  ctx.save();
-  ctx.translate(x, cy);
-  ctx.rotate(-Math.PI / 2);
-  ctx.font = `700 ${size}px ${FONT_COND}`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  if (opts.track) {
-    const chars = text.split('');
-    const w = chars.map((c) => ctx.measureText(c).width + opts.track);
-    const total = w.reduce((a, b) => a + b, 0);
-    let p = -total / 2;
-    ctx.fillStyle = color;
-    for (let i = 0; i < chars.length; i++) {
-      ctx.fillText(chars[i], p + w[i] / 2, 0);
-      p += w[i];
-    }
-  } else {
-    ctx.fillStyle = color;
-    ctx.fillText(text, 0, 0);
-  }
-  ctx.restore();
-}
 
 // ------------------------------------------------------------------- pieces
 
-/** A bright green divider band running the full label height. */
-function greenBand(ctx, W, H, f, wFrac, rnd) {
-  const x = at(f, W) - W * wFrac / 2;
-  const w = W * wFrac;
+/**
+ * The spec line: one bright green strip running the whole way round the bottom
+ * of the wrap, carrying every piece of product copy in a single pass.
+ *
+ * This replaces the two vertical divider bands and the stacked strain chips.
+ * Those put the copy in three places, none of them readable at once, and the
+ * vertical bands wrapped as stripes up the jar rather than rings around it.
+ *
+ * Tiling uses FLOOR, not round. Rounding up makes pitch smaller than the tile
+ * width, the tiles overlap, and the text collides into itself — the same bug
+ * the Sour Diesel gold strip hit, where it read "90-139U2G".
+ *
+ * Returns the layout so the roughness and metalness masks re-stamp it exactly.
+ */
+function infoStrip(ctx, W, H, y0, h, text) {
   ctx.save();
-  const g = ctx.createLinearGradient(x, 0, x + w, 0);
-  g.addColorStop(0.00, '#0C3D14');
-  g.addColorStop(0.22, PR.greenDeep);
-  g.addColorStop(0.50, PR.green);
-  g.addColorStop(0.78, PR.greenDeep);
-  g.addColorStop(1.00, '#0C3D14');
-  ctx.fillStyle = g;
-  ctx.fillRect(x, 0, w, H);
-
-  // horizontal foil banding inside the green
-  ctx.globalAlpha = 0.22;
-  ctx.fillStyle = '#0A2A10';
-  for (let y = 0; y < H; y += H / 30) ctx.fillRect(x, y, w, H / 90);
-  ctx.globalAlpha = 1;
-
-  ctx.strokeStyle = 'rgba(8,30,12,0.75)';
-  ctx.lineWidth = Math.max(1.5, W * 0.0009);
-  ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x + w, 0); ctx.lineTo(x + w, H); ctx.stroke();
-  ctx.restore();
-  return { x, w };
-}
-
-/** A green chip carrying red strain text — GARY PAYTON, RAINBOW GUAVA. */
-function strainChip(ctx, cx, cy, w, h, text, size) {
-  ctx.save();
-  const g = ctx.createLinearGradient(0, cy - h / 2, 0, cy + h / 2);
+  const g = ctx.createLinearGradient(0, y0, 0, y0 + h);
   g.addColorStop(0.00, PR.greenHot);
-  g.addColorStop(0.45, PR.green);
+  g.addColorStop(0.30, PR.green);
+  g.addColorStop(0.72, PR.green);
   g.addColorStop(1.00, PR.greenDeep);
   ctx.fillStyle = g;
-  ctx.beginPath(); ctx.roundRect(cx - w / 2, cy - h / 2, w, h, h * 0.16); ctx.fill();
-  ctx.strokeStyle = 'rgba(6,26,10,0.8)';
-  ctx.lineWidth = Math.max(1.4, h * 0.05);
-  ctx.stroke();
+  ctx.fillRect(0, y0, W, h);
 
+  // foil banding inside the green, running with the strip
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = '#0A2A10';
+  for (let y = y0; y < y0 + h; y += h / 7) ctx.fillRect(0, y, W, h / 22);
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = 'rgba(8,30,12,0.7)';
+  ctx.lineWidth = Math.max(1.4, H * 0.006);
+  ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(W, y0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, y0 + h); ctx.lineTo(W, y0 + h); ctx.stroke();
+
+  const size = h * 0.54;
+  const cy = y0 + h * 0.52;
   ctx.font = `700 ${size}px ${FONT_COND}`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = size * 0.22; ctx.strokeStyle = 'rgba(40,4,10,0.75)';
-  ctx.strokeText(text, cx, cy);
-  const rg = ctx.createLinearGradient(0, cy - size * 0.5, 0, cy + size * 0.5);
-  rg.addColorStop(0.00, PR.redPale);
-  rg.addColorStop(0.40, PR.redHot);
-  rg.addColorStop(0.62, PR.red);
-  rg.addColorStop(1.00, PR.redDeep);
-  ctx.fillStyle = rg;
-  ctx.fillText(text, cx, cy);
+  const tile = text + '   ·   ';
+  const tw = ctx.measureText(tile).width;
+  const reps = Math.max(1, Math.floor(W / tw));
+  const pitch = W / reps;
+  for (let i = 0; i < reps; i++) {
+    const cx = i * pitch + pitch / 2;
+    ctx.fillStyle = 'rgba(190,255,190,0.35)';
+    ctx.fillText(tile, cx, cy + Math.max(1, H * 0.005));
+    ctx.fillStyle = PR.greenInk;
+    ctx.fillText(tile, cx, cy);
+  }
   ctx.restore();
+  return { reps, pitch, tile, size, cy, y0, h };
 }
+
 
 /**
  * Stylised figure behind RESIN CULTURE. Deliberately graphic, not photographic:
@@ -547,15 +610,7 @@ export function buildBodyLabelRodman(W = 4096) {
   const a = albedo.getContext('2d');
 
   foilGround(a, W, H, rnd);
-  dataRules(a, W, H, mulberry32(0x11CE), [0.115, 0.325, 0.435, 0.565, 0.675, 0.885]);
-
-  // green divider bands, both sides of the hero
-  greenBand(a, W, H, 0.625, 0.030, rnd);
-  greenBand(a, W, H, 0.375, 0.030, rnd);
-  // sized so the run fits inside H: vertical text is bounded by the label
-  // HEIGHT, not its width, and the first pass overshot by 40%
-  verticalText(a, 'PREMIUM LIVE ROSIN', at(0.625, W), H * 0.5, H * 0.078, PR.greenInk, { track: H * 0.006 });
-  verticalText(a, 'COLD CURE · 2G', at(0.375, W), H * 0.5, H * 0.082, PR.greenInk, { track: H * 0.006 });
+  dataRows(a, W, H, mulberry32(0x11CE), STRIP.rows);
 
   // ---- zone 0.75: RESIN CULTURE over the figure ---------------------------
   const drawResin = (ox) => {
@@ -565,19 +620,10 @@ export function buildBodyLabelRodman(W = 4096) {
   };
   drawResin(0); drawResin(W); drawResin(-W);
 
-  // ---- zone 0.25: the strain ----------------------------------------------
-  const drawStrain = (ox) => {
-    const cx = at(0.25, W) + ox;
-    strainChip(a, cx, H * 0.31, W * 0.128, H * 0.150, 'GARY PAYTON', H * 0.098);
-    strainChip(a, cx, H * 0.52, W * 0.138, H * 0.150, 'RAINBOW GUAVA', H * 0.094);
-    a.save();
-    a.font = `700 ${H * 0.072}px ${FONT_COND}`;
-    a.textAlign = 'center'; a.textBaseline = 'middle';
-    a.fillStyle = 'rgba(150,225,160,0.72)';
-    a.fillText('90 · 139U   ·   SINGLE SOURCE', cx, H * 0.72);
-    a.restore();
-  };
-  drawStrain(0); drawStrain(W); drawStrain(-W);
+  // Zone 0.25 is deliberately left as bare foil. Every piece of spec copy that
+  // used to be stacked here now runs along STRIP.text at the bottom, and the
+  // hero arch owns a third of the circumference either side of it, so the
+  // label needs one quarter that is only foil.
 
   // ---- zone 0.00: SMALL BATCH / SINGLE SOURCE -----------------------------
   const drawBatch = (ox) => {
@@ -598,6 +644,9 @@ export function buildBodyLabelRodman(W = 4096) {
   const drawHero = (ox) => heroArch(a, W, H, WRAP.body, { offsetX: ox });
   drawHero(0); drawHero(W); drawHero(-W);
 
+  // ---- the spec line, all the way round the bottom ------------------------
+  const strip = infoStrip(a, W, H, H * STRIP.y0, H * STRIP.h, STRIP.text);
+
   tooth(a, W, H, rnd, 9);
 
   // ---- roughness: this is where the hologram actually lives ---------------
@@ -607,21 +656,10 @@ export function buildBodyLabelRodman(W = 4096) {
   r.fillStyle = 'rgb(56,56,56)';                  // foil base, 0.22 — glossy
   r.fillRect(0, 0, rw, rh);
 
-  // diagonal banding: alternating gloss so the sheen sweeps as the jar turns
-  const bandRnd = mulberry32(0x8A11);
-  r.save();
-  for (let i = 0; i < 90; i++) {
-    const x = bandRnd() * rw;
-    const w = rw * (0.004 + bandRnd() * 0.020);
-    const v = 26 + Math.floor(bandRnd() * 70);
-    const g = r.createLinearGradient(x, 0, x + w, rh);
-    g.addColorStop(0.0, 'rgba(0,0,0,0)');
-    g.addColorStop(0.5, `rgba(${v},${v},${v},0.85)`);
-    g.addColorStop(1.0, 'rgba(0,0,0,0)');
-    r.fillStyle = g;
-    r.fillRect(x, 0, w, rh);
-  }
-  r.restore();
+  // Gloss banding, running ROUND the jar like the albedo does. This is what
+  // actually makes the foil flash as it turns, so it has to band the same way
+  // the print does or the sheen crosses the pattern at right angles.
+  glossBands(r, rw, rh, mulberry32(0x8A11), 260);
 
   r.save(); r.scale(rw / W, rh / H);
   // printed ink is duller than the foil it sits on
@@ -636,9 +674,9 @@ export function buildBodyLabelRodman(W = 4096) {
     goldWord(r, 'SINGLE SOURCE', at(0.0, W) + ox, H * 0.67, H * 0.140,
       { spacing: 1.14, stretch: 1.10, maskOnly: 'rgb(88,88,88)' });
   }
-  // the green bands are printed, not foil
+  // the spec strip is printed, not foil
   r.fillStyle = 'rgb(122,122,122)';
-  for (const f of [0.625, 0.375]) r.fillRect(at(f, W) - W * 0.015, 0, W * 0.030, H);
+  r.fillRect(0, H * STRIP.y0, W, H * STRIP.h);
   r.restore();
   tooth(r, rw, rh, mulberry32(0x2A2A), 22);
 
@@ -649,8 +687,8 @@ export function buildBodyLabelRodman(W = 4096) {
   m.fillStyle = 'rgb(236,236,236)';               // foil
   m.fillRect(0, 0, mw, mh);
   m.save(); m.scale(mw / W, mh / H);
-  m.fillStyle = 'rgb(150,150,150)';               // green bands: printed on foil
-  for (const f of [0.625, 0.375]) m.fillRect(at(f, W) - W * 0.015, 0, W * 0.030, H);
+  m.fillStyle = 'rgb(150,150,150)';               // spec strip: printed on foil
+  m.fillRect(0, H * STRIP.y0, W, H * STRIP.h);
   m.fillStyle = 'rgb(40,40,40)';                  // solid ink kills the metal
   for (const ox of [0, W, -W]) {
     heroArch(m, W, H, WRAP.body, { offsetX: ox, maskOnly: 'rgb(40,40,40)' });
@@ -685,10 +723,7 @@ export function buildSkirtLabelRodman(W = 4096) {
   const a = albedo.getContext('2d');
 
   foilGround(a, W, H, rnd);
-  dataRules(a, W, H, mulberry32(0x22DE), [0.115, 0.325, 0.435, 0.565, 0.675, 0.885]);
-
-  greenBand(a, W, H, 0.625, 0.030, rnd);
-  greenBand(a, W, H, 0.375, 0.030, rnd);
+  dataRows(a, W, H, mulberry32(0x22DE), [0.10, 0.26, 0.80, 0.92]);
 
   // the top of the hero arch crosses the seam onto the skirt. Same centre and
   // same radius as the body; only the baseline moves, so the two halves line
@@ -701,14 +736,7 @@ export function buildSkirtLabelRodman(W = 4096) {
   // first pass repeated both, so the jar read the brand twice stacked on
   // itself. Each column now says one thing.
   const drawSkirtCopy = (ox) => {
-    strainChip(a, at(0.25, W) + ox, H * 0.50, W * 0.118, H * 0.34, '90 · 139U', H * 0.20);
     goldWord(a, 'HASH CLUB', at(0.75, W) + ox, H * 0.50, H * 0.27, { spacing: 1.12 });
-    a.save();
-    a.font = `700 ${H * 0.215}px ${FONT_COND}`;
-    a.textAlign = 'center'; a.textBaseline = 'middle';
-    a.fillStyle = 'rgba(178,232,188,0.72)';
-    a.fillText('2G  ·  COLD CURE', at(0.00, W) + ox, H * 0.50);
-    a.restore();
   };
   drawSkirtCopy(0); drawSkirtCopy(W); drawSkirtCopy(-W);
 
@@ -718,16 +746,7 @@ export function buildSkirtLabelRodman(W = 4096) {
   const rough = makeCanvas(rw, rh);
   const r = rough.getContext('2d');
   r.fillStyle = 'rgb(56,56,56)'; r.fillRect(0, 0, rw, rh);
-  const bandRnd = mulberry32(0x9B22);
-  for (let i = 0; i < 70; i++) {
-    const x = bandRnd() * rw, w = rw * (0.004 + bandRnd() * 0.020);
-    const v = 26 + Math.floor(bandRnd() * 70);
-    const g = r.createLinearGradient(x, 0, x + w, rh);
-    g.addColorStop(0.0, 'rgba(0,0,0,0)');
-    g.addColorStop(0.5, `rgba(${v},${v},${v},0.85)`);
-    g.addColorStop(1.0, 'rgba(0,0,0,0)');
-    r.fillStyle = g; r.fillRect(x, 0, w, rh);
-  }
+  glossBands(r, rw, rh, mulberry32(0x9B22), 200);
   r.save(); r.scale(rw / W, rh / H);
   for (const ox of [0, W, -W]) {
     heroArch(r, W, H, WRAP.skirt, { offsetX: ox, maskOnly: 'rgb(96,96,96)' });
@@ -781,12 +800,12 @@ export function buildTopLabelRodman(S = 2048) {
   a.save();
   a.globalCompositeOperation = 'lighter';
   for (let i = 0; i < 18; i++) {
-    const x = rnd() * S, w = S * (0.008 + rnd() * 0.028);
-    const g = a.createLinearGradient(x, 0, x + w, S);
+    const y = rnd() * S, h = S * (0.008 + rnd() * 0.028);
+    const g = a.createLinearGradient(0, y, 0, y + h);
     g.addColorStop(0.0, 'rgba(0,0,0,0)');
     g.addColorStop(0.5, `hsla(${80 + rnd() * 110},70%,45%,0.16)`);
     g.addColorStop(1.0, 'rgba(0,0,0,0)');
-    a.fillStyle = g; a.fillRect(x, 0, w, S);
+    a.fillStyle = g; a.fillRect(0, y, S, h);
   }
   a.restore();
 
@@ -990,16 +1009,7 @@ export function buildTopLabelRodman(S = 2048) {
   const rough = makeCanvas(rw, rw);
   const r = rough.getContext('2d');
   r.fillStyle = 'rgb(58,58,58)'; r.fillRect(0, 0, rw, rw);
-  const bandRnd = mulberry32(0xAB33);
-  for (let i = 0; i < 40; i++) {
-    const x = bandRnd() * rw, w = rw * (0.006 + bandRnd() * 0.026);
-    const v = 28 + Math.floor(bandRnd() * 66);
-    const g = r.createLinearGradient(x, 0, x + w, rw);
-    g.addColorStop(0.0, 'rgba(0,0,0,0)');
-    g.addColorStop(0.5, `rgba(${v},${v},${v},0.85)`);
-    g.addColorStop(1.0, 'rgba(0,0,0,0)');
-    r.fillStyle = g; r.fillRect(x, 0, w, rw);
-  }
+  glossBands(r, rw, rw, mulberry32(0xAB33), 150);
   tooth(r, rw, rw, mulberry32(0x6E6E), 20);
 
   const metal = makeCanvas(rw, rw);
