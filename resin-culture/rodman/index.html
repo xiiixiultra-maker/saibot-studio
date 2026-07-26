@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resin Culture — Saibot Studio</title>
-<meta name="description" content="A cannabis concentrate jar rebuilt in code. Procedural Three.js — every surface drawn, nothing imported. Twist the cap off.">
-<meta property="og:title" content="Resin Culture — Saibot Studio">
-<meta property="og:description" content="A jar rebuilt entirely in code. Procedural Three.js, no imported meshes or textures. The cap really unscrews.">
-<meta property="og:image" content="https://saibot.studio/assets/jar-3d.jpg">
+<title>Rodman — Resin Culture — Saibot Studio</title>
+<meta name="description" content="Gary Payton x Rainbow Guava, in a holographic foil label drawn entirely in code. Same jar as the Sour Diesel BX2, same procedural Three.js build. Twist the cap off.">
+<meta property="og:title" content="Rodman — Resin Culture — Saibot Studio">
+<meta property="og:description" content="Gary Payton x Rainbow Guava. A holographic foil label rebuilt in code, on the same procedural jar. The cap really unscrews.">
+<meta property="og:image" content="https://saibot.studio/assets/jar-3d-rodman.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,6 +58,10 @@ canvas{display:block;touch-action:none}
 #intro{
   position:fixed;left:24px;bottom:26px;z-index:6;max-width:min(420px,calc(100vw - 48px));
   transition:opacity .6s var(--ease),transform .6s var(--ease);
+}
+#intro .strain{
+  font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--l2);margin:0 0 14px;
 }
 #intro .kicker{
   font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--l3);
@@ -133,14 +137,16 @@ button.primary:hover{filter:brightness(1.12)}
 
 <a class="hud" id="back" href="https://saibot.studio/#work"><span class="bar"></span>Saibot Studio</a>
 <div class="hud" id="meta">Cap <b id="capstate">seated</b></div>
-<div class="hud" id="rel"><a href="/resin-culture/" class="on">Sour Diesel BX2</a><span>/</span><a href="/resin-culture/rodman/">Rodman</a></div>
+<div class="hud" id="rel"><a href="/resin-culture/">Sour Diesel BX2</a><span>/</span><a href="/resin-culture/rodman/" class="on">Rodman</a></div>
 
 <div id="intro">
-  <span class="kicker">011 — 3D / Procedural</span>
-  <h1>Resin<br>Culture</h1>
-  <p>A jar rebuilt from five photographs — entirely in code. Every surface here is
-     drawn at runtime: <em>no imported meshes, no downloaded textures, no scans.</em>
-     The cap is a real screw — it can't lift without turning.</p>
+  <span class="kicker">012 · 3D / Procedural</span>
+  <h1>Rodman</h1>
+  <p class="strain">Gary Payton x Rainbow Guava</p>
+  <p>Second release, same jar. One mould, one thread, one screw rig, with a label
+     pack swapped underneath it. This one is holographic foil rather than printed
+     paper, so <em>the colour is mostly whatever it reflects</em> and the flash
+     comes out of the roughness map. Turn it and watch the sheen sweep.</p>
 
   <div class="ctl">
     <label for="open">Unscrew</label>
@@ -162,14 +168,14 @@ button.primary:hover{filter:brightness(1.12)}
 
 <script type="importmap">
 { "imports": {
-  "three": "./vendor/three/three.module.js",
-  "three/addons/": "./vendor/three/addons/"
+  "three": "../vendor/three/three.module.js",
+  "three/addons/": "../vendor/three/addons/"
 } }
 </script>
 
 <script type="module">
-import { initViewer } from './src/viewer.js';
-initViewer({ label: 'sour-diesel-bx2' });
+import { initViewer } from '../src/viewer.js';
+initViewer({ label: 'rodman' });
 </script>
 </body>
 </html>

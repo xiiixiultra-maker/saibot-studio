@@ -18,7 +18,34 @@ import * as THREE from 'three';
 import { buildTopLabel, buildRosinMaps, mulberry32 } from './labelTextures.js';
 // Body and skirt wraps were rebuilt from the close-up reference set, which showed
 // three whole label zones the first pass never saw. See labelArt.js.
-import { buildBodyLabel2 as buildBodyLabel, buildSkirtLabel2 as buildSkirtLabel } from './labelArt.js';
+import { buildBodyLabel2, buildSkirtLabel2 } from './labelArt.js';
+import {
+  buildBodyLabelRodman, buildSkirtLabelRodman, buildTopLabelRodman,
+} from './labelArtRodman.js';
+
+/**
+ * A label pack is the only thing that differs between releases. The jar itself
+ * is one mould, so the geometry, the thread, the contents and the glass are all
+ * shared and only these three canvases change.
+ *
+ *   body   the wrap below the seam
+ *   skirt  the wrap on the cap
+ *   top    the emblem printed in the 0.35 mm recess on the lid
+ */
+export const LABELS = {
+  'sour-diesel-bx2': {
+    name: 'Sour Diesel BX2',
+    body: buildBodyLabel2,
+    skirt: buildSkirtLabel2,
+    top: buildTopLabel,
+  },
+  rodman: {
+    name: 'Rodman — Gary Payton x Rainbow Guava',
+    body: buildBodyLabelRodman,
+    skirt: buildSkirtLabelRodman,
+    top: buildTopLabelRodman,
+  },
+};
 
 // ------------------------------------------------------------- dimensions
 /**
@@ -272,7 +299,7 @@ function orangePeelNormal(size = 256, seed = 0x0A9E) {
 // ------------------------------------------------------------- the factory
 /**
  * @param {{pass?: 'blockout'|'structural'|'form'|'material'|'full', anisotropy?: number,
- *          textureSize?: number}} options
+ *          textureSize?: number, label?: keyof typeof LABELS | object}} options
  */
 export function createResinCultureJarModel(options = {}) {
   const pass = options.pass ?? 'full';
@@ -281,6 +308,18 @@ export function createResinCultureJarModel(options = {}) {
   const showStructure = showForm || pass === 'structural';
   const aniso = options.anisotropy ?? 8;
   const texSize = options.textureSize ?? 4096;
+
+  // accepts a key or a pack object; unknown keys fail loudly rather than
+  // silently rendering the wrong strain
+  const label = typeof options.label === 'object' && options.label !== null
+    ? options.label
+    : LABELS[options.label ?? 'sour-diesel-bx2'];
+  if (!label) {
+    throw new Error(
+      `createResinCultureJarModel: unknown label "${options.label}". ` +
+      `Known: ${Object.keys(LABELS).join(', ')}`,
+    );
+  }
 
   const root = new THREE.Group();
   root.name = 'pressed-culture-rosin-jar';
@@ -358,7 +397,17 @@ export function createResinCultureJarModel(options = {}) {
     rosinMat = new THREE.MeshStandardMaterial({ color: 0xd8d2bc, roughness: 0.6 });
   }
 
-  const labelMat = (maps, { metalness = false } = {}) => {
+  /**
+   * Whether a wrap is metallic is a property of the artwork, not of the call
+   * site: a pack that paints a metalness mask wants it, one that does not is
+   * paper. Reading it off the maps stops a foil pack from rendering matte just
+   * because it was passed to the skirt slot instead of the body slot.
+   *
+   * maps.material lets a pack push its own MeshPhysicalMaterial overrides —
+   * the Rodman wrap is holographic foil and needs far more env than the
+   * printed-paper default.
+   */
+  const labelMat = (maps) => {
     const al = canvasTexture(maps.albedo, { srgb: true, aniso });
     const ro = canvasTexture(maps.roughness, { aniso });
     const no = canvasTexture(maps.normal, { aniso });
@@ -367,15 +416,16 @@ export function createResinCultureJarModel(options = {}) {
       map: al,
       roughnessMap: ro, roughness: 1.0,
       normalMap: no, normalScale: new THREE.Vector2(0.45, 0.45),
-      metalness: metalness ? 1.0 : 0.0,
+      metalness: maps.metalness ? 1.0 : 0.0,
       envMapIntensity: 0.45,
       clearcoat: 0.05,
     });
-    if (metalness && maps.metalness) {
+    if (maps.metalness) {
       const mt = canvasTexture(maps.metalness, { aniso });
       disposables.push(mt);
       m.metalnessMap = mt;
     }
+    if (maps.material) Object.assign(m, maps.material);
     return m;
   };
 
@@ -423,10 +473,10 @@ export function createResinCultureJarModel(options = {}) {
 
   // body label wrap
   if (showMaterials) {
-    const maps = buildBodyLabel(texSize);
+    const maps = label.body(texSize);
     const geo = new THREE.CylinderGeometry(DIM.R - 0.03, DIM.R - 0.05, DIM.LABEL_BODY_H, 128, 1, true);
     disposables.push(geo);
-    const m = labelMat(maps, { metalness: true });
+    const m = labelMat(maps);
     const wrap = new THREE.Mesh(geo, m);
     wrap.name = 'body-label-wrap';
     wrap.position.y = DIM.LABEL_BODY_Y + DIM.LABEL_BODY_H / 2;
@@ -496,7 +546,7 @@ export function createResinCultureJarModel(options = {}) {
 
   if (showMaterials) {
     // skirt wrap
-    const sMaps = buildSkirtLabel(texSize);
+    const sMaps = label.skirt(texSize);
     const sGeo = new THREE.CylinderGeometry(DIM.R + 0.06, DIM.R + 0.06, DIM.LABEL_SKIRT_H, 128, 1, true);
     disposables.push(sGeo);
     const skirtWrap = new THREE.Mesh(sGeo, labelMat(sMaps));
@@ -508,18 +558,27 @@ export function createResinCultureJarModel(options = {}) {
     meshes['lid-label-wrap'] = skirtWrap;
 
     // top emblem print, sitting in the 0.35 mm recess
-    const tMaps = buildTopLabel(Math.min(2048, texSize));
+    const tMaps = label.top(Math.min(2048, texSize));
     const tGeo = new THREE.CircleGeometry(23.3, 96);
     disposables.push(tGeo);
     const tAl = canvasTexture(tMaps.albedo, { srgb: true, aniso });
     const tRo = canvasTexture(tMaps.roughness, { aniso });
     const tNo = canvasTexture(tMaps.normal, { aniso });
     disposables.push(tAl, tRo, tNo);
-    const topPrint = new THREE.Mesh(tGeo, new THREE.MeshPhysicalMaterial({
+    const topMat = new THREE.MeshPhysicalMaterial({
       map: tAl, roughnessMap: tRo, roughness: 1.0,
       normalMap: tNo, normalScale: new THREE.Vector2(0.4, 0.4),
-      metalness: 0.0, envMapIntensity: 0.42, clearcoat: 0.06,
-    }));
+      metalness: tMaps.metalness ? 1.0 : 0.0, envMapIntensity: 0.42, clearcoat: 0.06,
+    });
+    // the emblem obeys the same pack rules as the wraps: a foil top would
+    // otherwise render matte here purely because this block predates packs
+    if (tMaps.metalness) {
+      const tMt = canvasTexture(tMaps.metalness, { aniso });
+      disposables.push(tMt);
+      topMat.metalnessMap = tMt;
+    }
+    if (tMaps.material) Object.assign(topMat, tMaps.material);
+    const topPrint = new THREE.Mesh(tGeo, topMat);
     topPrint.name = 'lid-top-print';
     topPrint.rotation.x = -Math.PI / 2;
     topPrint.position.y = 18.05;
