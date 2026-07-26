@@ -384,17 +384,39 @@ export function createResinCultureJarModel(options = {}) {
     const rr = canvasTexture(rm.roughness);
     const rn = canvasTexture(rm.normal);
     disposables.push(rr, rn);
+    // Pale and cold rather than the warm blonde of the first pass.
+    //
+    // Tuned against the render, not picked off a swatch, because the mass is
+    // near blown out: clearcoat and env wash most of the colour out, so the
+    // material has to carry far more saturation than the result shows. The
+    // diffuse body (darkest 60% of the mass, excluding specular) measures:
+    //
+    //             was #E4D3A4/#C9B37E      now #D5DCB4/#9CA982
+    //   diffuse   230 225 206              226 227 213
+    //   R-B       +24.4                    +12.8
+    //   sat       10.6%                    6.1%
+    //   hue       R > G, amber             G > R, cool
+    //
+    // The flip from R>G to G>R is what actually reads as "colder" — the label
+    // for warmth here is red leading green, not the red-blue gap on its own.
+    // Halving the saturation is what reads as "paler".
+    //
+    // Both values had to move. Lifting the base alone does almost nothing,
+    // because attenuationColor is what light picks up crossing the mass and a
+    // warm tan there drags the interior back to amber however pale the surface
+    // is. Pushed further than this (tried #E5E3D4/#C0C4B8) it desaturates to
+    // 2.5% and reads as white paint rather than concentrate.
     rosinMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#E4D3A4'),
+      color: new THREE.Color('#D5DCB4'),
       roughnessMap: rr, roughness: 1.0, metalness: 0.0,
       normalMap: rn, normalScale: new THREE.Vector2(0.55, 0.55),
       clearcoat: 0.72, clearcoatRoughness: 0.09,
       transmission: 0.14, ior: 1.47, thickness: 1.2,
-      attenuationColor: new THREE.Color('#C9B37E'), attenuationDistance: 4.5,
+      attenuationColor: new THREE.Color('#9CA982'), attenuationDistance: 4.5,
       envMapIntensity: 0.75,
     });
   } else {
-    rosinMat = new THREE.MeshStandardMaterial({ color: 0xd8d2bc, roughness: 0.6 });
+    rosinMat = new THREE.MeshStandardMaterial({ color: 0xd2d6c0, roughness: 0.6 });
   }
 
   /**
