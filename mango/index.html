@@ -105,6 +105,7 @@ button[aria-pressed=true]{background:#2c2415;border-color:var(--acc);color:var(-
  justify-content:center;padding:28px 22px}
 .tycard{width:100%;max-width:250px;height:auto;display:block}
 .boxcopy{font-size:13.5px;color:#c3c3c8;margin:0 0 12px}
+.boxcopy b{color:#fff}
 .boxgrid .row b{font-family:"Arial Black",Helvetica,Arial,sans-serif;font-size:11px;
  color:var(--acc);letter-spacing:1px}
 .boxgrid .row span{text-align:right}
@@ -161,7 +162,7 @@ button[aria-pressed=true]{background:#2c2415;border-color:var(--acc);color:var(-
 
   <div class="controls">
     <button class="primary" id="play" aria-pressed="false">Ripen it</button>
-    <button id="compare" aria-pressed="false">Show the pair that releases</button>
+    <button id="compare" aria-pressed="false">Show the retail colorway</button>
   </div>
 
   <div class="grid">
@@ -228,15 +229,13 @@ button[aria-pressed=true]{background:#2c2415;border-color:var(--acc);color:var(-
     </div>
     <div class="panel">
       <h3>In the box</h3>
-      <p class="boxcopy">Every seeded box carries four things.</p>
-      <div class="row"><b>01</b><span>The pair, dyed to their answer</span></div>
-      <div class="row"><b>02</b><span>A stock pair, the shoe that actually releases</span></div>
-      <div class="row"><b>03</b><span>This card, printed</span></div>
-      <div class="row"><b>04</b><span>A product card crediting Joey Hamilton</span></div>
-      <p class="boxcopy" style="margin-top:16px">The stock pair and the credit card both came
-        straight off the 8/14 call. The stock pair answers the one real objection, that a creator
-        posting a dyed pair reads as "that's not the shoe I'm buying". The credit card was Daniel's
-        ask, to name who made it and give him a platform.</p>
+      <p class="boxcopy">Every seeded box carries three things.</p>
+      <div class="row"><b>01</b><span>One pair, dyed to their answer</span></div>
+      <div class="row"><b>02</b><span>This card, printed</span></div>
+      <div class="row"><b>03</b><span>A product card crediting Joey Hamilton</span></div>
+      <p class="boxcopy" style="margin-top:16px"><b>One pair per creator, the customized one.</b>
+        No second retail pair in the box. The product card was Daniel's ask on the 8/14 call, to
+        name who made it and give him a platform.</p>
     </div>
   </div>
 
@@ -349,9 +348,9 @@ document.getElementById('play').addEventListener('click', function(){
 document.getElementById('compare').addEventListener('click', function(){
   showProd = !showProd;
   this.setAttribute('aria-pressed', showProd ? 'true' : 'false');
-  this.textContent = showProd ? 'Show my dyed pair' : 'Show the pair that releases';
+  this.textContent = showProd ? 'Show the dyed pair' : 'Show the retail colorway';
   document.getElementById('badge').textContent = showProd
-    ? 'The pair that actually releases' : 'Your pair, dyed to your answer';
+    ? 'Retail colorway, for reference' : 'Your pair, dyed to your answer';
   render(parseFloat(slider.value));
 });
 
