@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<title>Mango Ripeness | Sample</title>
+<style>
+:root{--bg:#0b0b0c;--ink:#f5f5f5;--card:#161617;--line:#2a2a2c;--acc:#F5AF20;--dim:#8b8b8f}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+ font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+ line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:1080px;margin:0 auto;padding:22px 20px 70px}
+.tag{display:inline-block;border:1px solid #3a3320;background:#1b1710;color:var(--acc);
+ font-size:10.5px;letter-spacing:1.8px;text-transform:uppercase;font-weight:700;
+ padding:5px 10px;border-radius:2px;margin-bottom:18px}
+.kick{color:var(--acc);font-size:11.5px;letter-spacing:2.4px;font-weight:700;
+ text-transform:uppercase;margin:0 0 12px}
+h1{font-family:"Arial Black",Helvetica,Arial,sans-serif;font-weight:900;
+ font-size:clamp(30px,6.4vw,60px);line-height:.96;letter-spacing:-1.4px;
+ text-transform:uppercase;margin:0 0 16px}
+h1 em{font-style:normal;color:var(--acc)}
+.lede{font-size:16.5px;color:#dcdcdc;max-width:660px;margin:0 0 6px}
+.ripebar{height:7px;border-radius:4px;margin:20px 0 30px;
+ background:linear-gradient(90deg,#35702B,#A9C33B,#F3C231,#EF8A1B,#A61B17)}
+
+.stage-wrap{position:relative;background:
+ radial-gradient(120% 90% at 50% 42%,#1e1e21 0%,#111113 55%,#0b0b0c 100%);
+ border:1px solid var(--line);border-radius:6px;padding:10px 10px 0;overflow:hidden}
+.shoe{position:relative;width:100%;aspect-ratio:1100/513}
+.shoe img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+ opacity:0;transition:opacity .12s linear;will-change:opacity}
+.shoe img.on{opacity:1}
+.glow{position:absolute;left:50%;top:58%;width:70%;height:34%;transform:translate(-50%,-50%);
+ border-radius:50%;filter:blur(46px);opacity:.5;pointer-events:none;transition:background .45s}
+.badge{position:absolute;left:14px;top:12px;font-size:10px;letter-spacing:1.6px;
+ text-transform:uppercase;color:var(--dim);font-weight:700}
+
+.readout{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;
+ flex-wrap:wrap;margin:22px 0 6px}
+.rname{font-family:"Arial Black",Helvetica,Arial,sans-serif;font-size:clamp(22px,4vw,36px);
+ letter-spacing:-.6px;text-transform:uppercase;margin:0;line-height:1}
+.ren{color:var(--dim);font-size:14px;margin-top:5px}
+.rnum{font-family:"Arial Black",Helvetica,Arial,sans-serif;font-size:52px;color:#26262a;line-height:.8}
+.rans{font-size:17px;color:#e8e8e8;margin:8px 0 0}
+.rrip{font-size:13.5px;color:var(--dim);margin:5px 0 0}
+
+.dial{margin:26px 0 8px}
+.track{position:relative;height:44px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;
+ background:transparent;margin:0;cursor:grab}
+input[type=range]:active{cursor:grabbing}
+input[type=range]::-webkit-slider-runnable-track{height:12px;border-radius:6px;margin-top:16px;
+ background:linear-gradient(90deg,#35702B,#A9C33B,#F3C231,#EF8A1B,#A61B17)}
+input[type=range]::-moz-range-track{height:12px;border-radius:6px;
+ background:linear-gradient(90deg,#35702B,#A9C33B,#F3C231,#EF8A1B,#A61B17)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;
+ border-radius:50%;background:#fff;border:4px solid #0b0b0c;margin-top:-9px;
+ box-shadow:0 0 0 2px #fff,0 6px 16px rgba(0,0,0,.6)}
+input[type=range]::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:#fff;
+ border:4px solid #0b0b0c;box-shadow:0 0 0 2px #fff}
+input[type=range]:focus-visible{outline:2px solid var(--acc);outline-offset:6px;border-radius:8px}
+.ticks{display:flex;justify-content:space-between;margin-top:2px}
+.ticks span{font-size:10px;letter-spacing:1.2px;color:#5d5d63;text-transform:uppercase;
+ flex:1;text-align:center;cursor:pointer;transition:color .2s;padding:4px 0}
+.ticks span:hover{color:#adadb3}
+.ticks span.on{color:var(--acc);font-weight:700}
+
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 0}
+button{background:#1a1a1c;color:#f0f0f0;border:1px solid #33333a;border-radius:3px;
+ padding:11px 18px;font-family:"Arial Black",Helvetica,Arial,sans-serif;font-size:12px;
+ letter-spacing:1.3px;text-transform:uppercase;cursor:pointer;transition:.16s}
+button:hover{background:#252529;border-color:#4a4a54}
+button.primary{background:var(--acc);color:#0b0b0c;border-color:var(--acc)}
+button.primary:hover{filter:brightness(1.08)}
+button[aria-pressed=true]{background:#2c2415;border-color:var(--acc);color:var(--acc)}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:34px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:18px 20px}
+.panel h3{font-family:"Arial Black",Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:1.7px;
+ text-transform:uppercase;color:var(--acc);margin:0 0 14px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;
+ border-bottom:1px solid #232326;font-size:13.5px}
+.row:last-child{border-bottom:0}
+.row b{font-weight:400;color:var(--dim)}
+.row span{text-align:right;color:#efefef}
+.chips{display:flex;gap:10px;margin-top:14px}
+.chip{flex:1;text-align:center}
+.chip i{display:block;height:34px;border-radius:3px;border:1px solid #3a3a3e;margin-bottom:6px;
+ transition:background .45s}
+.chip u{display:block;text-decoration:none;font-size:9.5px;letter-spacing:1.1px;color:#6e6e74;
+ text-transform:uppercase}
+.chip s{display:block;text-decoration:none;font-family:Consolas,monospace;font-size:11.5px;color:#c9c9cf}
+
+.mango{width:100%;max-width:150px;display:block;margin:0 auto}
+.note{border-left:3px solid var(--acc);background:#141310;padding:12px 16px;margin:30px 0 0;
+ font-size:13.5px;color:#c3c3c8}
+.note b{color:#fff}
+.foot{border-top:1px solid #222;margin-top:40px;padding-top:18px;font-size:12px;color:#5d5d63}
+@media (max-width:760px){.grid{grid-template-columns:1fr}.rnum{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="tag">Internal sample &middot; not a live form</div>
+  <p class="kick">Thinking of You &nbsp;/&nbsp; creator seeding</p>
+  <h1>How do you eat your <em>mangoes</em>?</h1>
+  <p class="lede">Creators scan the QR on the back of the postcard and tell us one thing: how they
+    eat their mangoes. That answer picks the colourway their pair gets dyed to.</p>
+  <p class="lede"><b>Drag the dial.</b> The off-white upper takes the dye. The sole stays
+    exactly as it ships.</p>
+  <div class="ripebar"></div>
+
+  <div class="stage-wrap">
+    <div class="glow" id="glow"></div>
+    <div class="badge" id="badge">Your pair, dyed to your answer</div>
+    <div class="shoe">
+      <img id="img-verde" src="shoe-verde.png" alt="VERDE CON SAL Y LIMON colourway"><img id="img-picado" src="shoe-picado.png" alt="PICADO EN CUBITOS colourway"><img id="img-erizo" src="shoe-erizo.png" alt="CORTE ERIZO colourway"><img id="img-fregadero" src="shoe-fregadero.png" alt="SOBRE EL FREGADERO colourway"><img id="img-mangonada" src="shoe-mangonada.png" alt="MANGONADA colourway">
+      <img id="img-production" src="shoe-production.png" alt="Production colourway">
+    </div>
+  </div>
+
+  <div class="readout">
+    <div>
+      <h2 class="rname" id="rname"></h2>
+      <div class="ren" id="ren"></div>
+      <p class="rans" id="rans"></p>
+      <p class="rrip" id="rrip"></p>
+    </div>
+    <div class="rnum" id="rnum"></div>
+  </div>
+
+  <div class="dial">
+    <div class="track">
+      <input type="range" id="dial" min="0" max="4" step="0.01" value="2"
+             aria-label="Ripeness, 1 green to 5 overripe">
+    </div>
+    <div class="ticks"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+  </div>
+
+  <div class="controls">
+    <button class="primary" id="play" aria-pressed="false">Ripen it</button>
+    <button id="compare" aria-pressed="false">Show the pair that releases</button>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h3>What Joey gets</h3>
+      <div class="row"><b>Green from heel</b><span id="v-green"></span></div>
+      <div class="row"><b>Red from toe</b><span id="v-red"></span></div>
+      <div class="row"><b>Ground bath</b><span id="v-ground"></span></div>
+      <div class="row"><b>Heel bath</b><span id="v-heelbath"></span></div>
+      <div class="row"><b>Toe bath</b><span id="v-toebath"></span></div>
+      <div class="row"><b>Laces</b><span id="v-laces"></span></div>
+      <div class="row"><b>Freckle pass</b><span id="v-speckle"></span></div>
+      <div class="chips">
+        <div class="chip"><i id="c-toe"></i><u>Toe on cream</u><s id="h-toe"></s></div>
+        <div class="chip"><i id="c-mid"></i><u>Midfoot on cream</u><s id="h-mid"></s></div>
+        <div class="chip"><i id="c-heel"></i><u>Heel on cream</u><s id="h-heel"></s></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>The mango</h3>
+      <svg class="mango" viewBox="0 0 130 150" aria-hidden="true">
+        <defs>
+          <radialGradient id="mg" cx="0.60" cy="0.66" r="0.70">
+            <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/>
+          </radialGradient>
+          <mask id="mk"><rect width="130" height="150" fill="url(#mg)"/></mask>
+          <radialGradient id="msheen" cx="0.34" cy="0.30" r="0.34">
+            <stop offset="0" stop-color="#fff" stop-opacity=".38"/>
+            <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          </radialGradient>
+          <clipPath id="mclip"><path d="M96,30 C114,42 122,70 114,96 C105,124 78,140 52,136
+            C27,132 11,111 13,86 C15,59 36,38 62,30 C74,26 86,24 96,30 Z"/></clipPath>
+        </defs>
+        <path d="M96,30 C114,42 122,70 114,96 C105,124 78,140 52,136 C27,132 11,111 13,86
+                 C15,59 36,38 62,30 C74,26 86,24 96,30 Z" id="m-body" fill="#F3C231"/>
+        <path d="M96,30 C114,42 122,70 114,96 C105,124 78,140 52,136 C27,132 11,111 13,86
+                 C15,59 36,38 62,30 C74,26 86,24 96,30 Z" id="m-blush" fill="#E4512A"
+              opacity=".4" mask="url(#mk)"/>
+        <g id="m-freckles" opacity="0" fill="#3a2415" clip-path="url(#mclip)">
+          <ellipse cx="52" cy="74" rx="2.6" ry="2"/><ellipse cx="74" cy="62" rx="2" ry="1.6"/>
+          <ellipse cx="88" cy="96" rx="3" ry="2.3"/><ellipse cx="44" cy="106" rx="2.2" ry="1.8"/>
+          <ellipse cx="66" cy="120" rx="2.6" ry="2"/><ellipse cx="98" cy="74" rx="2" ry="1.6"/>
+          <ellipse cx="32" cy="86" rx="2.4" ry="1.9"/><ellipse cx="60" cy="94" rx="2" ry="1.6"/>
+          <ellipse cx="80" cy="112" rx="2.3" ry="1.8"/><ellipse cx="40" cy="66" rx="1.8" ry="1.4"/>
+        </g>
+        <ellipse cx="46" cy="58" rx="30" ry="24" fill="url(#msheen)"/>
+        <path d="M92,31 C93,20 88,12 78,7" stroke="#5c4a25" stroke-width="4.5" fill="none"
+              stroke-linecap="round"/>
+        <path d="M78,8 C66,0 48,4 44,16 C56,25 72,21 78,8 Z" fill="#5e8f33"/>
+      </svg>
+      <div class="note" style="margin-top:16px">The dye only touches the off-white upper. The
+        midsole keeps the production fade it ships with, because acid dye bonds to nylon and the
+        sole unit resists it.<br><br>And the upper is <b>cream, not white</b>, so the dye tints it
+        rather than covering it. Every colour comes off warmer than the bath looks: greens land
+        olive, reds land terracotta. The swatches here are the on-cream values, what the pair
+        actually ends up.</div>
+    </div>
+  </div>
+
+  <div class="note"><b>Heads up.</b> Shoe art is rendered from the confidential FW26 CAD and the
+    colourways here are recoloured samples, not approved product. The live creator page carries no
+    product imagery at all. Dye direction is still an open question, see the spec.</div>
+
+  <p class="foot">Shoe Gallery &middot; internal sample &middot; five stages driven by
+    stages.json, same source as Joey's bench spec.</p>
+</div>
+<script>
+var ST = [{"id": "verde", "order": 1, "label_es": "VERDE CON SAL Y LIMON", "label_en": "Green, with salt and lime", "answer": "Hard and green. Salt, lime, chili on top.", "ripeness": "Stage 1 of 5. Picked early. Still firm enough to slice thin.", "toe_hex": "#E8D44F", "mid_hex": "#A9C33B", "heel_hex": "#35702B", "green_from_heel_pct": 85, "red_from_toe_pct": 0, "dye": {"ground": "Sun Yellow 1.2% WOG", "heel": "Kelly Green 3.0% WOG + Sun Yellow 0.6% WOG", "toe": "None. Toe stays on the yellow ground.", "laces": "Left natural."}, "speckle": null, "toe_c": "#DDC544", "mid_c": "#A1B532", "heel_c": "#336825"}, {"id": "picado", "order": 2, "label_es": "PICADO EN CUBITOS", "label_en": "Cubed on a plate, with a fork", "answer": "Cut into cubes. Still firm, eaten off a plate.", "ripeness": "Stage 2 of 5. Turning. Shoulders gone gold, tip still green.", "toe_hex": "#F09A2C", "mid_hex": "#F3C231", "heel_hex": "#5E8F32", "green_from_heel_pct": 45, "red_from_toe_pct": 12, "dye": {"ground": "Sun Yellow 2.0% WOG", "heel": "Kelly Green 2.2% WOG + Sun Yellow 0.4% WOG", "toe": "Fire Red 0.8% WOG (dilute, blush only)", "laces": "Left natural."}, "speckle": null, "toe_c": "#E58F26", "mid_c": "#E8B42A", "heel_c": "#5A852B"}, {"id": "erizo", "order": 3, "label_es": "CORTE ERIZO", "label_en": "Scored and turned inside out", "answer": "Hedgehog cut. Scored, pushed out, eaten off the skin.", "ripeness": "Stage 3 of 5. Peak. Gives to the thumb, does not collapse.", "toe_hex": "#E4512A", "mid_hex": "#F5AF20", "heel_hex": "#7CA338", "green_from_heel_pct": 22, "red_from_toe_pct": 28, "dye": {"ground": "Sun Yellow 2.4% WOG + Golden Orange 0.5% WOG", "heel": "Kelly Green 1.6% WOG", "toe": "Fire Red 2.2% WOG", "laces": "Dyed to toe color."}, "speckle": null, "toe_c": "#D94B24", "mid_c": "#E9A31B", "heel_c": "#769730"}, {"id": "fregadero", "order": 4, "label_es": "SOBRE EL FREGADERO", "label_en": "Over the sink, skin and all", "answer": "Whole, over the sink. Bite the skin, let it run.", "ripeness": "Stage 4 of 5. Soft. Heavy in the hand, sweet at the stem.", "toe_hex": "#CE2F1F", "mid_hex": "#EF8A1B", "heel_hex": "#93A63E", "green_from_heel_pct": 12, "red_from_toe_pct": 42, "dye": {"ground": "Sun Yellow 1.8% WOG + Golden Orange 1.6% WOG", "heel": "Kelly Green 1.0% WOG (short dip)", "toe": "Fire Red 3.2% WOG", "laces": "Dyed to toe color."}, "speckle": null, "toe_c": "#C42C1B", "mid_c": "#E48017", "heel_c": "#8C9A35"}, {"id": "mangonada", "order": 5, "label_es": "MANGONADA", "label_en": "Blended, chamoy on top", "answer": "Pulped. Batido or mangonada, chamoy and chili on the rim.", "ripeness": "Stage 5 of 5. Past firm. Freckled skin, best day of its life.", "toe_hex": "#A61B17", "mid_hex": "#E2631A", "heel_hex": "#B5A03A", "green_from_heel_pct": 6, "red_from_toe_pct": 55, "dye": {"ground": "Golden Orange 2.8% WOG + Fire Red 0.6% WOG", "heel": "Kelly Green 0.8% WOG (touch dip, 60 sec)", "toe": "Fire Red 4.0% WOG", "laces": "Dyed to toe color."}, "speckle": {"hex": "#4A2418", "note": "Dark Brown 0.5% WOG, thinned 1:4 with water, flicked off a stiff brush from 12 to 18 inches. Vamp and shoulder only, never the heel. Steam-set 10 minutes."}, "toe_c": "#9E1914", "mid_c": "#D75C16", "heel_c": "#AC9532"}];
+var slider = document.getElementById('dial');
+var imgs = {};
+ST.forEach(function(s){ imgs[s.id] = document.getElementById('img-' + s.id); });
+var prod = document.getElementById('img-production');
+var showProd = false, playing = false, raf = null;
+
+function lerp(a,b,t){ return a + (b-a)*t; }
+function hex2rgb(h){ h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+function mix(h1,h2,t){ var a=hex2rgb(h1), b=hex2rgb(h2);
+  return 'rgb('+Math.round(lerp(a[0],b[0],t))+','+Math.round(lerp(a[1],b[1],t))+','+Math.round(lerp(a[2],b[2],t))+')'; }
+
+function render(v){
+  var i = Math.min(Math.floor(v), ST.length-2), f = v - i;
+  if (v >= ST.length-1) { i = ST.length-2; f = 1; }
+  ST.forEach(function(s,k){
+    var o = 0;
+    if (k === i) o = 1-f; else if (k === i+1) o = f;
+    imgs[s.id].style.opacity = showProd ? 0 : o;
+  });
+  prod.style.opacity = showProd ? 1 : 0;
+
+  var near = ST[Math.round(v)];
+  var a = ST[i], b = ST[i+1];
+  document.getElementById('rname').textContent = near.label_es;
+  document.getElementById('ren').textContent = near.label_en;
+  document.getElementById('rnum').textContent = near.order;
+  document.getElementById('rans').textContent = near.answer;
+  document.getElementById('rrip').textContent = near.ripeness;
+
+  var toe = mix(a.toe_c,b.toe_c,f), mid = mix(a.mid_c,b.mid_c,f), heel = mix(a.heel_c,b.heel_c,f);
+  document.getElementById('c-toe').style.background = toe;
+  document.getElementById('c-mid').style.background = mid;
+  document.getElementById('c-heel').style.background = heel;
+  document.getElementById('h-toe').textContent = near.toe_c;
+  document.getElementById('h-mid').textContent = near.mid_c;
+  document.getElementById('h-heel').textContent = near.heel_c;
+  document.getElementById('glow').style.background = mid;
+
+  document.getElementById('v-green').textContent = near.green_from_heel_pct + '%';
+  document.getElementById('v-red').textContent = near.red_from_toe_pct ? near.red_from_toe_pct + '%' : 'none';
+  document.getElementById('v-ground').textContent = near.dye.ground;
+  document.getElementById('v-heelbath').textContent = near.dye.heel;
+  document.getElementById('v-toebath').textContent = near.dye.toe;
+  document.getElementById('v-laces').textContent = near.dye.laces;
+  document.getElementById('v-speckle').textContent = near.speckle ? 'Yes, freckle pass' : 'No';
+
+  // mango ripens with the dial
+  document.getElementById('m-body').setAttribute('fill', mid);
+  document.getElementById('m-blush').setAttribute('fill', toe);
+  document.getElementById('m-blush').setAttribute('opacity', Math.min(0.20 + v*0.17, 0.9));
+  document.getElementById('m-freckles').setAttribute('opacity', Math.max(0, (v-2.6)/2.4));
+
+  var t = Array.prototype.slice.call(document.querySelectorAll('.ticks span'));
+  t.forEach(function(el,k){ el.classList.toggle('on', k === Math.round(v)); });
+}
+
+slider.addEventListener('input', function(){ stop(); render(parseFloat(this.value)); });
+
+Array.prototype.slice.call(document.querySelectorAll('.ticks span')).forEach(function(el,k){
+  el.addEventListener('click', function(){ stop(); glide(k); });
+});
+
+function glide(target){
+  var start = parseFloat(slider.value), t0 = null;
+  cancelAnimationFrame(raf);
+  (function step(ts){
+    if (t0 === null) t0 = ts;
+    var p = Math.min((ts - t0) / 420, 1), e = 1 - Math.pow(1-p, 3);
+    slider.value = lerp(start, target, e);
+    render(parseFloat(slider.value));
+    if (p < 1) raf = requestAnimationFrame(step);
+  })(performance.now());
+}
+
+function stop(){ playing = false; cancelAnimationFrame(raf);
+  document.getElementById('play').setAttribute('aria-pressed','false');
+  document.getElementById('play').textContent = 'Ripen it'; }
+
+document.getElementById('play').addEventListener('click', function(){
+  if (playing) { stop(); return; }
+  playing = true; this.setAttribute('aria-pressed','true'); this.textContent = 'Stop';
+  var t0 = null, from = parseFloat(slider.value);
+  (function step(ts){
+    if (!playing) return;
+    if (t0 === null) t0 = ts;
+    var p = ((ts - t0) / 4200) % 1;
+    var v = from + p * (ST.length - 1);
+    if (v > ST.length - 1) v -= (ST.length - 1);
+    slider.value = v; render(v);
+    raf = requestAnimationFrame(step);
+  })(performance.now());
+});
+
+document.getElementById('compare').addEventListener('click', function(){
+  showProd = !showProd;
+  this.setAttribute('aria-pressed', showProd ? 'true' : 'false');
+  this.textContent = showProd ? 'Show my dyed pair' : 'Show the pair that releases';
+  document.getElementById('badge').textContent = showProd
+    ? 'The pair that actually releases' : 'Your pair, dyed to your answer';
+  render(parseFloat(slider.value));
+});
+
+document.addEventListener('keydown', function(e){
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
+    stop();
+    var v = Math.round(parseFloat(slider.value)) + (e.key === 'ArrowRight' ? 1 : -1);
+    glide(Math.max(0, Math.min(ST.length-1, v)));
+  }
+});
+
+render(2);
+slider.value = 2;
+</script>
+</body>
+</html>
