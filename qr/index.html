@@ -2874,6 +2874,11 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
 
   qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
 
+  // Corner radius of a rounded module, as a fraction of the module size.
+  // Rounded SQUARES, not circles: circles delete most of each module and rigid
+  // run-length decoders (OpenCV) stop reading the code above about version 4.
+  var DOT_R = window.__DOTR || 0.32;
+
   /* ---------------- i18n ---------------- */
   var I18N = {
     es: {
@@ -3309,9 +3314,13 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
           for (var c = 0; c < o.n; c++) {
             if (!o.m[r][c]) continue;
             if (o.round && !(o.solid && o.solid[r][c])) {
-              var cx = ox + c * u + u / 2, cy = oy + r * u + u / 2;
-              ctx.moveTo(cx + u * 0.45, cy);
-              ctx.arc(cx, cy, u * 0.45, 0, Math.PI * 2);
+              var px = ox + c * u, py = oy + r * u, rad = u * DOT_R;
+              ctx.moveTo(px + rad, py);
+              ctx.arcTo(px + u, py, px + u, py + u, rad);
+              ctx.arcTo(px + u, py + u, px, py + u, rad);
+              ctx.arcTo(px, py + u, px, py, rad);
+              ctx.arcTo(px, py, px + u, py, rad);
+              ctx.closePath();
             } else {
               var run = 1;
               while (c + run < o.n && o.m[r][c + run] &&
@@ -3554,7 +3563,7 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
             for (var c = 0; c < o.n; c++) {
               if (!o.m[r][c]) continue;
               if (o.round && !(o.solid && o.solid[r][c])) {
-                mp += circlePath(mx + c * u + u / 2, Y(my + r * u + u / 2), u * 0.45);
+                mp += rrPath(mx + c * u, Y(my + (r + 1) * u), u, u, u * DOT_R);
               } else {
                 var run = 1;
                 while (c + run < o.n && o.m[r][c + run] &&
