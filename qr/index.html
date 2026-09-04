@@ -330,10 +330,9 @@ footer{
           <label data-i18n="l_url">Dirección web o texto</label>
           <input type="text" id="inLink" placeholder="menu.midominio.com" spellcheck="false" autocapitalize="off">
           <div class="chips" id="linkChips">
-            <button type="button" data-fill="https://www.instagram.com/">Instagram</button>
             <button type="button" data-fill="https://www.facebook.com/">Facebook</button>
             <button type="button" data-fill="https://www.tiktok.com/@">TikTok</button>
-            <button type="button" data-fill="https://g.page/r/">Google</button>
+            <button type="button" data-fill="https://g.page/r/" data-i18n="chip_review">Reseñas Google</button>
             <button type="button" data-fill="https://maps.app.goo.gl/" data-i18n="chip_maps">Mapa</button>
           </div>
           <div class="hint" data-i18n="h_url">Si no pones <code>https://</code> lo agregamos. Cualquier texto también sirve (wifi, dirección, mensaje).</div>
@@ -358,8 +357,7 @@ footer{
           <label data-i18n="l_wa">Número de WhatsApp</label>
           <div class="row2">
             <select id="inWaCc">
-              <option value="1">🇩🇴 Rep. Dom. +1</option>
-              <option value="1">🇺🇸 USA +1</option>
+              <option value="1">🇩🇴 🇺🇸 Rep. Dom. / USA +1</option>
               <option value="509">🇭🇹 Haití +509</option>
               <option value="34">🇪🇸 España +34</option>
               <option value="52">🇲🇽 México +52</option>
@@ -2880,7 +2878,7 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
   var I18N = {
     es: {
       back: '← Saibot', h_dest: 'A dónde lleva', tab_link: 'Enlace',
-      l_url: 'Dirección web o texto', chip_maps: 'Mapa',
+      l_url: 'Dirección web o texto', chip_maps: 'Mapa', chip_review: 'Reseñas Google',
       h_url: 'Si no pones <code>https://</code> lo agregamos. Cualquier texto también sirve (wifi, dirección, mensaje).',
       l_ig: 'Usuario de Instagram',
       h_ig: 'Sin el arroba. Abre el perfil directo en la app de Instagram.',
@@ -2929,7 +2927,7 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
     },
     en: {
       back: '← Saibot', h_dest: 'Where it goes', tab_link: 'Link',
-      l_url: 'Web address or text', chip_maps: 'Map',
+      l_url: 'Web address or text', chip_maps: 'Map', chip_review: 'Google reviews',
       h_url: 'We add <code>https://</code> if you leave it out. Plain text works too (wifi, address, a message).',
       l_ig: 'Instagram username',
       h_ig: 'No at-sign. Opens the profile straight in the Instagram app.',
