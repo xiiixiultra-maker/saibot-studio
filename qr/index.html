@@ -4614,6 +4614,7 @@ function buildPrompt(f) {
         im.src = saved.logoData;
       }
     }
+    $('aiEndpoint').value = st.aiEndpoint; $('aiToken').value = st.aiToken;
     $('qr2wrap').style.opacity = st.grad ? '1' : '.4';
     markPreset();
     syncLogoControls();
