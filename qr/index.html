@@ -259,6 +259,57 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
   font-size:11px;line-height:1.55;color:var(--l3);
   border-left:2px solid var(--l4);padding-left:11px;
 }
+.note.warnbox{border-left-color:var(--orange);color:#ffb489;margin-top:9px}
+
+/* ---------- segmented control ---------- */
+.seg{display:flex;gap:6px;margin-bottom:14px}
+.seg button{
+  flex:1;background:var(--b3);border:1px solid var(--l4);border-radius:9px;
+  color:var(--l2);font:inherit;font-size:11px;letter-spacing:.04em;
+  padding:9px 6px;cursor:pointer;transition:.18s var(--ease);text-transform:uppercase;
+}
+.seg button:hover{color:var(--l1);border-color:var(--l3)}
+.seg button.on{background:var(--l1);color:var(--b1);border-color:var(--l1)}
+.seg.small button{font-size:10.5px;padding:7px 5px;text-transform:none;letter-spacing:.02em}
+
+/* ---------- disclosure ---------- */
+.disc{margin-top:12px;border-top:1px solid var(--l5);padding-top:11px}
+.disc summary{
+  cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:.11em;
+  color:var(--l3);list-style:none;transition:color .18s;user-select:none;
+}
+.disc summary::-webkit-details-marker{display:none}
+.disc summary::before{content:"▸ ";display:inline-block;transition:transform .18s}
+.disc[open] summary::before{content:"▾ "}
+.disc summary:hover{color:var(--l1)}
+.disc > *:not(summary){margin-top:10px}
+textarea{
+  width:100%;background:var(--b1);border:1px solid var(--l4);border-radius:9px;
+  color:var(--l1);font:inherit;font-size:12px;line-height:1.5;padding:10px 12px;
+  outline:none;resize:vertical;min-height:90px;
+}
+
+/* ---------- generated logo gallery ---------- */
+.gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.gallery figure{position:relative;margin:0}
+.gallery img{
+  width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:9px;
+  border:1px solid var(--l4);padding:5px;cursor:pointer;transition:.18s var(--ease);display:block;
+}
+.gallery img:hover{transform:translateY(-2px);border-color:var(--l2)}
+.gallery figure.on img{outline:2px solid var(--violet);outline-offset:2px}
+.gallery .dl{
+  position:absolute;right:4px;bottom:4px;background:rgba(10,10,12,.82);border:0;
+  color:#fff;border-radius:6px;font:inherit;font-size:9px;letter-spacing:.05em;
+  padding:3px 6px;cursor:pointer;transition:.18s;
+}
+.gallery .dl:hover{background:var(--violet)}
+.spinner{
+  display:inline-block;width:12px;height:12px;border-radius:50%;
+  border:2px solid var(--l4);border-top-color:var(--l1);
+  animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
 .toast{
   position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);z-index:200;
   background:var(--b3);border:1px solid var(--l4);border-radius:11px;
@@ -475,26 +526,155 @@ footer{
         </div>
       </div>
 
-      <div class="field" style="margin-top:14px">
-        <label>
-          <span data-i18n="l_logo">Logo en el centro</span>
-          <span class="opt" data-i18n="optional">(opcional)</span>
-        </label>
+    </section>
+
+    <!-- ---------- logo ---------- -->
+    <section class="card">
+      <h2>
+        <span data-i18n="h_logo">Logo en el centro</span>
+        <span class="opt" data-i18n="optional">(opcional)</span>
+      </h2>
+
+      <div class="seg" id="logoModes">
+        <button type="button" data-mode="upload" class="on" data-i18n="lm_upload">Subir imagen</button>
+        <button type="button" data-mode="ai" data-i18n="lm_ai">Generar con IA</button>
+      </div>
+
+      <!-- upload -->
+      <div class="lpane" data-lpane="upload">
         <label class="filebtn">
           <input type="file" id="inLogo" accept="image/png,image/jpeg,image/webp,image/gif">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
           <span data-i18n="l_pick">Subir imagen (PNG o JPG)</span>
         </label>
-        <div class="logoinfo hidden" id="logoInfo">
-          <img id="logoThumb" alt="">
-          <span class="nm" id="logoName"></span>
-          <button type="button" class="xbtn" id="logoClear" data-i18n="remove">Quitar</button>
+      </div>
+
+      <!-- ai -->
+      <div class="lpane hidden" data-lpane="ai">
+        <div class="row2">
+          <div class="field">
+            <label data-i18n="al_name">Nombre del negocio</label>
+            <input type="text" id="aiName" placeholder="Colmado La Esquina" maxlength="90">
+          </div>
+          <div class="field">
+            <label data-i18n="al_what">Qué es / qué vende</label>
+            <input type="text" id="aiWhat" placeholder="colmado de barrio" maxlength="140">
+          </div>
         </div>
-        <div class="rangerow hidden" id="logoSizeRow" style="margin-top:10px">
-          <input type="range" id="inLogoSize" min="10" max="26" value="18">
-          <span class="val" id="logoSizeVal">18%</span>
+        <div class="field">
+          <label data-i18n="al_style">Estilo</label>
+          <select id="aiStyle">
+            <option value="minimal" data-i18n="sty_minimal">Minimalista — formas simples</option>
+            <option value="emblem" data-i18n="sty_emblem">Emblema — tipo escudo</option>
+            <option value="monogram" data-i18n="sty_monogram">Monograma — las iniciales</option>
+            <option value="mascot" data-i18n="sty_mascot">Mascota — personaje</option>
+            <option value="retro" data-i18n="sty_retro">Retro — años 70</option>
+            <option value="geometric" data-i18n="sty_geometric">Geométrico — abstracto</option>
+            <option value="handmade" data-i18n="sty_handmade">Hecho a mano — pincel</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="al_colors">Colores</label>
+          <div class="seg small" id="aiColorMode">
+            <button type="button" data-cm="card" class="on" data-i18n="cm_card">Los de la tarjeta</button>
+            <button type="button" data-cm="pick" data-i18n="cm_pick">Elegir</button>
+            <button type="button" data-cm="any" data-i18n="cm_any">Que decida</button>
+          </div>
+          <div class="colorrow hidden" id="aiColorPickers" style="margin-top:9px">
+            <div class="swatch">
+              <input type="color" id="aiC1" value="#c2185b">
+              <span class="txt" data-i18n="cm_c1">Principal</span>
+            </div>
+            <div class="swatch">
+              <input type="color" id="aiC2" value="#0a0a0c">
+              <span class="txt" data-i18n="cm_c2">Segundo</span>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>
+            <span data-i18n="al_extra">Algo más que quieras incluir</span>
+            <span class="opt" data-i18n="optional">(opcional)</span>
+          </label>
+          <input type="text" id="aiExtra" placeholder="una palma, un gallo, una taza de café" maxlength="300">
+        </div>
+
+        <details class="disc" id="aiPromptBox">
+          <summary data-i18n="al_prompt">Ver y editar el texto que se le manda</summary>
+          <textarea id="aiPrompt" rows="7" spellcheck="false"></textarea>
+          <div class="hint" data-i18n="al_prompthint">Puedes reescribirlo completo. Si cambias los campos de arriba se vuelve a armar solo, a menos que lo edites tú.</div>
+          <button type="button" class="xbtn" id="aiPromptReset" style="margin-top:8px" data-i18n="al_reset">Volver al automático</button>
+        </details>
+
+        <div class="row2" style="margin-top:12px">
+          <div class="field">
+            <label data-i18n="al_quality">Calidad</label>
+            <select id="aiQuality">
+              <option value="low" data-i18n="q_low">Baja — más barata</option>
+              <option value="medium" selected data-i18n="q_med">Media</option>
+              <option value="high" data-i18n="q_high">Alta — más cara</option>
+            </select>
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end">
+            <button type="button" class="btn primary" id="dlLogo" style="width:100%">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6 4.6 1.9-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>
+              <span data-i18n="al_go">Generar</span>
+            </button>
+          </div>
+        </div>
+        <div class="note" id="aiStatus" data-i18n="al_cost">Cada logo gasta créditos de la cuenta de OpenAI. Tarda unos 20 segundos.</div>
+
+        <div class="gallery hidden" id="aiGallery"></div>
+
+        <details class="disc" id="aiSettings">
+          <summary data-i18n="al_svc">Configuración del servicio</summary>
+          <div class="seg small" id="aiBackend" style="margin-bottom:10px">
+            <button type="button" data-be="proxy" class="on" data-i18n="be_proxy">Servidor propio</button>
+            <button type="button" data-be="openai" data-i18n="be_key">Mi clave OpenAI</button>
+          </div>
+          <div id="beProxy">
+            <div class="field">
+              <label data-i18n="be_url">Dirección del servicio</label>
+              <input type="text" id="aiEndpoint" placeholder="https://qr-studio-logo.saibot-studio.workers.dev" spellcheck="false">
+            </div>
+            <div class="field">
+              <label data-i18n="be_pass">Clave de acceso</label>
+              <input type="password" id="aiToken" spellcheck="false" autocomplete="off">
+            </div>
+            <div class="hint" data-i18n="be_proxyhint">Recomendado. La clave de OpenAI se queda en el servidor y nunca pasa por el navegador.</div>
+          </div>
+          <div id="beOpenai" class="hidden">
+            <div class="field">
+              <label data-i18n="be_okey">Clave de OpenAI</label>
+              <input type="password" id="aiKey" placeholder="sk-..." spellcheck="false" autocomplete="off">
+            </div>
+            <div class="note warnbox" data-i18n="be_keywarn">La clave se guarda solo en este teléfono o computadora y nunca se sube a la página. Aun así, cualquiera que use este equipo puede sacarla. Úsala solo en un equipo tuyo.</div>
+          </div>
+          <button type="button" class="xbtn" id="aiTest" style="margin-top:10px" data-i18n="be_test">Probar conexión</button>
+          <span class="hint" id="aiTestOut" style="margin-left:8px"></span>
+        </details>
+      </div>
+
+      <div class="logoinfo hidden" id="logoInfo">
+        <img id="logoThumb" alt="">
+        <span class="nm" id="logoName"></span>
+        <button type="button" class="xbtn" id="logoSave" data-i18n="l_save">Guardar</button>
+        <button type="button" class="xbtn" id="logoClear" data-i18n="remove">Quitar</button>
+      </div>
+      <div class="hidden" id="logoPlaceRow" style="margin-top:12px">
+        <label data-i18n="l_where">Dónde va el logo</label>
+        <div class="seg small" id="logoPos">
+          <button type="button" data-pos="qr" class="on" data-i18n="pos_qr">En el código</button>
+          <button type="button" data-pos="top" data-i18n="pos_top">Arriba</button>
+          <button type="button" data-pos="bottom" data-i18n="pos_bottom">Abajo</button>
+          <button type="button" data-pos="corner" data-i18n="pos_corner">Esquina</button>
         </div>
       </div>
+      <div class="rangerow hidden" id="logoSizeRow" style="margin-top:10px">
+        <input type="range" id="inLogoSize" min="10" max="26" value="18">
+        <span class="val" id="logoSizeVal">18%</span>
+      </div>
+      <div class="note hidden" id="logoLight" data-i18n="l_light">Este logo es muy claro y el recuadro detrás del código es blanco. Ponle un color más oscuro o apaga el recuadro blanco.</div>
     </section>
 
     <!-- ---------- size + export ---------- -->
@@ -2864,6 +3044,81 @@ var WINANSI = "\u0020\u0021\u0022\u0023\u0024\u0025\u0026\u0027\u0028\u0029\u002
 var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584,278,556,350,222,556,333,1000,556,556,333,1000,667,333,1000,350,611,350,350,222,222,333,333,350,556,1000,333,1000,500,333,944,350,500,667,278,333,556,556,556,556,260,556,333,737,370,556,584,333,737,552,400,549,333,333,333,576,537,333,333,333,365,556,834,834,834,611,667,667,667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,549,611,556,556,556,556,500,556,500],"Helvetica-Bold":[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584,278,556,350,278,556,500,1000,556,556,333,1000,667,333,1000,350,611,350,350,278,278,500,500,350,556,1000,333,1000,556,333,944,350,500,667,278,333,556,556,556,556,280,556,333,737,370,556,584,333,737,552,400,549,333,333,333,576,556,333,333,333,365,556,834,834,834,611,722,722,722,722,722,722,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,556,556,556,556,556,278,278,278,278,611,611,611,611,611,611,611,549,611,611,611,611,611,556,611,556],"Times-Roman":[250,333,408,500,500,833,778,180,333,333,500,564,250,333,250,278,500,500,500,500,500,500,500,500,500,500,278,278,564,564,564,444,921,722,667,667,722,611,556,722,722,333,389,722,611,889,722,722,556,722,667,556,611,722,722,944,722,722,611,333,278,333,469,500,333,444,500,444,500,444,333,500,500,278,278,500,278,778,500,500,500,500,333,389,278,500,500,722,500,500,444,480,200,480,541,250,500,350,333,500,444,1000,500,500,333,1000,556,333,889,350,611,350,350,333,333,444,444,350,500,1000,333,980,389,333,722,350,444,722,250,333,500,500,500,500,200,500,333,760,276,500,564,333,760,500,400,549,300,300,333,576,453,333,333,300,310,500,750,750,750,444,722,722,722,722,722,722,889,667,611,611,611,611,333,333,333,333,722,722,722,722,722,722,722,564,722,722,722,722,722,722,556,500,444,444,444,444,444,444,667,444,444,444,444,444,278,278,278,278,500,500,500,500,500,500,500,549,500,500,500,500,500,500,500,500],"Times-Bold":[250,333,555,500,500,1000,833,278,333,333,500,570,250,333,250,278,500,500,500,500,500,500,500,500,500,500,333,333,570,570,570,500,930,722,667,722,722,667,611,778,778,389,500,778,667,944,722,778,611,778,722,556,667,722,722,1000,722,722,667,333,278,333,581,500,333,500,556,444,556,444,333,500,556,278,333,556,278,833,556,500,556,556,444,389,333,556,500,722,500,500,444,394,220,394,520,250,500,350,333,500,500,1000,500,500,333,1000,556,333,1000,350,667,350,350,333,333,500,500,350,500,1000,333,1000,389,333,722,350,444,722,250,333,500,500,500,500,220,500,333,747,300,500,570,333,747,500,400,549,300,300,333,576,540,333,333,300,330,500,750,750,750,500,722,722,722,722,722,722,1000,722,667,667,667,667,389,389,389,389,722,722,778,778,778,778,778,570,778,722,722,722,722,722,611,556,500,500,500,500,500,500,722,444,444,444,444,444,278,278,278,278,500,556,500,500,500,500,500,549,500,556,556,556,556,500,556,500],"Courier":[600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600],"Courier-Bold":[600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600]};
 </script>
 <script>
+/* Prompt composition — the one source of truth.
+   build.py strips the `export ` keywords and inlines this file into the page,
+   so what the user edits in the browser and what the worker relays are the
+   same text produced by the same code. */
+
+const STYLES = {
+  minimal: 'a minimal modern mark built from a few clean geometric shapes and even-weight strokes',
+  emblem: 'a classic emblem or badge crest, symmetrical, with a contained silhouette',
+  monogram: 'a bold geometric monogram built from the initials {INITIALS}, treated as custom lettering',
+  mascot: 'a friendly simple character mascot with thick confident outlines and minimal facial detail',
+  retro: 'a 1970s retro mark with chunky rounded forms and a warm nostalgic feel',
+  geometric: 'an abstract geometric mark assembled from simple primitives, balanced and symmetrical',
+  handmade: 'a hand-drawn brush mark with organic, slightly imperfect strokes',
+};
+
+const STYLE_KEYS = ['minimal', 'emblem', 'monogram', 'mascot', 'retro', 'geometric', 'handmade'];
+
+function cleanField(s, max) {
+  return String(s == null ? '' : s)
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+}
+
+function initialsFrom(name) {
+  const words = cleanField(name, 80).split(' ').filter(w => /[a-z0-9]/i.test(w));
+  const skip = ['de', 'del', 'la', 'las', 'el', 'los', 'y', 'the', 'of', 'and', 'a'];
+  const picked = words.filter(w => skip.indexOf(w.toLowerCase()) < 0).slice(0, 3);
+  return (picked.length ? picked : words.slice(0, 2)).map(w => w[0].toUpperCase()).join('');
+}
+
+function buildPrompt(f) {
+  const name = cleanField(f.name, 90);
+  const what = cleanField(f.what, 140);
+  const extra = cleanField(f.extra, 300);
+  const styleKey = STYLE_KEYS.indexOf(f.style) >= 0 ? f.style : 'minimal';
+  const initials = initialsFrom(name) || 'AB';
+  const style = STYLES[styleKey].replace('{INITIALS}', initials);
+
+  const colors = (f.colors || []).filter(c => /^#[0-9a-f]{6}$/i.test(c)).slice(0, 2);
+  const colorLine = colors.length
+    ? 'Use only ' + (colors.length > 1 ? 'these colours: ' + colors.join(' and ') : 'this colour: ' + colors[0])
+      + ', plus transparency. Do not introduce any other colour.'
+    : 'Use at most two flat colours.';
+
+  // A monogram is the one style where letterforms are the point; everywhere
+  // else, text is unreadable at the size this mark gets printed.
+  const textRule = styleKey === 'monogram'
+    ? 'The only letters allowed are the initials ' + initials
+      + '. No other words, no business name, no tagline, no numbers.'
+    : 'No text of any kind: no letters, no words, no business name, no tagline, no numbers.';
+
+  const subject = [
+    name ? 'The business is called "' + name + '".' : '',
+    what ? 'It is a ' + what + '.' : '',
+  ].filter(Boolean).join(' ');
+
+  return [
+    ('Design ONE logo mark for a small local business. ' + subject).trim(),
+    'Style: ' + style + '.',
+    colorLine,
+    extra ? 'Also incorporate: ' + extra + '.' : '',
+    'This mark gets printed in the middle of a QR code at about one centimetre wide, so it has to survive being tiny.',
+    'Reduce the idea to its simplest recognisable silhouette — fewer, larger shapes always beat more detail.',
+    'A single centred symbol, bold forms, thick strokes, strong contrast, flat solid colour fills only.',
+    'No gradients, no drop shadows, no 3D, no bevels, no glow, no photorealism, no texture, no thin hairlines, no small interior details.',
+    'Fully transparent background: no background square, no circle badge, no frame, and no border around the image itself.',
+    textRule,
+    'Centre the mark in a square frame and leave a generous empty margin around it.',
+  ].filter(Boolean).join(' ');
+}
+
+</script>
+<script>
 /* ============================================================
    SAIBOT QR STUDIO
    One layout pass feeds three backends (preview canvas, PNG, PDF)
@@ -2928,7 +3183,39 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
       msg_big: 'Ese texto no cabe en un solo código. Usa un enlace más corto.',
       msg_err: 'No se pudo generar el archivo',
       msg_logo: 'Esa imagen no se pudo abrir',
-      sheet_n: 'por hoja'
+      sheet_n: 'por hoja',
+      h_logo: 'Logo en el centro',
+      lm_upload: 'Subir imagen', lm_ai: 'Generar con IA',
+      al_name: 'Nombre del negocio', al_what: 'Qué es / qué vende',
+      al_style: 'Estilo', al_colors: 'Colores',
+      sty_minimal: 'Minimalista — formas simples', sty_emblem: 'Emblema — tipo escudo',
+      sty_monogram: 'Monograma — las iniciales', sty_mascot: 'Mascota — personaje',
+      sty_retro: 'Retro — años 70', sty_geometric: 'Geométrico — abstracto',
+      sty_handmade: 'Hecho a mano — pincel',
+      cm_card: 'Los de la tarjeta', cm_pick: 'Elegir', cm_any: 'Que decida',
+      cm_c1: 'Principal', cm_c2: 'Segundo',
+      al_extra: 'Algo más que quieras incluir',
+      al_prompt: 'Ver y editar el texto que se le manda',
+      al_prompthint: 'Puedes reescribirlo completo. Si cambias los campos de arriba se vuelve a armar solo, a menos que lo edites tú.',
+      al_reset: 'Volver al automático',
+      al_quality: 'Calidad', q_low: 'Baja — más barata', q_med: 'Media', q_high: 'Alta — más cara',
+      al_go: 'Generar', al_again: 'Generar otro',
+      al_cost: 'Cada logo gasta créditos de la cuenta de OpenAI. Tarda entre 20 segundos y un minuto.',
+      al_working: 'Dibujando el logo…',
+      al_done: 'Listo. Tócalo para ponerlo en el código.',
+      al_svc: 'Configuración del servicio',
+      be_proxy: 'Servidor propio', be_key: 'Mi clave OpenAI',
+      be_url: 'Dirección del servicio', be_pass: 'Clave de acceso',
+      be_proxyhint: 'Recomendado. La clave de OpenAI se queda en el servidor y nunca pasa por el navegador.',
+      be_okey: 'Clave de OpenAI',
+      be_keywarn: 'La clave se guarda solo en este teléfono o computadora y nunca se sube a la página. Aun así, cualquiera que use este equipo puede sacarla. Úsala solo en un equipo tuyo.',
+      be_test: 'Probar conexión', be_ok: 'Conectado', be_bad: 'No conecta',
+      be_need: 'Primero pon la dirección y la clave en Configuración del servicio.',
+      be_needkey: 'Primero pon tu clave de OpenAI en Configuración del servicio.',
+      l_light: 'Este logo es muy claro y el recuadro detrás del código es blanco. Ponle un color más oscuro o apaga el recuadro blanco.',
+      al_saved: 'Logo descargado', l_save: 'Guardar', l_where: 'Dónde va el logo',
+      pos_qr: 'En el código', pos_top: 'Arriba', pos_bottom: 'Abajo', pos_corner: 'Esquina',
+      dl_logo: 'Bajar'
     },
     en: {
       back: '← Saibot', h_dest: 'Where it goes', tab_link: 'Link',
@@ -2977,7 +3264,39 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
       msg_big: 'That text is too long for one code. Use a shorter link.',
       msg_err: 'Could not build the file',
       msg_logo: 'That image could not be opened',
-      sheet_n: 'per sheet'
+      sheet_n: 'per sheet',
+      h_logo: 'Logo in the middle',
+      lm_upload: 'Upload image', lm_ai: 'Generate with AI',
+      al_name: 'Business name', al_what: 'What it is / sells',
+      al_style: 'Style', al_colors: 'Colours',
+      sty_minimal: 'Minimal — simple shapes', sty_emblem: 'Emblem — crest style',
+      sty_monogram: 'Monogram — the initials', sty_mascot: 'Mascot — character',
+      sty_retro: 'Retro — 1970s', sty_geometric: 'Geometric — abstract',
+      sty_handmade: 'Handmade — brush',
+      cm_card: 'Match the card', cm_pick: 'Pick', cm_any: 'Let it choose',
+      cm_c1: 'Main', cm_c2: 'Second',
+      al_extra: 'Anything else to include',
+      al_prompt: 'See and edit what gets sent',
+      al_prompthint: 'You can rewrite it completely. Changing the fields above rebuilds it, unless you have edited it yourself.',
+      al_reset: 'Back to automatic',
+      al_quality: 'Quality', q_low: 'Low — cheapest', q_med: 'Medium', q_high: 'High — priciest',
+      al_go: 'Generate', al_again: 'Generate another',
+      al_cost: 'Each logo spends credit on the OpenAI account. Takes 20 seconds to a minute.',
+      al_working: 'Drawing the logo…',
+      al_done: 'Done. Tap it to put it on the code.',
+      al_svc: 'Service settings',
+      be_proxy: 'Own server', be_key: 'My OpenAI key',
+      be_url: 'Service address', be_pass: 'Access passcode',
+      be_proxyhint: 'Recommended. The OpenAI key stays on the server and never reaches the browser.',
+      be_okey: 'OpenAI key',
+      be_keywarn: 'The key is saved only on this phone or computer and never uploaded to the page. Even so, anyone using this device can read it. Only use it on a device of your own.',
+      be_test: 'Test connection', be_ok: 'Connected', be_bad: 'Cannot connect',
+      be_need: 'Add the address and passcode under Service settings first.',
+      be_needkey: 'Add your OpenAI key under Service settings first.',
+      l_light: 'This logo is very light and the plate behind the code is white. Give it a darker colour, or turn the white plate off.',
+      al_saved: 'Logo downloaded', l_save: 'Save', l_where: 'Where the logo goes',
+      pos_qr: 'On the code', pos_top: 'Top', pos_bottom: 'Bottom', pos_corner: 'Corner',
+      dl_logo: 'Save'
     }
   };
   var lang = 'es';
@@ -3082,8 +3401,22 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
     bg: '#ffffff', ink: '#0a0a0c', qr: '#0a0a0c', qr2: '#7a5cff',
     grad: false, plate: false, round: false, border: false,
     logo: null, logoName: '', logoSize: 18,
-    size: 'c46', res: 2400, sheet: 'single', preset: 'classic'
+    logoPos: 'qr', logoSizes: { qr: 18, top: 24, bottom: 20, corner: 12 },
+    size: 'c46', res: 2400, sheet: 'single', preset: 'classic',
+    logoMode: 'upload', aiColorMode: 'card', aiQuality: 'medium', aiPromptEdited: false,
+    aiBackend: 'proxy', aiEndpoint: '', aiToken: '', aiKey: '',
+    aiShots: [], aiPicked: -1
   };
+
+  // Each placement reads its percentage against a different base (the code's
+  // side vs the card's width), so they keep independent sizes.
+  var LOGO_RANGE = { qr: [10, 26], top: [10, 42], bottom: [10, 42], corner: [6, 24] };
+  function logoSizeFor(pos) {
+    var r = LOGO_RANGE[pos] || LOGO_RANGE.qr;
+    var v = st.logoSizes[pos];
+    if (v == null) v = r[0] + (r[1] - r[0]) / 2;
+    return Math.min(r[1], Math.max(r[0], v));
+  }
 
   /* ---------------- destination ---------------- */
   function digits(s) { return (s || '').replace(/\D/g, ''); }
@@ -3171,7 +3504,9 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
   function buildQR() {
     var text = target();
     if (!text) return null;
-    var ecc = st.logo ? 'H' : (text.length > 120 ? 'M' : 'Q');
+    // Max error correction only pays for itself when the logo actually covers
+    // modules; anywhere else it just makes the code denser for nothing.
+    var ecc = (st.logo && st.logoPos === 'qr') ? 'H' : (text.length > 120 ? 'M' : 'Q');
     var key = ecc + ' ' + text;
     if (qrCache.key === key) return qrCache.data;
     var out = null;
@@ -3208,6 +3543,12 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
     var botStr = cap((st.bottom.trim() || autoBottom()));
     var smStr = cap(st.small.trim());
 
+    // A logo placed above or below the code takes its own slice of the stack;
+    // in the corner it floats and costs the stack nothing.
+    var logoPos = st.logo ? st.logoPos : 'none';
+    var logoStacked = logoPos === 'top' || logoPos === 'bottom' || logoPos === 'corner';
+    var logoSide = st.logo ? innerW * (logoSizeFor(logoPos) / 100) : 0;
+
     var scale = 1, blocks, qrSide, guard = 0;
     while (guard++ < 22) {
       var tS = 0.088 * W * scale, bS = 0.052 * W * scale, sS = 0.032 * W * scale;
@@ -3221,9 +3562,12 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
       var gapTop = blocks.some(function (b) { return b.k === 'top'; }) ? 0.055 * W * scale : 0;
       var gapBot = blocks.some(function (b) { return b.k === 'bot'; }) ? 0.05 * W * scale : 0;
       var gapSm = blocks.some(function (b) { return b.k === 'sm'; }) ? 0.02 * W * scale : 0;
-      var gaps = gapTop + gapBot + gapSm;
-      qrSide = Math.min(innerW, H - 2 * pad - textH - gaps);
+      var gapLogo = logoStacked ? 0.045 * W * scale : 0;
+      var gaps = gapTop + gapBot + gapSm + gapLogo;
+      var stackedLogoH = logoStacked ? logoSide : 0;
+      qrSide = Math.min(innerW, H - 2 * pad - textH - gaps - stackedLogoH);
       blocks.gapTop = gapTop; blocks.gapBot = gapBot; blocks.gapSm = gapSm;
+      blocks.gapLogo = gapLogo; blocks.logoH = stackedLogoH;
       // The code is the product -- shrink the type until the QR gets its share
       // rather than letting three lines of text squeeze it into a stamp.
       var want = Math.min(innerW, 0.6 * (H - 2 * pad));
@@ -3232,9 +3576,21 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
     }
     qrSide = Math.max(qrSide, 24);
 
-    var stackH = qrSide + blocks.gapTop + blocks.gapBot + blocks.gapSm +
+    var stackH = qrSide + blocks.gapTop + blocks.gapBot + blocks.gapSm + blocks.gapLogo + blocks.logoH +
       blocks.reduce(function (a, b) { return a + b.h; }, 0);
     var y = pad + Math.max(0, (H - 2 * pad - stackH) / 2);
+
+    function drawLogoBlock(align) {
+      var lx = align === 'right' ? W - pad - logoSide : (W - logoSide) / 2;
+      ops.push({ t: 'image', x: lx, y: y, w: logoSide, h: logoSide, img: st.logo });
+      y += logoSide;
+    }
+    // "Corner" is a right-aligned header mark. It still reserves its band in the
+    // stack — floating it over the top line just ran the logo through the name.
+    if (logoPos === 'top' || logoPos === 'corner') {
+      drawLogoBlock(logoPos === 'corner' ? 'right' : 'center');
+      y += blocks.gapLogo;
+    }
 
     function drawBlock(b) {
       for (var i = 0; i < b.lines.length; i++) {
@@ -3259,8 +3615,8 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
         plate: plateCol, plateR: st.round ? unit * 2.2 : 0,
         fill: st.qr, fill2: st.grad ? st.qr2 : null, round: st.round
       });
-      if (st.logo) {
-        var ls = qrSide * (st.logoSize / 100);
+      if (logoPos === 'qr') {
+        var ls = qrSide * (logoSizeFor('qr') / 100);
         var pr = ls * 1.16;
         ops.push({ t: 'rect', x: qx + (qrSide - pr) / 2, y: qy + (qrSide - pr) / 2, w: pr, h: pr, r: pr * 0.16, fill: plateCol });
         ops.push({ t: 'image', x: qx + (qrSide - ls) / 2, y: qy + (qrSide - ls) / 2, w: ls, h: ls, img: st.logo });
@@ -3275,6 +3631,8 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
     if (botB) { y += blocks.gapBot; drawBlock(botB); }
     var smB = blocks.filter(function (b) { return b.k === 'sm'; })[0];
     if (smB) { y += blocks.gapSm; drawBlock(smB); }
+
+    if (logoPos === 'bottom') { y += blocks.gapLogo; drawLogoBlock('center'); }
 
     return { ops: ops, W: W, H: H, qrSide: qrSide, plate: plateCol, size: S };
   }
@@ -3714,6 +4072,11 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
       ? T('t_ver') + ' ' + qr.ver + ' · ECC ' + qr.ecc + ' · ' + qr.n + ' ' + T('t_mod')
       : '—';
 
+    // a near-white mark disappears on the white plate
+    var logoBack = st.logoPos === 'qr' ? L.plate : st.bg;
+    var lightWarn = st.logo && contrast(logoBack, '#ffffff') < 1.25 && logoIsLight(st.logo);
+    $('logoLight').classList.toggle('hidden', !lightWarn);
+
     // sheet count hint
     var so = $('inSheet');
     for (var i = 0; i < so.options.length; i++) {
@@ -3734,8 +4097,13 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
   function save() {
     try {
       var c = {};
-      for (var k in st) if (k !== 'logo') c[k] = st[k];
+      // aiShots is a handful of base64 images — far too big for localStorage
+      for (var k in st) if (k !== 'logo' && k !== 'aiShots') c[k] = st[k];
       c.logoData = st.logo && st.logo.__src && st.logo.__src.length < 400000 ? st.logo.__src : '';
+      c.aiName = $('aiName').value; c.aiWhat = $('aiWhat').value;
+      c.aiStyle = $('aiStyle').value; c.aiExtra = $('aiExtra').value;
+      c.aiC1 = $('aiC1').value; c.aiC2 = $('aiC2').value;
+      c.aiPromptText = st.aiPromptEdited ? $('aiPrompt').value : '';
       localStorage.setItem('saibotqr.v1', JSON.stringify(c));
       localStorage.setItem('saibotqr.lang', lang);
     } catch (e) { }
@@ -3864,33 +4232,54 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
   $('inLogo').addEventListener('change', function () {
     var f = this.files && this.files[0]; if (!f) return;
     var fr = new FileReader();
-    fr.onload = function () {
-      var img = new Image();
-      img.onload = function () {
-        img.__src = fr.result;
-        st.logo = img; st.logoName = f.name;
-        $('logoThumb').src = fr.result; $('logoName').textContent = f.name;
-        $('logoInfo').classList.remove('hidden');
-        $('logoSizeRow').classList.remove('hidden');
-        qrCache.key = '';
-        refresh();
-      };
-      img.onerror = function () { toast(T('msg_logo')); };
-      img.src = fr.result;
-    };
+    fr.onload = function () { setLogoFromDataURL(fr.result, f.name); };
     fr.readAsDataURL(f);
     this.value = '';
   });
   $('logoClear').addEventListener('click', function () {
-    st.logo = null; st.logoName = '';
-    $('logoInfo').classList.add('hidden'); $('logoSizeRow').classList.add('hidden');
+    st.logo = null; st.logoName = ''; st.aiPicked = -1;
+    $('logoInfo').classList.add('hidden');
+    syncLogoControls();
     qrCache.key = '';
+    renderGallery();
     refresh();
   });
   $('inLogoSize').addEventListener('input', function () {
-    st.logoSize = parseInt(this.value, 10);
-    $('logoSizeVal').textContent = st.logoSize + '%';
+    st.logoSizes[st.logoPos] = parseInt(this.value, 10);
+    $('logoSizeVal').textContent = this.value + '%';
     refresh();
+  });
+
+  function syncLogoControls() {
+    var has = !!st.logo;
+    $('logoPlaceRow').classList.toggle('hidden', !has);
+    $('logoSizeRow').classList.toggle('hidden', !has);
+    var r = LOGO_RANGE[st.logoPos] || LOGO_RANGE.qr;
+    var sl = $('inLogoSize');
+    sl.min = r[0]; sl.max = r[1];
+    sl.value = logoSizeFor(st.logoPos);
+    $('logoSizeVal').textContent = sl.value + '%';
+    Array.prototype.forEach.call(document.querySelectorAll('#logoPos button'), function (x) {
+      x.classList.toggle('on', x.getAttribute('data-pos') === st.logoPos);
+    });
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('#logoPos button'), function (b) {
+    b.addEventListener('click', function () {
+      st.logoPos = b.getAttribute('data-pos');
+      syncLogoControls();
+      refresh();
+    });
+  });
+
+  $('logoSave').addEventListener('click', function () {
+    var src = (st.aiPicked >= 0 && st.aiShots[st.aiPicked]) ? st.aiShots[st.aiPicked].src
+      : (st.logo && st.logo.__src);
+    if (!src) return;
+    fetch(src).then(function (r) { return r.blob(); }).then(function (b) {
+      saveBlob(b, fname('png').replace(/^QR-/, 'LOGO-'));
+      toast(T('al_saved'));
+    });
   });
 
   // exports
@@ -3921,6 +4310,258 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
     } catch (e) { console.error(e); toast(T('msg_err')); }
     btn.classList.remove('busy');
   });
+
+  /* ================= AI logo ================= */
+
+  // Crop the transparent margin the model leaves and re-pad evenly, so every
+  // generated mark sits in the QR at the same visual weight. Also caps the
+  // resolution: 512px is already more than the plate needs at 300 DPI.
+  function trimAndPad(img, padFrac) {
+    var n = 512;
+    var c = document.createElement('canvas');
+    c.width = c.height = n;
+    var x = c.getContext('2d');
+    x.drawImage(img, 0, 0, n, n);
+    var d;
+    try { d = x.getImageData(0, 0, n, n).data; } catch (e) { return null; }
+    var x0 = n, y0 = n, x1 = -1, y1 = -1, px, py;
+    for (py = 0; py < n; py++) {
+      for (px = 0; px < n; px++) {
+        if (d[(py * n + px) * 4 + 3] > 12) {
+          if (px < x0) x0 = px;
+          if (px > x1) x1 = px;
+          if (py < y0) y0 = py;
+          if (py > y1) y1 = py;
+        }
+      }
+    }
+    if (x1 < 0) return null;                       // nothing but transparency
+    var w = x1 - x0 + 1, h = y1 - y0 + 1;
+    var side = Math.max(w, h), pad = side * (padFrac == null ? 0.06 : padFrac);
+    var out = document.createElement('canvas');
+    out.width = out.height = Math.round(side + pad * 2);
+    out.getContext('2d').drawImage(c, x0, y0, w, h, (out.width - w) / 2, (out.height - h) / 2, w, h);
+    return out;
+  }
+
+  // Mean luminance of the opaque pixels — a near-white mark vanishes on the
+  // white plate, which is worth saying out loud before anything gets printed.
+  function logoIsLight(img) {
+    var n = 96, c = document.createElement('canvas');
+    c.width = c.height = n;
+    var x = c.getContext('2d');
+    x.drawImage(img, 0, 0, n, n);
+    var d;
+    try { d = x.getImageData(0, 0, n, n).data; } catch (e) { return false; }
+    var sum = 0, cnt = 0;
+    for (var i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 128) continue;
+      sum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+      cnt++;
+    }
+    return cnt > 20 && sum / cnt > 0.72;
+  }
+
+  function setLogoFromDataURL(src, name, cb) {
+    var probe = new Image();
+    probe.onload = function () {
+      var trimmed = trimAndPad(probe, 0.06);
+      var finalSrc = trimmed ? trimmed.toDataURL('image/png') : src;
+      var img = new Image();
+      img.onload = function () {
+        img.__src = finalSrc;
+        st.logo = img; st.logoName = name;
+        $('logoThumb').src = finalSrc; $('logoName').textContent = name;
+        $('logoInfo').classList.remove('hidden');
+        syncLogoControls();
+        qrCache.key = '';
+        refresh();
+        if (cb) cb();
+      };
+      img.src = finalSrc;
+    };
+    probe.onerror = function () { toast(T('msg_logo')); };
+    probe.src = src;
+  }
+
+  function aiFields() {
+    var mode = st.aiColorMode, colors = [];
+    if (mode === 'card') colors = [st.qr, st.ink].filter(function (c, i, a) { return a.indexOf(c) === i; }).slice(0, 2);
+    else if (mode === 'pick') colors = [$('aiC1').value, $('aiC2').value];
+    return {
+      name: $('aiName').value || st.top,
+      what: $('aiWhat').value,
+      style: $('aiStyle').value,
+      colors: colors,
+      extra: $('aiExtra').value
+    };
+  }
+
+  function syncPrompt(force) {
+    if (st.aiPromptEdited && !force) return;
+    $('aiPrompt').value = buildPrompt(aiFields());
+    st.aiPromptEdited = false;
+  }
+
+  function aiStatus(html, cls) {
+    var el = $('aiStatus');
+    el.innerHTML = html;
+    el.className = 'note' + (cls ? ' ' + cls : '');
+  }
+
+  async function callLogoService(prompt, quality) {
+    if (st.aiBackend === 'openai') {
+      var key = st.aiKey.trim();
+      if (!key) throw new Error(T('be_needkey'));
+      var r = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+        body: JSON.stringify({
+          model: 'gpt-image-2', prompt: prompt, n: 1, size: '1024x1024',
+          quality: quality, background: 'transparent', output_format: 'png'
+        })
+      });
+      var j = await r.json().catch(function () { return {}; });
+      if (!r.ok) throw new Error((j.error && j.error.message) || ('OpenAI ' + r.status));
+      var b64 = j.data && j.data[0] && j.data[0].b64_json;
+      if (!b64) throw new Error('No image returned.');
+      return 'data:image/png;base64,' + b64;
+    }
+    var url = st.aiEndpoint.trim().replace(/\/+$/, '');
+    if (!url || !st.aiToken) throw new Error(T('be_need'));
+    var res = await fetch(url + '/api/logo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-QR-Token': st.aiToken },
+      body: JSON.stringify({ prompt: prompt, quality: quality })
+    });
+    var jj = await res.json().catch(function () { return {}; });
+    if (!res.ok) throw new Error(jj.error || ('Service ' + res.status));
+    if (!jj.image) throw new Error('No image returned.');
+    return jj.image;
+  }
+
+  function renderGallery() {
+    var g = $('aiGallery');
+    g.innerHTML = '';
+    if (!st.aiShots.length) { g.classList.add('hidden'); return; }
+    g.classList.remove('hidden');
+    st.aiShots.forEach(function (shot, i) {
+      var fig = document.createElement('figure');
+      if (i === st.aiPicked) fig.className = 'on';
+      var im = document.createElement('img');
+      im.src = shot.src; im.alt = '';
+      im.addEventListener('click', function () {
+        st.aiPicked = i;
+        setLogoFromDataURL(shot.src, 'logo-ia.png');
+        renderGallery();
+      });
+      var dl = document.createElement('button');
+      dl.type = 'button'; dl.className = 'dl'; dl.textContent = T('dl_logo');
+      dl.addEventListener('click', function (e) {
+        e.stopPropagation();
+        fetch(shot.src).then(function (r) { return r.blob(); }).then(function (b) {
+          saveBlob(b, fname('png').replace(/^QR-/, 'LOGO-'));
+          toast(T('al_saved'));
+        });
+      });
+      fig.appendChild(im); fig.appendChild(dl);
+      g.appendChild(fig);
+    });
+  }
+
+  $('dlLogo').addEventListener('click', async function () {
+    var btn = this;
+    if (btn.classList.contains('busy')) return;
+    var prompt = $('aiPrompt').value.trim() || buildPrompt(aiFields());
+    btn.classList.add('busy');
+    aiStatus('<span class="spinner"></span>' + T('al_working'));
+    try {
+      var src = await callLogoService(prompt, $('aiQuality').value);
+      st.aiShots.unshift({ src: src });
+      st.aiShots = st.aiShots.slice(0, 4);
+      st.aiPicked = 0;
+      renderGallery();
+      setLogoFromDataURL(src, 'logo-ia.png');
+      aiStatus(T('al_done'));
+      btn.querySelector('span').textContent = T('al_again');
+    } catch (err) {
+      aiStatus(String(err && err.message ? err.message : err), 'warnbox');
+    }
+    btn.classList.remove('busy');
+  });
+
+  $('aiTest').addEventListener('click', async function () {
+    var out = $('aiTestOut');
+    out.textContent = '…';
+    try {
+      if (st.aiBackend === 'openai') {
+        if (!st.aiKey.trim()) throw new Error(T('be_needkey'));
+        var r = await fetch('https://api.openai.com/v1/models', {
+          headers: { Authorization: 'Bearer ' + st.aiKey.trim() }
+        });
+        if (!r.ok) throw new Error('OpenAI ' + r.status);
+      } else {
+        var url = st.aiEndpoint.trim().replace(/\/+$/, '');
+        if (!url) throw new Error(T('be_need'));
+        var res = await fetch(url + '/api/logo');
+        var j = await res.json().catch(function () { return {}; });
+        if (!res.ok || !j.ok) throw new Error('Service ' + res.status);
+        if (!j.configured) throw new Error('Service has no API key configured.');
+      }
+      out.textContent = '✓ ' + T('be_ok');
+      out.style.color = '#7ff0a8';
+    } catch (e) {
+      out.textContent = '✕ ' + T('be_bad') + ' — ' + (e && e.message ? e.message : e);
+      out.style.color = '#ff8fbb';
+    }
+  });
+
+  // ---- AI panel wiring ----
+  Array.prototype.forEach.call(document.querySelectorAll('#logoModes button'), function (b) {
+    b.addEventListener('click', function () {
+      st.logoMode = b.getAttribute('data-mode');
+      Array.prototype.forEach.call(document.querySelectorAll('#logoModes button'), function (x) {
+        x.classList.toggle('on', x === b);
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('.lpane'), function (p) {
+        p.classList.toggle('hidden', p.getAttribute('data-lpane') !== st.logoMode);
+      });
+      if (st.logoMode === 'ai') { if (!$('aiName').value) $('aiName').value = st.top; syncPrompt(); }
+      save();
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#aiColorMode button'), function (b) {
+    b.addEventListener('click', function () {
+      st.aiColorMode = b.getAttribute('data-cm');
+      Array.prototype.forEach.call(document.querySelectorAll('#aiColorMode button'), function (x) {
+        x.classList.toggle('on', x === b);
+      });
+      $('aiColorPickers').classList.toggle('hidden', st.aiColorMode !== 'pick');
+      syncPrompt(); save();
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#aiBackend button'), function (b) {
+    b.addEventListener('click', function () {
+      st.aiBackend = b.getAttribute('data-be');
+      Array.prototype.forEach.call(document.querySelectorAll('#aiBackend button'), function (x) {
+        x.classList.toggle('on', x === b);
+      });
+      $('beProxy').classList.toggle('hidden', st.aiBackend !== 'proxy');
+      $('beOpenai').classList.toggle('hidden', st.aiBackend !== 'openai');
+      $('aiTestOut').textContent = '';
+      save();
+    });
+  });
+  ['aiName', 'aiWhat', 'aiExtra', 'aiC1', 'aiC2'].forEach(function (id) {
+    $(id).addEventListener('input', function () { syncPrompt(); save(); });
+  });
+  $('aiStyle').addEventListener('change', function () { syncPrompt(); save(); });
+  $('aiQuality').addEventListener('change', function () { st.aiQuality = this.value; save(); });
+  $('aiPrompt').addEventListener('input', function () { st.aiPromptEdited = true; });
+  $('aiPromptReset').addEventListener('click', function () { st.aiPromptEdited = false; syncPrompt(true); });
+  $('aiEndpoint').addEventListener('input', function () { st.aiEndpoint = this.value; save(); });
+  $('aiToken').addEventListener('input', function () { st.aiToken = this.value; save(); });
+  $('aiKey').addEventListener('input', function () { st.aiKey = this.value; save(); });
 
   /* ---------------- language ---------------- */
   function syncPlaceholders() {
@@ -3972,7 +4613,8 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
       $('inFont').value = st.font; $('inSize').value = st.size;
       $('inRes').value = String(st.res); $('inSheet').value = st.sheet; $('inWaCc').value = st.waCc;
       $('inBg').value = st.bg; $('inInk').value = st.ink; $('inQr').value = st.qr; $('inQr2').value = st.qr2;
-      $('inLogoSize').value = st.logoSize; $('logoSizeVal').textContent = st.logoSize + '%';
+      if (saved.logoSizes) st.logoSizes = saved.logoSizes;
+      if (saved.logoPos) st.logoPos = saved.logoPos;
       ['caps', 'grad', 'plate', 'round', 'border'].forEach(function (key) {
         setSwitch({ caps: 'swCaps', grad: 'swGrad', plate: 'swPlate', round: 'swRound', border: 'swBorder' }[key], st[key]);
       });
@@ -3982,17 +4624,43 @@ var PDF_WIDTHS = {"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,2
       Array.prototype.forEach.call(document.querySelectorAll('.pane'), function (p) {
         p.classList.toggle('hidden', p.getAttribute('data-pane') !== st.tab);
       });
+      ['aiName', 'aiWhat', 'aiStyle', 'aiExtra', 'aiC1', 'aiC2'].forEach(function (id) {
+        if (saved[id] != null && saved[id] !== '') $(id).value = saved[id];
+      });
+      $('aiQuality').value = st.aiQuality;
+      $('aiEndpoint').value = st.aiEndpoint; $('aiToken').value = st.aiToken; $('aiKey').value = st.aiKey;
+      if (saved.aiPromptText) { $('aiPrompt').value = saved.aiPromptText; st.aiPromptEdited = true; }
+      Array.prototype.forEach.call(document.querySelectorAll('#logoModes button'), function (x) {
+        x.classList.toggle('on', x.getAttribute('data-mode') === st.logoMode);
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('.lpane'), function (p) {
+        p.classList.toggle('hidden', p.getAttribute('data-lpane') !== st.logoMode);
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('#aiColorMode button'), function (x) {
+        x.classList.toggle('on', x.getAttribute('data-cm') === st.aiColorMode);
+      });
+      $('aiColorPickers').classList.toggle('hidden', st.aiColorMode !== 'pick');
+      Array.prototype.forEach.call(document.querySelectorAll('#aiBackend button'), function (x) {
+        x.classList.toggle('on', x.getAttribute('data-be') === st.aiBackend);
+      });
+      $('beProxy').classList.toggle('hidden', st.aiBackend !== 'proxy');
+      $('beOpenai').classList.toggle('hidden', st.aiBackend !== 'openai');
       if (saved.logoData) {
         var im = new Image();
         im.onload = function () { im.__src = saved.logoData; st.logo = im; qrCache.key = '';
           $('logoThumb').src = saved.logoData; $('logoName').textContent = st.logoName || 'logo';
-          $('logoInfo').classList.remove('hidden'); $('logoSizeRow').classList.remove('hidden');
+          $('logoInfo').classList.remove('hidden');
+          syncLogoControls();
           refresh(); };
         im.src = saved.logoData;
       }
     }
     $('qr2wrap').style.opacity = st.grad ? '1' : '.4';
     markPreset();
+    syncLogoControls();
+    if (!$('aiName').value) $('aiName').value = st.top;
+    syncPrompt();
+    renderGallery();
     applyLang();
     // webfonts change nothing about layout (metrics come from the tables) but
     // the preview text is drawn with them, so repaint once they land.
