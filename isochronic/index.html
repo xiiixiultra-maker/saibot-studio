@@ -231,6 +231,25 @@ details.numbers[open] summary::before { content: "\2212"; }
 .export-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
 .export-row .meta { color: var(--ink3); font-size: 13.5px; }
 
+/* ---------- agent mode ---------- */
+.agdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ink3); transition: background .3s, box-shadow .3s; }
+.agdot[data-s="idle"], .agdot[data-s="done"], .agdot[data-s="work"] { background: var(--band); }
+.agdot[data-s="work"] { box-shadow: 0 0 9px var(--band); }
+.agdot[data-s="wait"] { background: var(--ink2); }
+.agdot[data-s="needs"] { background: #f4b63f; box-shadow: 0 0 11px #f4b63f; animation: agpulse 1.2s ease-in-out infinite; }
+@keyframes agpulse { 50% { transform: scale(1.55); opacity: .6; } }
+html.calm .agdot { animation: none; }
+@media (prefers-reduced-motion: reduce) { .agdot { animation: none; } }
+.agico { position: relative; display: inline-flex; }
+.agico .agdot { position: absolute; top: -3px; right: -4px; width: 7px; height: 7px; box-shadow: 0 0 0 2px var(--bg); }
+.agico .agdot[data-s="needs"], .agico .agdot[data-s="work"] { box-shadow: 0 0 0 2px var(--bg), 0 0 9px currentColor; }
+.agent-status { display: flex; align-items: center; gap: 11px; padding: 12px 15px; margin: 4px 0 6px; border-radius: 16px; background: rgba(255,255,255,.04); border: 1px solid var(--line); color: var(--ink2); font-size: 14.5px; transition: background .3s, border-color .3s; }
+.agent-status b { color: var(--ink); font-weight: 500; }
+.agent-status.needs { background: rgba(244,182,63,.1); border-color: rgba(244,182,63,.45); }
+.callout.agent { cursor: pointer; }
+.callout.agent .agdot { margin: 0 1px; }
+.callout.agent.needs { color: var(--ink); border-color: rgba(244,182,63,.45); background: rgba(244,182,63,.1); }
+
 /* ---------- look menu ---------- */
 .look { position: relative; }
 .look summary { list-style: none; }
@@ -321,6 +340,10 @@ dialog p b { color: var(--ink); font-weight: 500; }
     </svg>
     <div><h1 class="display-w">Isochronic Studio</h1><p>Pulses, breath and space for your mind</p></div>
   </div>
+  <button class="btn ghost" id="agentBtn" title="Agent mode: the session follows your coding agent" hidden>
+    <span class="agico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 7.5 4.5 4.5L5 16.5M12.5 17H19"/></svg><i class="agdot" data-s="off"></i></span>
+    <span class="lbl-wide">Agent</span>
+  </button>
   <button class="btn ghost" id="bedsBtn" title="Link the folder that holds your music beds">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2h9A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>
     <span class="lbl-wide" id="bedsLabel">Link beds</span>
@@ -420,6 +443,7 @@ dialog p b { color: var(--ink); font-weight: 500; }
         <button class="tab" data-tab="ambience">Ambience</button>
         <button class="tab" data-tab="bed">Music bed</button>
         <button class="tab" data-tab="export">Export</button>
+        <button class="tab" data-tab="agent" hidden>Agent</button>
       </div>
 
       <div class="pane" data-pane="tone">
@@ -578,6 +602,30 @@ dialog p b { color: var(--ink); font-weight: 500; }
             <div class="row-btns"><button class="btn small" id="mineOut">Download my presets</button><button class="btn small" id="mineIn">Import presets</button></div>
           </div>
         </div>
+      </div>
+
+      <div class="pane" data-pane="agent">
+        <div class="field sw"><span class="lbl">Follow my agent</span><label class="switch"><input type="checkbox" id="agOn" aria-label="Follow my agent"><span></span></label></div>
+        <div class="agent-status" id="agStatus"><i class="agdot" data-s="off"></i><span></span></div>
+        <div class="cols">
+          <div>
+            <div class="row-label">When it needs you</div>
+            <div class="field"><label for="ag-hz">Lift to</label><input type="range" id="ag-hz" data-ag="hz" min="13" max="30" step="0.5"><span class="val"><input class="num" type="number" data-ag="hz" min="5" max="60" step="0.5"><span class="unit">Hz</span></span></div>
+            <div class="field"><label for="ag-up">Glide up</label><input type="range" id="ag-up" data-ag="up" min="1" max="30" step="1"><span class="val"><input class="num" type="number" data-ag="up" min="0.5" max="60" step="0.5"><span class="unit">s</span></span></div>
+            <div class="field sw"><span class="lbl">Call chime</span><label class="switch"><input type="checkbox" data-ag="call" aria-label="Call chime"><span></span></label></div>
+            <div class="row-label">When it gets going again</div>
+            <div class="field"><label for="ag-down">Glide back</label><input type="range" id="ag-down" data-ag="down" min="1" max="30" step="1"><span class="val"><input class="num" type="number" data-ag="down" min="0.5" max="60" step="0.5"><span class="unit">s</span></span></div>
+          </div>
+          <div>
+            <div class="row-label">When it finishes</div>
+            <div class="field sw"><span class="lbl">Done chime</span><label class="switch"><input type="checkbox" data-ag="done" aria-label="Done chime"><span></span></label></div>
+            <div class="field"><label for="ag-db">Chime level</label><input type="range" id="ag-db" data-ag="db" min="-24" max="6" step="0.5"><span class="val"><input class="num" type="number" data-ag="db" min="-40" max="12" step="0.5"><span class="unit">dB</span></span></div>
+            <div class="row-label">Try it</div>
+            <div class="row-btns" id="agTests"><button class="btn small" data-agtest="needs">Needs you</button><button class="btn small" data-agtest="working">Back to work</button><button class="btn small" data-agtest="done">Finished</button></div>
+          </div>
+        </div>
+        <p class="hint">While your agent works, your session plays as usual. When it needs your OK or your reply, the pulse glides up into beta and a call chime rings. When it finishes, the end chime rings instead of a system ding. Both chimes are tuned to your carrier, so they land in key with whatever is playing. Free play never ends, which suits a long coding session.</p>
+        <div id="agSetup"></div>
       </div>
     </div>
   </section>
@@ -777,6 +825,7 @@ const KV16 = new Float64Array(NV).fill(smooth16(0.03)); KV16[IX.fc] = smooth16(0
 const K_DUCK = 1 - Math.exp(-1 / (0.004 * SR)), K_START = 1 - Math.exp(-1 / (0.05 * SR));
 const K_FREE = 1 - Math.exp(-1 / (0.35 * SR)), K_PAN = 1 - Math.exp(-1 / (0.006 * SR));
 const SPACE_CAL = 0.3;                 // Freeverb runs hot: at 100% the wet sits about level with the dry tone
+const BELL = { parts: [1, 2.76, 5.4], amps: [1, 0.35, 0.12], taus: [1.9, 0.75, 0.28] };   // the chime voice
 
 function createEngine(P0, opt = {}) {
   const live = !!opt.live, dt = 1 / SR, seed = (opt.seed >>> 0) || 7;
@@ -799,6 +848,7 @@ function createEngine(P0, opt = {}) {
   const CN = 12, cF = new Float64Array(CN * 3), cPh = new Float64Array(CN * 3), cA = new Float64Array(CN * 3), cM = new Float64Array(CN * 3);
   let dLive = false, cLive = false, verb = null, verbOn = false, bVal = 0, bK = -1, driftF = 1, sched = [];
   const BR = new Float64Array(3);
+  let liftOn = false, liftA = 0, liftT = 0, liftUp = 0, liftDn = 0, liftHz = 16;   // agent mode, live playback only
 
   function configure() {
     const tim = TIMBRES[P.timbre] || TIMBRES.sine; nP = tim.length; let gs = 0;
@@ -839,7 +889,7 @@ function createEngine(P0, opt = {}) {
     if (initial) { tv[IX.swell] = 1; cv.set(tv); }
   }
   function trigger(freq, amp) {
-    const parts = [1, 2.76, 5.4], amps = [1, 0.35, 0.12], taus = [1.9, 0.75, 0.28];
+    const { parts, amps, taus } = BELL;
     for (let s = 0; s < CN; s++) {
       if (cA[s * 3] > 1e-5) continue;
       for (let j = 0; j < 3; j++) { const q = s * 3 + j; cF[q] = freq * parts[j]; cPh[q] = 0; cA[q] = amp * amps[j]; cM[q] = Math.exp(-dt / taus[j]); }
@@ -898,6 +948,11 @@ function createEngine(P0, opt = {}) {
       if ((gi & 63) === 0) block(_t);
       dk += (duckT - dk) * duckK;
       if (journey) f = map.at(_t); else { fS += (freeT - fS) * K_FREE; f = fS; }
+      if (liftOn) {                             // agent mode: glide the pulse up into beta while your agent needs you
+        if (liftA !== liftT) liftA = liftT > liftA ? Math.min(liftT, liftA + liftUp) : Math.max(liftT, liftA - liftDn);
+        if (liftA > 0) { const s = liftA * liftA * (3 - 2 * liftA); f *= Math.pow(shapeK === 4 ? 1.6 : Math.max(liftHz / f, 1.25), s); }
+        else liftOn = false;
+      }
       f *= driftF;
       ph += f * dt; if (ph >= 1) ph -= 1;
       const duty = cv[IX.duty], ramp = cv[IX.ramp], floor = cv[IX.floor];
@@ -1044,11 +1099,40 @@ function createEngine(P0, opt = {}) {
       P = q; bed = nb; configure(); targets(false);
     },
     setFree(hz) { freeT = hz; },
+    lift(on, o = {}) {                          // agent mode: glide up to o.hz over o.up seconds, back down over o.down
+      if (!live) return;                        // exports never lift, so they stay sample-exact with iso.py
+      liftT = on ? 1 : 0; liftHz = clamp(+o.hz || 16, 1, 200);
+      liftUp = 1 / (Math.max(0.1, +o.up || 8) * SR); liftDn = 1 / (Math.max(0.1, +o.down || 12) * SR);
+      if (on || liftA > 0) liftOn = true;
+    },
+    get lifted() { return liftA; },
     snapshot() { return { t, ph: modPh, rate: lastF }; },
     get t() { return t; },
     get ended() { return ended; },
     get endAt() { return map.total + (P.endChime ? 4.5 : 0); },
   };
+}
+
+/* ------------------------------------------------------------ agent cues */
+function agentChimeNotes(kind, carrier) {       // [seconds, Hz, level], in the key of the carrier
+  const base = foldPitch(carrier * 2);          // same register as the end and guide chimes
+  return kind === "done"
+    ? [[0, base, 0.2], [0.6, base * 1.25, 0.18], [1.2, base * 1.5, 0.18]]   // the end chime: root, third, fifth
+    : [[0, base * 1.5, 0.16], [0.24, base * 2, 0.18]];                     // needs you: fifth up to the octave
+}
+function renderBell(notes, tail = 6.5) {        // the engine's chime voice on its own, so cues ring even when nothing plays
+  const len = Math.ceil((Math.max(...notes.map(n => n[0])) + tail) * SR), out = new Float32Array(len), dt = 1 / SR;
+  for (const [at, freq, amp] of notes) {
+    const i0 = Math.round(at * SR);
+    for (let j = 0; j < 3; j++) {
+      const fi = freq * BELL.parts[j] * dt, m = Math.exp(-dt / BELL.taus[j]);
+      let a = amp * BELL.amps[j], p = 0;
+      for (let i = i0; i < len && a > 1e-5; i++) { p += fi; if (p >= 1) p -= 1; out[i] += a * sw(p); a *= m; }
+    }
+  }
+  const fl = Math.round(1.2 * SR);              // ease the last of the ring out instead of cutting it
+  for (let i = 0; i < fl && i < len; i++) { const s = sn(i / fl * 0.25); out[len - 1 - i] *= s * s; }
+  return out;
 }
 
 /* ------------------------------------------------------------ presets */
@@ -1158,9 +1242,28 @@ const PRESETS = [
   { id: "ghost", cat: "track", name: "Ghost", desc: "Whispers turn friendly, then silly, then calm.", phones: true,
     segs: [[12, 12, 150], [12, 7.5, 30], [7.5, 7.5, 120], [7.5, 9, 20], [9, 9, 100], [9, 5.5, 40], [5.5, 5.5, 140]], carrier: 294, timbre: "warm", ramp: 8,
     floor: 0.05, toneDb: -16, bed: "ghost_track.wav", bedDb: -2, bedMod: 0.1, fade: 3 },
+  { id: "rhapsody", cat: "track", name: "Rhapsody Cartridge", desc: "A Hungarian lament, then a dance that speeds up from 150 to 300 BPM.",
+    segs: [[6.4, 6.4, 125.0], [6.4, 4.8, 5.71], [4.8, 8, 5.0], [8, 4.8, 5.0], [4.8, 4.8, 3.34], [10, 10, 57.6], [10, 12, 16.0], [12, 12, 48.0], [12, 14, 16.0], [14, 14, 24.0], [14, 8, 8.73], [8, 8, 48.0], [8, 12, 25.6], [12, 12, 16.0], [12, 16, 16.0], [16, 16, 48.0], [16, 20, 16.0], [20, 20, 59.2], [20, 8, 2.28], [8, 8, 4.01]],
+    carrier: 288.33, timbre: "full", ramp: 3, toneDb: -16, bed: "rhapsody_track.wav", bedDb: -2, bedMod: 0.1, fade: 1 },
+  { id: "nocturne", cat: "track", name: "Nocturne Cartridge", desc: "One night in D-flat: a nocturne, two storms and a sunrise.",
+    segs: [[6.4, 6.4, 125.0], [6.4, 8, 8.89], [8, 10, 42.67], [10, 12, 34.91], [12, 14, 9.84], [14, 14, 36.57], [14, 16, 17.07], [16, 7, 11.13], [6.4, 6.4, 100.0], [8, 14, 23.27], [14, 18, 16.0], [18, 18, 24.0], [8, 8, 48.0], [8, 5.6, 18.83], [5.6, 5.6, 5.72]],
+    carrier: 272.14, timbre: "full", ramp: 3, toneDb: -16, bed: "nocturne_track.wav", bedDb: -2, bedMod: 0.1, fade: 1 },
+  { id: "bossrush", cat: "track", name: "Boss Rush", desc: "Six bosses back to back, each one faster, then an A major victory.",
+    segs: [[8, 8, 16.0], [11, 11, 69.82], [8, 8, 24.0], [12, 12, 64.0], [8.5, 8.5, 22.59], [13, 14, 56.89], [9, 9, 21.33], [14, 16, 51.2], [9, 9, 14.22], [16, 18, 50.82], [18, 20, 13.48], [20, 20, 25.6], [12, 12, 32.0], [8, 8, 15.99], [8, 8, 4.01]],
+    carrier: 432, timbre: "full", ramp: 3, toneDb: -16, bed: "bossrush_track.wav", bedDb: -2, bedMod: 0.1, fade: 1 },
+  { id: "requiem", cat: "track", name: "Requiem Cartridge", desc: "Grief to glory: a funeral march reborn as a chorale.",
+    segs: [[5.6, 5.6, 102.86], [10, 10, 57.6], [12, 12, 21.33], [13, 15, 45.72], [15, 8, 5.56], [8, 8, 2.0], [6.4, 6.4, 100.0], [6.4, 16, 57.14], [16, 16, 32.0], [16, 6.4, 11.43], [6.4, 6.4, 5.01]],
+    carrier: 342.88, timbre: "full", ramp: 3, toneDb: -16, bed: "requiem_track.wav", bedDb: -2, bedMod: 0.1, fade: 1 },
+  { id: "seasons", cat: "track", name: "Seasons Cartridge", desc: "A year in E: spring, a summer storm, autumn, winter and back.",
+    segs: [[10, 10, 83.2], [7, 7, 36.57], [7, 15, 23.27], [15, 15, 38.4], [12, 12, 48.0], [12, 7, 26.95], [9, 9, 42.67], [6, 6, 42.66], [6, 10, 16.0], [10, 16, 39.39], [16, 16, 24.0], [16, 8, 2.66], [8, 8, 4.01]],
+    carrier: 323.63, timbre: "full", ramp: 3, toneDb: -16, bed: "seasons_track.wav", bedDb: -2, bedMod: 0.1, fade: 1 },
+  { id: "credits", cat: "track", name: "Credits Roll", desc: "The goodbye: a farewell theme, and every cartridge remembered.",
+    segs: [[6.4, 6.4, 20.0], [8, 8, 48.0], [6.4, 6.4, 80.0], [6.4, 10, 15.61], [10, 12, 58.18], [12, 12, 32.0], [12, 16, 36.57], [16, 16, 24.0], [6.4, 6.4, 30.01], [6.4, 6.4, 5.0]],
+    carrier: 256.87, timbre: "full", ramp: 3, toneDb: -16, bed: "credits_track.wav", bedDb: -2, bedMod: 0.1, fade: 1 },
 ];
 const ISO_TWINS = new Set(["sleep", "meditate", "creative", "flow", "focus", "deepfocus", "gamma", "study", "jsrf", "dark", "accel", "chip",
-  "sonata", "tempest", "fugue", "rag", "rollers", "singularity", "teacher", "garden", "yeti", "ghost"]);
+  "sonata", "tempest", "fugue", "rag", "rollers", "singularity", "teacher", "garden", "yeti", "ghost",
+  "rhapsody", "nocturne", "bossrush", "requiem", "seasons", "credits"]);
 const PRESET_META = new Set(["id", "cat", "name", "desc", "phones"]);
 
 function normalize(p) {
@@ -1227,7 +1330,7 @@ const Beds = {
   files: new Map(), current: null, loading: null, missing: null, dirHandle: null, needsReconnect: false,
   get count() { return this.files.size; },
   async fileOf(v) { return v instanceof File ? v : await v.getFile(); },
-  async decode(ab, name) {
+  async decode(ab, name, ceil = 0) {
     const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     const buf = await new Ctx(2, 1, SR).decodeAudioData(ab);
     const L = buf.getChannelData(0), R = buf.numberOfChannels > 1 ? buf.getChannelData(1) : null, n = buf.length;
@@ -1235,8 +1338,9 @@ const Beds = {
     const chans = R && !same ? [L, R] : [L], SL = 1 << 20, breathe = () => new Promise(r => setTimeout(r, 0));
     let pk = 0;                                            // sliced so live playback keeps its buffer topped up
     for (const X of chans) for (let o = 0; o < n; o += SL) { const e = Math.min(n, o + SL); for (let i = o; i < e; i++) { const a = X[i] < 0 ? -X[i] : X[i]; if (a > pk) pk = a; } await breathe(); }
+    if (ceil && pk > ceil) pk = ceil;                     // codec overshoot must not set the level, it gets clipped back instead
     const s = pk > 0 ? 32767 / pk : 1, out = chans.map(() => new Int16Array(n));
-    for (let c = 0; c < chans.length; c++) { const X = chans[c], Y = out[c]; for (let o = 0; o < n; o += SL) { const e = Math.min(n, o + SL); for (let i = o; i < e; i++) Y[i] = Math.round(X[i] * s); await breathe(); } }
+    for (let c = 0; c < chans.length; c++) { const X = chans[c], Y = out[c]; for (let o = 0; o < n; o += SL) { const e = Math.min(n, o + SL); for (let i = o; i < e; i++) { const v = Math.round(X[i] * s); Y[i] = v > 32767 ? 32767 : v < -32767 ? -32767 : v; } await breathe(); } }
     return { name, L: out[0], R: out[1] || null, len: n, scale: 1 / 32767, dur: n / SR, stereo: chans.length > 1 };
   },
   index(entries) { for (const [name, h] of entries) this.files.set(name.toLowerCase(), h); this.needsReconnect = false; renderBedUI(); },
@@ -1277,17 +1381,17 @@ const Beds = {
     if (this.current && this.current.name.toLowerCase() === name.toLowerCase()) { renderBedUI(); return; }
     const token = Symbol(); this.loading = { name, token }; renderBedUI(); Player.pump();
     try {
-      let ab = null;
+      let ab = null, ceil = 0;
       const h = this.files.get(name.toLowerCase());
       if (h) ab = await (await this.fileOf(h)).arrayBuffer();
       else if (/^https?:$/.test(location.protocol)) {
         const stem = name.replace(/\.[^.]+$/, "");   // online copies of the beds are compressed m4a
         for (const u of ["beds/" + stem + ".m4a", "beds/" + name, "beds/" + stem + ".mp3", name]) {
-          try { const r = await fetch(u); if (r.ok) { ab = await r.arrayBuffer(); break; } } catch (e) {}
+          try { const r = await fetch(u); if (r.ok) { ab = await r.arrayBuffer(); if (u !== "beds/" + name && u !== name) ceil = BED_PEAK; break; } } catch (e) {}
         }
       }
       if (!ab) { if (this.loading && this.loading.token === token) { this.loading = null; this.missing = name; if (this.current) { this.current = null; Player.update(); } } renderBedUI(); return; }
-      const b = await this.decode(ab, name);
+      const b = await this.decode(ab, name, ceil);
       if (!this.loading || this.loading.token !== token) return;
       this.loading = null; this.current = b; Player.update(); renderBedUI();
     } catch (e) {
@@ -1302,23 +1406,39 @@ const Beds = {
   },
 };
 
+// Every shipped bed WAV peaks at 29203 (-1 dBFS). Its compressed online copy overshoots that by 1 to 6 dB,
+// so it is scaled as if it peaked there, which keeps the bed as loud as the WAV the PC studio reads.
+const BED_PEAK = 29203 / 32768;
+
 /* ------------------------------------------------------------ live player */
 const Player = {
   ac: null, master: null, bus: null, eng: null, q: [], timer: 0, playing: false, nextTime: 0, underruns: 0,
+  held: null, heldBy: null, lastOff: null, idleT: 0, suspending: null, startTok: null,
   async ctx() {
+    // iPhone: "playback" keeps sound going with the screen locked and the silent switch on (iOS 17.6+)
+    if (navigator.audioSession && navigator.audioSession.type !== "playback") { try { navigator.audioSession.type = "playback"; } catch (e) {} }
     if (!this.ac) {
       const AC = window.AudioContext || window.webkitAudioContext;
       this.ac = new AC({ sampleRate: SR, latencyHint: "interactive" });
       this.master = this.ac.createGain(); this.master.connect(this.ac.destination); this.setVolume(ui.volume);
+      this.ac.onstatechange = () => this.onState();
     }
-    if (this.ac.state !== "running") { try { await this.ac.resume(); } catch (e) {} }
+    if (this.suspending) await this.suspending;           // a pause from the page may still be putting the context to sleep
+    if (this.ac.state !== "running") { this.held = null; try { await this.ac.resume(); } catch (e) {} }   // the page woke it, so onState must not restart a held session
     return this.ac;
   },
-  setVolume(v) { if (this.master) this.master.gain.setTargetAtTime(Math.pow(clamp(v, 0, 100) / 100, 1.6), this.ac.currentTime, 0.03); },
+  setVolume(v) {                               // never exactly 0: a silent page loses its hold on the audio once the phone locks
+    if (this.master) this.master.gain.setTargetAtTime(Math.max(1e-4, Math.pow(clamp(v, 0, 100) / 100, 1.6)), this.ac.currentTime, 0.03);
+  },
   async play(fromT) {
+    this.held = null; clearTimeout(this.idleT);
+    const tok = this.startTok = {};
     await this.ctx();
+    if (this.startTok !== tok) { if (!this.startTok) this.sleep(); return; }   // Pause or Stop came while the context was waking up
     this.halt();
+    this.nowPlaying();
     this.eng = createEngine(patch, { live: true, mode: ui.mode, bed: Beds.current, seed: 7, startT: ui.mode === "journey" ? fromT : 0, freeRate: patch.freeRate });
+    Agent.apply();
     this.bus = this.ac.createGain(); this.bus.connect(this.master);
     this.nextTime = Math.ceil((this.ac.currentTime + 0.06) * SR) / SR;
     this.q = []; this.playing = true;
@@ -1359,13 +1479,147 @@ const Player = {
     }
     this.bus = null; this.q = []; this.playing = false; this.eng = null;
   },
-  pause() { const p = this.position(); if (p && ui.mode === "journey") playT = Math.min(p.t, rateMapUI.total); this.halt(); syncTransport(); },
-  stop() { this.halt(); playT = 0; syncTransport(); },
-  finished() { this.halt(); playT = 0; syncTransport(); },
+  pause(sleep = true) { this.startTok = null; const p = this.position(); if (p && ui.mode === "journey") playT = Math.min(p.t, rateMapUI.total); this.halt(); if (sleep) this.sleep(); syncTransport(); },
+  stop() { this.held = null; this.startTok = null; this.halt(); this.sleep(); playT = 0; syncTransport(); },
+  finished() { this.startTok = null; this.halt(); this.sleep(); playT = 0; syncTransport(); },
+  // After a pause from the page the context goes to sleep once the fade is done, so the lock screen drops its tile
+  // instead of showing a silent "playing" session that its buttons could not restart. Agent mode (desktop only) stays awake for its chimes.
+  sleep() {
+    clearTimeout(this.idleT);
+    if (Agent.cfg.on && Agent.shown) return;
+    this.idleT = setTimeout(() => {
+      if (this.playing || this.held || !this.ac || this.ac.state === "closed") return;
+      this.suspending = this.ac.suspend().catch(() => {}).finally(() => { this.suspending = null; });
+    }, 80);
+  },
   seek(t) { playT = clamp(t, 0, rateMapUI.total); if (this.playing && ui.mode === "journey") this.play(playT); },
   update() { if (this.eng) { this.eng.update(patch, { bed: Beds.current }); this.eng.setFree(patch.freeRate); } },
+  // Lock screen play/pause and phone calls suspend or resume the AudioContext directly, so the player follows along
+  onState() {
+    const s = this.ac.state;
+    if (s !== "running") { this.lastOff = s; if (this.playing) { this.held = ui.mode; this.heldBy = s; this.pause(false); } return; }
+    if (!this.held || (this.heldBy === "suspended" && this.lastOff === "interrupted")) return;   // paused on the lock screen, then a call: iOS resumes after the call, the session stays paused
+    this.held = null; this.play(ui.mode === "journey" ? playT : 0);   // in whatever mode the page is in now
+  },
+  nowPlaying() {                               // lock screen title, otherwise iOS shows the domain
+    if (!navigator.mediaSession || typeof MediaMetadata === "undefined") return;
+    const p = presetById(activeId);
+    try { navigator.mediaSession.metadata = new MediaMetadata({ title: (p && p.name) || "Custom session", artist: BASE_TITLE }); } catch (e) {}
+  },
 };
 document.addEventListener("visibilitychange", () => Player.pump());
+
+/* ------------------------------------------------------------ agent mode */
+// Claude Code hooks -> tools/agent_hook.py -> tools/studio_server.py -> this tab over /agent/stream.
+// When your agent needs you the pulse glides up into beta and a call chime rings, when it finishes the end chime rings.
+const BASE_TITLE = document.title;
+const AGENT_LIM = { hz: [5, 60], up: [0.5, 60], down: [0.5, 60], db: [-40, 12] };
+const Agent = {
+  cfg: Object.assign({ on: false, hz: 16, up: 8, down: 12, call: true, done: true, db: 0 }, store.get("agent", {})),
+  es: null, conn: "off", hooks: null, needs: 0, working: 0, sessions: 0, reason: null, tool: null,
+  last: null, lastAt: 0, test: false, chimes: 0,
+  get local() { return location.protocol === "http:" && /^(127\.0\.0\.1|localhost)$/.test(location.hostname); },
+  get shown() { return this.local || location.protocol === "file:"; },
+  get waiting() { return this.cfg.on && (this.needs > 0 || this.test); },
+  set(k, v) {
+    if (AGENT_LIM[k]) v = clamp(v, AGENT_LIM[k][0], AGENT_LIM[k][1]);
+    this.cfg[k] = v; store.set("agent", this.cfg); this.apply();
+  },
+  setOn(v) {
+    this.cfg.on = !!v; store.set("agent", this.cfg);
+    if (this.cfg.on) { Player.ctx().then(renderAgent); this.connect(); } else this.disconnect();
+    this.apply(); renderAgent();
+  },
+  connect() {
+    if (!this.local || this.es) return;
+    this.conn = "connecting";
+    const es = this.es = new EventSource("/agent/stream");
+    es.onopen = () => { this.conn = "on"; renderAgent(); };
+    es.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (err) { return; } this.onMsg(m); };
+    es.onerror = () => {
+      if (this.es !== es) return;
+      if (es.readyState === 2) { this.es = null; this.conn = "old"; } else this.conn = "retrying";   // closed for good means no agent route here
+      renderAgent();
+    };
+  },
+  disconnect() {
+    if (this.es) { this.es.close(); this.es = null; }
+    this.conn = "off"; this.needs = this.working = this.sessions = 0; this.test = false;
+  },
+  onMsg(m) {
+    if (m.type === "hello") this.hooks = m.hooks || [];
+    this.needs = m.needs | 0; this.working = m.working | 0; this.sessions = m.sessions | 0;
+    if (m.type === "agent") {
+      this.last = m.event; this.lastAt = Date.now();
+      if (m.event === "needs") { this.reason = m.reason || null; this.tool = m.tool || null; }
+      if (m.chime) this.chime(m.chime);
+    }
+    this.apply(); renderAgent();
+  },
+  apply() {
+    if (Player.eng) Player.eng.lift(this.waiting, { hz: this.cfg.hz, up: this.cfg.up, down: this.cfg.down });
+    const t = (this.waiting ? "● Needs you · " : "") + BASE_TITLE;
+    if (document.title !== t) document.title = t;
+  },
+  async chime(kind) {                          // rings in the key of the carrier, playing or not
+    if (!this.cfg.on || !(kind === "needs" ? this.cfg.call : this.cfg.done)) return;
+    const ac = await Player.ctx(); if (ac.state !== "running") return;
+    const data = renderBell(agentChimeNotes(kind, patch.carrier)), buf = ac.createBuffer(1, data.length, SR);
+    buf.copyToChannel(data, 0);
+    const src = ac.createBufferSource(), g = ac.createGain();
+    g.gain.value = dB(this.cfg.db); src.buffer = buf; src.connect(g); g.connect(Player.master);
+    src.onended = () => { try { g.disconnect(); } catch (e) {} };
+    src.start(); this.chimes++;
+  },
+  async try(ev) {
+    if (!this.cfg.on) this.setOn(true);
+    await Player.ctx();
+    if (this.local && this.conn === "on") {
+      try {
+        const r = await fetch("/agent/test", { method: "POST", headers: { "Content-Type": "application/json", "X-Iso-Page": "1" }, body: JSON.stringify({ event: ev }) });
+        if (r.ok) return;
+      } catch (e) {}
+    }
+    this.test = ev === "needs";                 // no studio server to ask, so play it out right here
+    this.onMsg({ type: "agent", event: ev, chime: ev === "working" ? null : ev, reason: "permission", tool: "Bash",
+                 needs: this.needs, working: this.working, sessions: this.sessions });
+  },
+};
+const AGENT_WHY = { permission: "wants your OK", question: "has a question for you", plan: "has a plan for you to check",
+                    input: "is waiting on your reply", attention: "needs you" };
+const agentTool = t => String(t).startsWith("mcp__") ? String(t).split("__").pop() : String(t);
+function agentState() {                         // [dot, sentence for the tab, short chip for the hero]
+  const A = Agent;
+  if (!A.cfg.on) return ["off", "Agent mode is off. Turn it on and your session follows your coding agent.", ""];
+  if (A.waiting) {
+    const why = A.reason === "permission" && A.tool ? "wants to use " + esc(agentTool(A.tool)) : AGENT_WHY[A.reason] || "needs you";
+    return ["needs", `<b>Your agent needs you.</b> It ${why}.`, "Agent needs you"];
+  }
+  if (!A.local) return ["off", "Agent mode listens through the studio server on this computer.", "Agent offline"];
+  if (A.conn === "old") return ["off", "This tab came from the old studio server. Close its window and open START STUDIO.bat again.", "Agent offline"];
+  if (A.conn !== "on") return ["wait", "Looking for the studio server.", "Agent connecting"];
+  if (A.working) return ["work", A.working > 1 ? `<b>${A.working} agents are working.</b> Stay in it.` : "<b>Your agent is working.</b> Stay in it.", "Agent working"];
+  if (A.last === "done") return ["done", `<b>Your agent finished</b> at ${new Date(A.lastAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.`, "Agent finished"];
+  if (A.hooks && !A.hooks.length) return ["idle", "Connected. Set up the Claude Code hooks below to hear from your agent.", "Agent listening"];
+  return ["idle", "<b>Connected.</b> Waiting for Claude Code.", "Agent listening"];
+}
+function renderAgent() {
+  const [s, line] = agentState(), armed = !!(Player.ac && Player.ac.state === "running");
+  $$("#agentBtn .agdot, #agStatus .agdot").forEach(d => { d.dataset.s = s; });
+  $("#agStatus span").innerHTML = line + (Agent.cfg.on && !armed ? " Click anywhere once so the chimes can play." : "");
+  $("#agStatus").classList.toggle("needs", s === "needs");
+  $("#agOn").checked = Agent.cfg.on;
+  let setup = "";
+  if (location.protocol === "file:") setup = `<p class="hint"><b>Setup.</b> Agent mode talks to Claude Code through the studio server on this computer, so open the studio with START STUDIO.bat instead of the file. The Try it buttons work here too.</p>`;
+  else if (Agent.local && Agent.conn === "on" && Agent.hooks && !Agent.hooks.length) setup = `<p class="hint"><b>One-time setup.</b> Run this once from the ISOCHRONIC folder. If a Claude Code session stays quiet after that, start a new one.</p><pre class="cmd">python tools/agent_hooks.py install</pre>`;
+  else if (Agent.local && Agent.hooks && Agent.hooks.length) setup = `<p class="hint"><b>Claude Code is hooked up.</b> Your sessions report here. If one stays quiet, start a new session. To take the hooks out, run <b>python tools/agent_hooks.py uninstall</b> from the ISOCHRONIC folder.</p>`;
+  const box = $("#agSetup"); if (box._v !== setup) { box._v = setup; box.innerHTML = setup; }
+  renderCallouts();
+}
+function openAgentTab() {
+  setTab("agent"); $(".inspector").scrollIntoView({ behavior: "smooth", block: "start" });
+  const t = $("#tabs"); t.scrollTo({ left: t.scrollWidth, behavior: "smooth" });   // Agent is the last tab, bring it into the strip
+}
 
 /* ------------------------------------------------------------ export */
 let exporting = null;
@@ -1429,7 +1683,7 @@ function loadPreset(id, { autoplay = null } = {}) {
   const p = presetById(id); if (!p) return;
   const was = Player.playing;
   activeId = id; patch = normalize(p); rateMapUI = makeRateMap(patch.segs); playT = 0; TL.dirty = true; TL.sel = null;
-  renderAll(); Beds.ensure(patch.bed); saveSoon();
+  renderAll(); Beds.ensure(patch.bed); saveSoon(); Player.nowPlaying();
   if (autoplay ?? was) { ui.mode = "journey"; syncMode(); Player.play(0); }
 }
 
@@ -1544,6 +1798,10 @@ const ICON = {
 };
 function renderCallouts() {
   const box = $("#callouts"), out = [];
+  if (Agent.cfg.on && Agent.shown) {
+    const [s, , chip] = agentState();
+    if (chip) out.push(`<span class="callout agent${s === "needs" ? " needs" : ""}" data-act="agent" role="button" tabindex="0" title="Agent mode"><i class="agdot" data-s="${s}"></i>${chip}</span>`);
+  }
   if (needsPhones()) out.push(`<span class="callout">${ICON.phones}Headphones on for this one</span>`);
   if (Beds.loading) out.push(`<span class="callout">${ICON.wait}Loading ${esc(Beds.loading.name)}</span>`);
   else if (Beds.missing) out.push(`<span class="callout">${ICON.music}Plays over ${esc(Beds.missing)}<button class="btn small" data-act="link">${Beds.needsReconnect ? "Reconnect beds" : "Link beds folder"}</button></span>`);
@@ -1919,9 +2177,10 @@ function frame() {
     if (TL.dirty || Player.playing) drawTimeline(tNow);
     if (!$("#immersive").hidden) {
       drawOrb($("#imOrb"), orbState);
-      const ic = $("#imCue"), icv = patch.breathOn ? cue : `<b>${band.name}</b><span>${fmtHz(rate)} Hz</span>`;
+      const ic = $("#imCue"), icv = Agent.waiting && !patch.breathOn ? `<b>Your agent needs you</b><span>${band.name} · ${fmtHz(rate)} Hz</span>`
+        : patch.breathOn ? cue : `<b>${band.name}</b><span>${fmtHz(rate)} Hz</span>`;
       if (ic._v !== icv) { ic._v = icv; ic.innerHTML = icv; }
-      $("#imSub").textContent = `${band.name} · ${fmtHz(rate)} Hz`;
+      $("#imSub").textContent = `${band.name} · ${fmtHz(rate)} Hz${Agent.waiting ? " · your agent needs you" : ""}`;
       setFixed($("#imTime"), journey ? `${fmtTime(Math.min(tNow, total))} / ${fmtTime(total)}` : fmtTime(tNow));
       $("#imProg").style.width = journey ? (clamp(tNow / total, 0, 1) * 100) + "%" : "0%";
     }
@@ -2057,7 +2316,27 @@ function wire() {
   $("#pEdited").addEventListener("click", () => { if (activeId) loadPreset(activeId, { autoplay: Player.playing }); });
   $("#bedsBtn").addEventListener("click", () => Beds.needsReconnect ? Beds.reconnect() : Beds.link());
   $("#bedLink").addEventListener("click", () => Beds.needsReconnect ? Beds.reconnect() : Beds.link());
-  $("#callouts").addEventListener("click", e => { if (e.target.closest("[data-act=link]")) Beds.needsReconnect ? Beds.reconnect() : Beds.link(); });
+  $("#callouts").addEventListener("click", e => {
+    if (e.target.closest("[data-act=link]")) Beds.needsReconnect ? Beds.reconnect() : Beds.link();
+    else if (e.target.closest("[data-act=agent]")) openAgentTab();
+  });
+  $("#callouts").addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.closest("[data-act=agent]")) { e.preventDefault(); openAgentTab(); } });
+  $("#agentBtn").addEventListener("click", openAgentTab);
+  $("#agOn").addEventListener("change", e => Agent.setOn(e.target.checked));
+  $$("[data-ag]").forEach(el => {
+    const k = el.dataset.ag;
+    if (el.type === "checkbox") { el.checked = !!Agent.cfg[k]; el.addEventListener("change", () => Agent.set(k, el.checked)); return; }
+    el.value = Agent.cfg[k]; if (el.type === "range") fillRange(el);
+    el.addEventListener("input", () => {
+      const v = parseFloat(el.value); if (!isFinite(v)) return;
+      Agent.set(k, v);
+      $$(`[data-ag="${k}"]`).forEach(o => { if (o !== el) o.value = Agent.cfg[k]; if (o.type === "range") fillRange(o); });
+    });
+    if (el.classList.contains("num")) el.addEventListener("blur", () => { el.value = Agent.cfg[k]; });
+  });
+  $("#agTests").addEventListener("click", e => { const b = e.target.closest("[data-agtest]"); if (b) Agent.try(b.dataset.agtest); });
+  const arm = () => { if (Agent.cfg.on && !(Player.ac && Player.ac.state === "running")) Player.ctx().then(renderAgent); };
+  document.addEventListener("pointerdown", arm, true); document.addEventListener("keydown", arm, true);
   $("#bedPick").addEventListener("click", () => $("#fileInput").click());
   $("#bedClear").addEventListener("click", () => setPatch({ bed: null }));
   $("#fileInput").addEventListener("change", e => { Beds.useFile(e.target.files[0]); e.target.value = ""; });
@@ -2122,7 +2401,11 @@ function boot() {
   if (!LOOKS.some(l => l[0] === ui.look)) ui.look = "basteleur";
   if (qs.get("mode") === "free" || qs.get("mode") === "journey") ui.mode = qs.get("mode");
   renderLook(); wire();
+  if (Agent.shown) { $("#agentBtn").hidden = false; $('.tab[data-tab="agent"]').hidden = false; }
+  else if (ui.tab === "agent") ui.tab = "tone";
   setTab(ui.tab); syncMode(); renderAll(); drawStars();
+  if (Agent.cfg.on) Agent.connect();
+  renderAgent();
   if (patch.bed) Beds.ensure(patch.bed);
   Beds.restore();
   if (qs.get("view") === "immersive") openImmersive();
