@@ -143,6 +143,9 @@ h3.title { font: 400 23px/1.1 var(--display-sm); margin: 0; }
 .play { width: 66px; height: 66px; border-radius: 50%; border: 0; display: grid; place-items: center; color: #07060c; background: var(--band); box-shadow: 0 0 0 7px color-mix(in srgb, var(--band) 16%, transparent), 0 12px 44px color-mix(in srgb, var(--band) 42%, transparent); transition: transform .15s; flex: none; }
 .play:active { transform: scale(.95); }
 .play svg { width: 28px; height: 28px; }
+.waiting svg { animation: spinld .9s linear infinite; }
+@keyframes spinld { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .waiting svg { animation: none; } }
 .vol { display: inline-flex; align-items: center; gap: 8px; color: var(--ink2); min-width: 130px; }
 .vol svg { width: 20px; height: 20px; flex: none; }
 .vol input { width: 100px; }
@@ -1325,23 +1328,39 @@ let saveTimer = 0;
 function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { store.set("patch", patch); store.set("active", activeId); store.set("ui", ui); }, 300); }
 
 /* ------------------------------------------------------------ beds */
+const breathe = () => new Promise(r => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });   // setTimeout crawls in a hidden tab
 const AUDIO_RE = /\.(wav|mp3|m4a|aac|flac|ogg|oga|opus|webm)$/i;
 const Beds = {
-  files: new Map(), current: null, loading: null, missing: null, dirHandle: null, needsReconnect: false,
+  files: new Map(), current: null, loading: null, missing: null, dirHandle: null, needsReconnect: false, abort: null,
   get count() { return this.files.size; },
   async fileOf(v) { return v instanceof File ? v : await v.getFile(); },
-  async decode(ab, name, ceil = 0) {
+  async decode(ab, name, ceil = 0, alive = null) {
     const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     const buf = await new Ctx(2, 1, SR).decodeAudioData(ab);
+    if (alive && !alive()) return null;
     const L = buf.getChannelData(0), R = buf.numberOfChannels > 1 ? buf.getChannelData(1) : null, n = buf.length;
     let same = !!R; if (R) for (let i = 0; i < n; i += 997) if (L[i] !== R[i]) { same = false; break; }
-    const chans = R && !same ? [L, R] : [L], SL = 1 << 20, breathe = () => new Promise(r => setTimeout(r, 0));
-    let pk = 0;                                            // sliced so live playback keeps its buffer topped up
-    for (const X of chans) for (let o = 0; o < n; o += SL) { const e = Math.min(n, o + SL); for (let i = o; i < e; i++) { const a = X[i] < 0 ? -X[i] : X[i]; if (a > pk) pk = a; } await breathe(); }
-    if (ceil && pk > ceil) pk = ceil;                     // codec overshoot must not set the level, it gets clipped back instead
+    const chans = R && !same ? [L, R] : [L], SL = 1 << 20;   // sliced so live playback keeps its buffer topped up
+    if (ceil) {                                            // compressed online copy: play the decoded floats as they are, scaled to the WAV's peak,
+      for (const X of chans) for (let o = 0; o < n; o += SL) {   // with codec overshoot clipped back like the WAV never had it
+        const e = Math.min(n, o + SL); for (let i = o; i < e; i++) { const v = X[i]; if (v > ceil) X[i] = ceil; else if (v < -ceil) X[i] = -ceil; }
+        await breathe(); if (alive && !alive()) return null;
+      }
+      return { name, L: chans[0], R: chans[1] || null, len: n, scale: 1 / ceil, dur: n / SR, stereo: chans.length > 1 };
+    }
+    let pk = 0;
+    for (const X of chans) for (let o = 0; o < n; o += SL) { const e = Math.min(n, o + SL); for (let i = o; i < e; i++) { const a = X[i] < 0 ? -X[i] : X[i]; if (a > pk) pk = a; } await breathe(); if (alive && !alive()) return null; }
     const s = pk > 0 ? 32767 / pk : 1, out = chans.map(() => new Int16Array(n));
-    for (let c = 0; c < chans.length; c++) { const X = chans[c], Y = out[c]; for (let o = 0; o < n; o += SL) { const e = Math.min(n, o + SL); for (let i = o; i < e; i++) { const v = Math.round(X[i] * s); Y[i] = v > 32767 ? 32767 : v < -32767 ? -32767 : v; } await breathe(); } }
+    for (let c = 0; c < chans.length; c++) { const X = chans[c], Y = out[c]; for (let o = 0; o < n; o += SL) { const e = Math.min(n, o + SL); for (let i = o; i < e; i++) { const v = Math.round(X[i] * s); Y[i] = v > 32767 ? 32767 : v < -32767 ? -32767 : v; } await breathe(); if (alive && !alive()) return null; } }
     return { name, L: out[0], R: out[1] || null, len: n, scale: 1 / 32767, dur: n / SR, stereo: chans.length > 1 };
+  },
+  async read(r, tick) {                                    // the download, with a percentage for the loading callout
+    const total = +r.headers.get("content-length") || 0;
+    if (!total || !r.body || !r.body.getReader) return await r.arrayBuffer();
+    const rd = r.body.getReader(), parts = []; let got = 0;
+    for (;;) { const { done, value } = await rd.read(); if (done) break; parts.push(value); got += value.length; tick(Math.min(99, Math.floor(got / total * 100))); }
+    const out = new Uint8Array(got); let o = 0; for (const q of parts) { out.set(q, o); o += q.length; }
+    return out.buffer;
   },
   index(entries) { for (const [name, h] of entries) this.files.set(name.toLowerCase(), h); this.needsReconnect = false; renderBedUI(); },
   async scan(dir, depth = 0, out = []) {
@@ -1377,26 +1396,38 @@ const Beds = {
   afterLink() { if (patch.bed && (!this.current || this.current.name !== patch.bed)) this.ensure(patch.bed); },
   async ensure(name) {
     this.missing = null;
-    if (!name) { if (this.current) { this.current = null; Player.update(); } renderBedUI(); return; }
-    if (this.current && this.current.name.toLowerCase() === name.toLowerCase()) { renderBedUI(); return; }
-    const token = Symbol(); this.loading = { name, token }; renderBedUI(); Player.pump();
+    const key = name ? name.toLowerCase() : null, local = !!key && this.files.has(key);
+    if (this.loading && this.loading.key === key && (this.loading.local || !local)) return;   // already on its way, unless a linked file can now replace a download
+    if (this.abort) { this.abort.abort(); this.abort = null; }          // a newer pick wins, stop downloading the old one
+    this.loading = null;
+    if (!key) { if (this.current) { this.current = null; Player.update(); } renderBedUI(); Player.bedSettled(); return; }
+    if (this.current && this.current.name.toLowerCase() === key) { renderBedUI(); Player.bedSettled(); return; }
+    const token = Symbol(), alive = () => !!this.loading && this.loading.token === token;
+    this.loading = { name, key, token, local, pct: null, decoding: false };
+    if (this.current) { this.current = null; Player.update(); }         // never play the old track under the new session
+    renderBedUI(); Player.pump();
+    const tick = pct => { if (alive() && this.loading.pct !== pct) { this.loading.pct = pct; renderCallouts(); } };
     try {
       let ab = null, ceil = 0;
-      const h = this.files.get(name.toLowerCase());
+      const h = this.files.get(key);
       if (h) ab = await (await this.fileOf(h)).arrayBuffer();
       else if (/^https?:$/.test(location.protocol)) {
-        const stem = name.replace(/\.[^.]+$/, "");   // online copies of the beds are compressed m4a
+        const stem = name.replace(/\.[^.]+$/, ""), ac = this.abort = new AbortController();   // online copies of the beds are compressed m4a
         for (const u of ["beds/" + stem + ".m4a", "beds/" + name, "beds/" + stem + ".mp3", name]) {
-          try { const r = await fetch(u); if (r.ok) { ab = await r.arrayBuffer(); if (u !== "beds/" + name && u !== name) ceil = BED_PEAK; break; } } catch (e) {}
+          try { const r = await fetch(u, { signal: ac.signal }); if (r.ok) { ab = await this.read(r, tick); if (u !== "beds/" + name && u !== name) ceil = BED_PEAK; break; } }
+          catch (e) { if (!alive()) return; }
         }
+        if (this.abort === ac) this.abort = null;
       }
-      if (!ab) { if (this.loading && this.loading.token === token) { this.loading = null; this.missing = name; if (this.current) { this.current = null; Player.update(); } } renderBedUI(); return; }
-      const b = await this.decode(ab, name, ceil);
-      if (!this.loading || this.loading.token !== token) return;
-      this.loading = null; this.current = b; Player.update(); renderBedUI();
+      if (!alive()) return;
+      if (!ab) { this.loading = null; this.missing = name; renderBedUI(); Player.bedSettled(); return; }
+      this.loading.decoding = true; renderCallouts();
+      const b = await this.decode(ab, name, ceil, alive);
+      if (!b || !alive()) return;
+      this.loading = null; this.current = b; Player.update(); renderBedUI(); Player.bedSettled();
     } catch (e) {
-      console.warn(e); if (this.loading && this.loading.token === token) this.loading = null;
-      this.missing = name; renderBedUI(); toast("Could not read " + name);
+      if (!alive()) return;
+      console.warn(e); this.loading = null; this.missing = name; renderBedUI(); toast("Could not read " + name); Player.bedSettled();
     }
   },
   async useFile(file) {
@@ -1413,7 +1444,7 @@ const BED_PEAK = 29203 / 32768;
 /* ------------------------------------------------------------ live player */
 const Player = {
   ac: null, master: null, bus: null, eng: null, q: [], timer: 0, playing: false, nextTime: 0, underruns: 0,
-  held: null, heldBy: null, lastOff: null, idleT: 0, suspending: null, startTok: null,
+  held: null, heldBy: null, lastOff: null, idleT: 0, suspending: null, startTok: null, waiting: null,
   async ctx() {
     // iPhone: "playback" keeps sound going with the screen locked and the silent switch on (iOS 17.6+)
     if (navigator.audioSession && navigator.audioSession.type !== "playback") { try { navigator.audioSession.type = "playback"; } catch (e) {} }
@@ -1433,8 +1464,13 @@ const Player = {
   async play(fromT) {
     this.held = null; clearTimeout(this.idleT);
     const tok = this.startTok = {};
-    await this.ctx();
+    await this.ctx();                                     // unlock audio inside the tap, even if the music still has to load
     if (this.startTok !== tok) { if (!this.startTok) this.sleep(); return; }   // Pause or Stop came while the context was waking up
+    if (Beds.loading) {                                   // the session's music is still loading: start the moment it lands
+      if (this.playing) this.halt();
+      this.waiting = { fromT }; syncTransport(); return;
+    }
+    this.waiting = null;
     this.halt();
     this.nowPlaying();
     this.eng = createEngine(patch, { live: true, mode: ui.mode, bed: Beds.current, seed: 7, startT: ui.mode === "journey" ? fromT : 0, freeRate: patch.freeRate });
@@ -1480,7 +1516,7 @@ const Player = {
     this.bus = null; this.q = []; this.playing = false; this.eng = null;
   },
   pause(sleep = true) { this.startTok = null; const p = this.position(); if (p && ui.mode === "journey") playT = Math.min(p.t, rateMapUI.total); this.halt(); if (sleep) this.sleep(); syncTransport(); },
-  stop() { this.held = null; this.startTok = null; this.halt(); this.sleep(); playT = 0; syncTransport(); },
+  stop() { this.held = null; this.startTok = null; this.waiting = null; this.halt(); this.sleep(); playT = 0; syncTransport(); },
   finished() { this.startTok = null; this.halt(); this.sleep(); playT = 0; syncTransport(); },
   // After a pause from the page the context goes to sleep once the fade is done, so the lock screen drops its tile
   // instead of showing a silent "playing" session that its buttons could not restart. Agent mode (desktop only) stays awake for its chimes.
@@ -1492,12 +1528,22 @@ const Player = {
       this.suspending = this.ac.suspend().catch(() => {}).finally(() => { this.suspending = null; });
     }, 80);
   },
-  seek(t) { playT = clamp(t, 0, rateMapUI.total); if (this.playing && ui.mode === "journey") this.play(playT); },
+  seek(t) { playT = clamp(t, 0, rateMapUI.total); if (this.waiting) this.waiting.fromT = playT; if (this.playing && ui.mode === "journey") this.play(playT); },
+  bedSettled() { if (this.waiting) { const w = this.waiting; this.waiting = null; this.play(ui.mode === "journey" ? w.fromT : 0); } },
+  cancelWait() { this.waiting = null; this.startTok = null; this.sleep(); syncTransport(); },
   update() { if (this.eng) { this.eng.update(patch, { bed: Beds.current }); this.eng.setFree(patch.freeRate); } },
   // Lock screen play/pause and phone calls suspend or resume the AudioContext directly, so the player follows along
   onState() {
     const s = this.ac.state;
-    if (s !== "running") { this.lastOff = s; if (this.playing) { this.held = ui.mode; this.heldBy = s; this.pause(false); } return; }
+    if (s !== "running") {
+      this.lastOff = s;
+      if (this.playing) { this.held = ui.mode; this.heldBy = s; this.pause(false); }
+      else if (this.waiting) {                  // paused while the music was still loading: stay paused, the lock screen can resume it
+        if (ui.mode === "journey") playT = this.waiting.fromT;
+        this.waiting = null; this.startTok = null; this.held = ui.mode; this.heldBy = s; syncTransport();
+      }
+      return;
+    }
     if (!this.held || (this.heldBy === "suspended" && this.lastOff === "interrupted")) return;   // paused on the lock screen, then a call: iOS resumes after the call, the session stays paused
     this.held = null; this.play(ui.mode === "journey" ? playT : 0);   // in whatever mode the page is in now
   },
@@ -1625,6 +1671,7 @@ function openAgentTab() {
 let exporting = null;
 async function exportWav() {
   if (exporting) return;
+  if (Beds.loading) { toast("The music is still loading, export in a moment"); return; }
   const p = copyPatch(patch), bed = Beds.current, chans = ui.chans === 1 ? 1 : 2;
   const probe = createEngine(p, { mode: "journey", bed, seed: 7 }), frames = Math.ceil(probe.endAt * SR);
   const job = exporting = { cancel: false };
@@ -1681,7 +1728,7 @@ function setPatch(part, opt = {}) {
 }
 function loadPreset(id, { autoplay = null } = {}) {
   const p = presetById(id); if (!p) return;
-  const was = Player.playing;
+  const was = Player.playing || !!Player.waiting;
   activeId = id; patch = normalize(p); rateMapUI = makeRateMap(patch.segs); playT = 0; TL.dirty = true; TL.sel = null;
   renderAll(); Beds.ensure(patch.bed); saveSoon(); Player.nowPlaying();
   if (autoplay ?? was) { ui.mode = "journey"; syncMode(); Player.play(0); }
@@ -1795,6 +1842,7 @@ const ICON = {
   phones: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3.5" y="14" width="4" height="6.5" rx="1.6" fill="currentColor" stroke="none"/><rect x="16.5" y="14" width="4" height="6.5" rx="1.6" fill="currentColor" stroke="none"/></svg>',
   music: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor" stroke="none"/><circle cx="17.5" cy="16" r="2.5" fill="currentColor" stroke="none"/></svg>',
   wait: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+  load: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 4a8 8 0 1 1-8 8"/></svg>',
 };
 function renderCallouts() {
   const box = $("#callouts"), out = [];
@@ -1803,7 +1851,7 @@ function renderCallouts() {
     if (chip) out.push(`<span class="callout agent${s === "needs" ? " needs" : ""}" data-act="agent" role="button" tabindex="0" title="Agent mode"><i class="agdot" data-s="${s}"></i>${chip}</span>`);
   }
   if (needsPhones()) out.push(`<span class="callout">${ICON.phones}Headphones on for this one</span>`);
-  if (Beds.loading) out.push(`<span class="callout">${ICON.wait}Loading ${esc(Beds.loading.name)}</span>`);
+  if (Beds.loading) { const L = Beds.loading; out.push(`<span class="callout">${ICON.wait}${L.decoding ? "Getting the music ready" : "Loading the music" + (L.pct != null ? ` ${L.pct}%` : "")}</span>`); }
   else if (Beds.missing) out.push(`<span class="callout">${ICON.music}Plays over ${esc(Beds.missing)}<button class="btn small" data-act="link">${Beds.needsReconnect ? "Reconnect beds" : "Link beds folder"}</button></span>`);
   box.innerHTML = out.join("");
 }
@@ -2138,13 +2186,14 @@ function setBand(b) {
 }
 function syncTransport() {
   const on = Player.playing;
-  $("#playBtn").innerHTML = on ? ICON.pause : ICON.play; $("#playBtn").setAttribute("aria-label", on ? "Pause" : "Play");
-  $("#imPlay").innerHTML = on ? ICON.pause : ICON.play; $("#imPlay").setAttribute("aria-label", on ? "Pause" : "Play");
+  const w = !!Player.waiting, icon = w ? ICON.load : on ? ICON.pause : ICON.play, lbl = w ? "Loading the music, tap to cancel" : on ? "Pause" : "Play";
+  for (const b of [$("#playBtn"), $("#imPlay")]) { b.innerHTML = icon; b.setAttribute("aria-label", lbl); b.classList.toggle("waiting", w); }
   TL.dirty = true;
 }
 function syncMode() { $$("#modeSeg button").forEach(b => b.classList.toggle("on", b.dataset.mode === ui.mode)); syncUI(); saveSoon(); }
 async function togglePlay() {
-  if (Player.playing) Player.pause();
+  if (Player.waiting) Player.cancelWait();
+  else if (Player.playing) Player.pause();
   else await Player.play(playT >= rateMapUI.total - 0.25 ? 0 : playT);
 }
 let scopePh = 0, lastFrame = performance.now(), spin = 0;
@@ -2313,7 +2362,7 @@ function wire() {
   $("#aboutBtn").addEventListener("click", () => $("#about").showModal()); $("#aboutClose").addEventListener("click", () => $("#about").close());
   $("#saveBtn").addEventListener("click", openSave); $("#saveGo").addEventListener("click", doSave); $("#saveCancel").addEventListener("click", () => $("#saveDlg").close());
   $("#saveName").addEventListener("keydown", e => { if (e.key === "Enter") doSave(); });
-  $("#pEdited").addEventListener("click", () => { if (activeId) loadPreset(activeId, { autoplay: Player.playing }); });
+  $("#pEdited").addEventListener("click", () => { if (activeId) loadPreset(activeId, { autoplay: Player.playing || !!Player.waiting }); });
   $("#bedsBtn").addEventListener("click", () => Beds.needsReconnect ? Beds.reconnect() : Beds.link());
   $("#bedLink").addEventListener("click", () => Beds.needsReconnect ? Beds.reconnect() : Beds.link());
   $("#callouts").addEventListener("click", e => {
