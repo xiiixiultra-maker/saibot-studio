@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#142c36">
+  <meta name="theme-color" content="#075b43">
   <meta name="description" content="La colección de Sergio. Identifica monedas con fotos y consulta referencias de valor con sus fuentes.">
   <meta name="robots" content="noindex,nofollow">
   <title>Las monedas de Sergio · Saibot Studio</title>
@@ -11,12 +11,13 @@
   <script src="config.js" defer></script><script src="app.js" type="module"></script>
 </head>
 <body>
-  <header class="masthead"><a href="/" class="studio">SAIBOT<span>.STUDIO</span></a><div class="languages" aria-label="Language"><button id="es" aria-pressed="true">ES</button><button id="en" aria-pressed="false">EN</button></div></header>
+  <header class="masthead"><a href="/" class="studio">SAIBOT<span>.STUDIO</span></a><div class="masthead-right"><span class="personal-label" data-i18n="personalCollection">La colección de Sergio</span><div class="languages" aria-label="Language"><button id="es" aria-pressed="true">ES</button><button id="en" aria-pressed="false">EN</button></div></div></header>
   <main>
-    <div class="intro"><div><p class="eyebrow" data-i18n="eyebrow">UN TESORO, MONEDA A MONEDA</p><h1 data-i18n="title">Las monedas de Sergio</h1><p data-i18n="intro">Fotografía una moneda. Descubre su historia y su valor.</p></div><div class="coin-mark" aria-hidden="true"><span>S</span><small>COLECCIÓN</small></div></div>
+    <div class="intro"><div class="intro-copy"><p class="eyebrow" data-i18n="eyebrow">UN TESORO, MONEDA A MONEDA</p><h1 data-i18n="title">Las monedas de Sergio</h1><p class="intro-description" data-i18n="intro">Fotografía una moneda. Descubre su historia y su valor.</p><span class="hero-note"><span aria-hidden="true">✦</span><span data-i18n="heroNote">Pequeñas monedas. Grandes historias.</span></span></div><div class="hero-art" aria-hidden="true"><div class="art-orbit"></div><div class="art-coin silver-coin"><span>✦</span></div><div class="art-coin red-coin"><span>✳</span></div><div class="coin-mark"><small data-i18n="personalCollection">La colección de Sergio</small><span>S</span><small data-i18n="coinByCoin">MONEDA A MONEDA</small></div><span class="art-star star-one">✦</span><span class="art-star star-two">✦</span><span class="heritage-stamp" data-i18n="madeForSergio">Para Sergio, con cariño</span></div></div>
     <nav class="tabs" aria-label="Secciones"><button id="scan-tab" class="active" aria-current="page" data-i18n="newCoin">Añadir moneda</button><button id="collection-tab"><span data-i18n="collection">Mi colección</span><span id="collection-count" class="count">0</span></button></nav>
-    <p id="service-note" class="notice" data-i18n="servicePending">La identificación por foto está disponible. La consulta automática de precios está pendiente de activación.</p>
+    <p id="service-note" class="notice" data-i18n="servicePending" hidden>La identificación por foto está disponible. La consulta automática de precios está pendiente de activación.</p>
     <section id="scan-view">
+      <ol class="scan-guide"><li><span>1</span><div><strong data-i18n="guidePhoto">Dos fotos</strong><small data-i18n="guidePhotoHelp">Cara y cruz de la misma moneda</small></div></li><li><span>2</span><div><strong data-i18n="guideReview">Revisa los datos</strong><small data-i18n="guideReviewHelp">Confirma el año y la ceca</small></div></li><li><span>3</span><div><strong data-i18n="guideValue">Descubre su valor</strong><small data-i18n="guideValueHelp">Consulta y guarda tu hallazgo</small></div></li></ol>
       <div class="workbench">
         <div class="capture-panel">
           <div class="section-heading"><span class="step">01</span><div><h2 data-i18n="photos">Fotografía los dos lados</h2><p data-i18n="photoHelp">Una moneda a la vez, con buena luz y sin reflejos.</p></div></div>
