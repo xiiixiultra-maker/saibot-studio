@@ -1,0 +1,11 @@
+{
+  "name": "saibot-sergio-coins",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-03",
+  "account_id": "5ab64fc69cc2972f8a0598d86f6210e0",
+  "ai": { "binding": "AI" },
+  "durable_objects": { "bindings": [{ "name": "BUDGET", "class_name": "DailyBudget" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DailyBudget"] }],
+  "vars": { "MODEL": "@cf/qwen/qwen3.8-27b", "GATEWAY": "default", "DAILY_LIMIT": "200", "IP_DAILY_LIMIT": "120" },
+  "observability": { "enabled": false }
+}

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#142c36">
+  <meta name="description" content="La colección de Sergio. Identifica monedas con fotos y consulta referencias de valor con sus fuentes.">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Las monedas de Sergio · Saibot Studio</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js" defer></script><script src="app.js" type="module"></script>
+</head>
+<body>
+  <header class="masthead"><a href="/" class="studio">SAIBOT<span>.STUDIO</span></a><div class="languages" aria-label="Language"><button id="es" aria-pressed="true">ES</button><button id="en" aria-pressed="false">EN</button></div></header>
+  <main>
+    <div class="intro"><div><p class="eyebrow" data-i18n="eyebrow">UN TESORO, MONEDA A MONEDA</p><h1 data-i18n="title">Las monedas de Sergio</h1><p data-i18n="intro">Fotografía una moneda. Descubre su historia y su valor.</p></div><div class="coin-mark" aria-hidden="true"><span>S</span><small>COLECCIÓN</small></div></div>
+    <nav class="tabs" aria-label="Secciones"><button id="scan-tab" class="active" aria-current="page" data-i18n="newCoin">Añadir moneda</button><button id="collection-tab"><span data-i18n="collection">Mi colección</span><span id="collection-count" class="count">0</span></button></nav>
+    <p id="service-note" class="notice" data-i18n="servicePending">La identificación por foto está disponible. La consulta automática de precios está pendiente de activación.</p>
+    <section id="scan-view">
+      <div class="workbench">
+        <div class="capture-panel">
+          <div class="section-heading"><span class="step">01</span><div><h2 data-i18n="photos">Fotografía los dos lados</h2><p data-i18n="photoHelp">Una moneda a la vez, con buena luz y sin reflejos.</p></div></div>
+          <div class="photo-pair">
+            <div class="photo-slot" id="front-slot"><div class="placeholder"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="37"/><circle cx="50" cy="50" r="31" stroke-dasharray="2 5"/><path d="M52 30c-15 0-19 18-8 23l-5 17h26l-7-18c10-11 8-22-6-22Z"/></svg><strong data-i18n="front">Cara</strong><span data-i18n="frontHint">El lado con el retrato o la fecha</span></div><img hidden alt=""><button class="photo-button" id="front-camera" data-i18n="takePhoto">Tomar foto</button><button class="text-button" id="front-upload" data-i18n="choosePhoto">Elegir foto</button><input hidden id="front-file" type="file" accept="image/*" capture="environment"><input hidden id="front-library" type="file" accept="image/*"></div>
+            <div class="photo-slot" id="back-slot"><div class="placeholder"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="37"/><circle cx="50" cy="50" r="31" stroke-dasharray="2 5"/><path d="m50 28 6 13 15 2-11 10 3 15-13-7-13 7 3-15-11-10 15-2Z"/></svg><strong data-i18n="back">Cruz</strong><span data-i18n="backHint">Dale la vuelta a la misma moneda</span></div><img hidden alt=""><button class="photo-button" id="back-camera" data-i18n="takePhoto">Tomar foto</button><button class="text-button" id="back-upload" data-i18n="choosePhoto">Elegir foto</button><input hidden id="back-file" type="file" accept="image/*" capture="environment"><input hidden id="back-library" type="file" accept="image/*"></div>
+          </div>
+          <div class="capture-actions"><button id="identify" class="primary" disabled data-i18n="identify">Identificar moneda</button><button id="queue" class="secondary" disabled data-i18n="queue">Guardar para después</button></div>
+          <p class="privacy" data-i18n="privacy">Al identificar, las fotos se envían a Cloudflare AI. Tu colección se guarda en este navegador, sin publicar tus fotos.</p>
+          <div class="tip"><span aria-hidden="true">✦</span><p data-i18n="tip">No limpies las monedas. Limpiarlas puede reducir su valor. Sujétalas por el borde.</p></div>
+        </div>
+        <aside class="result-panel" id="result-panel"><div class="section-heading"><span class="step">02</span><div><h2 data-i18n="discovery">Tu descubrimiento</h2><p data-i18n="reviewHelp">Revisa la fecha y las letras antes de consultar el valor.</p></div></div><div id="result-content"><div class="empty-result"><span class="magnifier" aria-hidden="true">⌕</span><h3 data-i18n="ready">Cada moneda tiene una historia.</h3><p data-i18n="readyHelp">Añade las dos fotos para empezar. Si una fecha no se lee bien, te pediremos que la revises.</p></div></div></aside>
+      </div>
+    </section>
+    <section id="collection-view" hidden>
+      <div class="collection-header"><div><h2 data-i18n="collection">Mi colección</h2><p data-i18n="localHelp">Guardada en este navegador. Haz una copia para conservar tus fotos y resultados.</p></div><button class="secondary" id="backup" data-i18n="backup">Guardar copia</button></div>
+      <div class="totals"><div><span data-i18n="coins">Monedas</span><strong id="total-coins">0</strong></div><div><span data-i18n="references">Con referencia de valor</span><strong id="total-priced">0</strong></div><div><span data-i18n="referenceTotal">Suma de referencias (USD)</span><strong id="total-value">—</strong></div></div>
+      <p class="valuation-note" data-i18n="totalNote">La suma incluye solo monedas con precio encontrado. No es una tasación; las referencias pueden ser de distintas fechas y grados.</p>
+      <div class="collection-tools"><label class="search"><span data-i18n="search">Buscar en tu colección</span><input id="search" type="search" placeholder="País, año, nombre o caja…"></label><label><span data-i18n="filter">Mostrar</span><select id="filter"><option value="all" data-i18n="all">Todas</option><option value="pending" data-i18n="pending">Por identificar</option><option value="review" data-i18n="review">Por revisar</option><option value="valued" data-i18n="valued">Con valor</option></select></label></div>
+      <div id="collection-list"></div>
+      <div class="collection-footer"><button class="secondary" id="scan-pending" data-i18n="scanPending">Identificar pendientes</button><button class="text-button" id="csv" data-i18n="csv">Exportar lista CSV</button><button class="text-button" id="restore" data-i18n="restore">Restaurar copia</button><input type="file" accept=".json,application/json" id="restore-file" hidden></div>
+      <p data-i18n="batchHelp" class="small">Para muchas monedas: fotografía las dos caras, guárdala para después y continúa con la siguiente. Luego identifica las pendientes en orden.</p>
+    </section>
+    <footer><p data-i18n="disclaimer">Una foto no certifica autenticidad ni grado. Para una moneda rara o valiosa, consulta a un numismático.</p><a href="https://www.pcgs.com/photograde" target="_blank" rel="noopener" data-i18n="grading">Guía visual de conservación · PCGS</a></footer>
+  </main>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="delete-dialog"><h2 data-i18n="deleteTitle">¿Eliminar esta moneda?</h2><p data-i18n="deleteHelp">Se eliminarán sus fotos y resultados de este navegador.</p><div class="capture-actions"><button id="cancel-delete" class="secondary" data-i18n="cancel">Cancelar</button><button id="confirm-delete" class="danger" data-i18n="delete">Eliminar</button></div></dialog>
+</body></html>
