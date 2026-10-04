@@ -8,13 +8,15 @@ Spanish is the default, with an English toggle. Photographs, a thumbnail, quanti
 
 `config.js` points to the existing Cloudflare-account Worker at https://saibot-sergio-coins.saibot-studio.workers.dev. Two compressed JPEG images go to Cloudflare Workers AI (`@cf/qwen/qwen3.8-27b`). The Worker never persists coin photographs or collection records. The user must review the suggested date, country, denomination and mint mark before asking for a value. The model cannot certify authenticity, errors or grade.
 
-## Market references: activation outstanding
+## Market references: live
 
-The recognition service is live and tested. At initial publication on October 3, 2026, Cloudflare Web Search returned `402 web_search_payment_required`. Live market lookup is **not enabled or verified end to end** until AI Gateway Unified Billing credits, or an existing Ceramic.ai provider key, are configured on the account’s `default` gateway. There are no credentials in this repository. Do not paste provider credentials into chat or this static website.
+Cloudflare AI Gateway credits are active on the account’s `default` gateway. The Worker uses Cloudflare Web Search with Exa to find source pages. Ceramic returned no results for a common test coin, so Exa replaced it. There are no credentials in this repository.
 
-Once search credits are configured, use the app to query a coin or test `/value`. Successful search updates the Worker’s readiness status, so the app’s activation notice clears on its next load. No code change is needed to enable search. Confirm a real referenced result before describing pricing as available.
+Live verification on October 3, 2026 (October 4 UTC): `/value` returned a $55–$57 USD reference for a 1921 Philadelphia Morgan Dollar in circulated condition, from NGC's F12 and VF20 guide columns updated October 3. The activation notice clears after the app checks the Worker’s health. This is a test of the lookup, not an appraisal of Sergio’s coins.
 
-The backend fetches allowlisted coin guides and auction sources. If a page cannot be read, it may use a source-linked search excerpt, visibly labeled as such. It requires an exact observed USD amount, matching year/mint and compatible condition. Completed sales must have a verified date within 180 days. Guide references with unknown publication dates are labeled undated. Historical guides and search indexes may lag the market. When evidence is insufficient, **no value is assigned**. The range is the min/max of observed matching amounts, not a guaranteed sale price. Collection totals include only records with a found value.
+The backend fetches allowlisted coin guides and auction sources, excluding community forums and historical news articles. NGC's public Coin Explorer loads its guide from public JSON endpoints; the Worker reads those same named grade columns directly, verifies country, year, denomination, mint and series, and excludes prooflike and plus-grade tables. Raw circulated coins use F/VF columns, worn coins AG/G/VG, and light wear XF/AU. The source must have an update within 180 days. No photo is assigned a numeric grade. Certified coins require an exact supported label grade. An unreadable mint must be clarified before valuation.
+
+Other sources require exact observed USD amounts and compatible condition. If a page cannot be read, a source-linked search excerpt may be used and is visibly labeled. Completed sales need a verified date within 180 days; dated guides older than that are excluded. Undated guide references are labeled undated. Search indexes and guides can lag the market. When evidence is insufficient, **no value is assigned**. The range is the min/max of matching amounts, not a guaranteed sale price. Collection totals include only records with a found value.
 
 ## Usage limits and privacy
 

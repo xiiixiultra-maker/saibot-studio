@@ -2,7 +2,7 @@ const ORIGINS = new Set(['https://saibot.studio','https://www.saibot.studio']);
 const SOURCE_HOSTS = ['pcgs.com','ngccoin.com','numismedia.com','ha.com','stacksbowers.com','numista.com'];
 const MAX_BODY = 4400000;
 export function safeSource(raw) {
-  try {const u=new URL(raw);return u.protocol==='https:'&&!u.username&&!u.password&&(!u.port||u.port==='443')&&SOURCE_HOSTS.some(h=>u.hostname===h||u.hostname.endsWith('.'+h));}catch{return false;}
+  try {const u=new URL(raw);return u.protocol==='https:'&&!u.username&&!u.password&&(!u.port||u.port==='443')&&SOURCE_HOSTS.some(h=>u.hostname===h||u.hostname==='www.'+h)&&!/^\/(?:news|forum|forums|boards|community)(?:\/|$)/i.test(u.pathname);}catch{return false;}
 }
 const trim=(v,max=140)=>typeof v==='string'?v.trim().slice(0,max):'';
 const normalize=s=>String(s).replace(/\s+/g,' ').trim();
@@ -18,7 +18,31 @@ async function identify(env,body){const images=[body.front,body.back];if(!images
 }
 async function fetchDocument(url){if(!safeSource(url))return null;try{let current=url;for(let i=0;i<4;i++){const response=await fetch(current,{redirect:'manual',signal:AbortSignal.timeout(12000),headers:{'Accept':'text/html','User-Agent':'SergioCoinReference/1.0 (+https://saibot.studio/sergio/)'}});if(response.status>=300&&response.status<400){const location=response.headers.get('location');if(!location)return null;current=new URL(location,current).href;if(!safeSource(current))return null;continue;}if(!response.ok||!response.headers.get('content-type')?.includes('text/html'))return null;const reader=response.body.getReader();const chunks=[];let bytes=0;for(;;){const {value,done}=await reader.read();if(done)break;bytes+=value.byteLength;if(bytes>700000){await reader.cancel();return null;}chunks.push(value);}const html=new TextDecoder().decode(Uint8Array.from(chunks.flatMap(c=>Array.from(c))));return {url:current,title:stripHTML(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]||new URL(current).hostname).slice(0,180),text:stripHTML(html).slice(0,48000)};}return null;}catch{return null;}}
 async function search(env,query){
-  try{const response=await env.AI.websearch({gatewayId:env.GATEWAY,provider:'ceramic',query,limit:8});if(!response.ok)return null;const data=await response.json();return Array.isArray(data.items)?data.items:null;}catch{return null;}
+  try{const response=await env.AI.websearch({gatewayId:env.GATEWAY,provider:'exa',query,limit:8});if(!response.ok)return null;const data=await response.json();return Array.isArray(data.items)?data.items:null;}catch{return null;}
+}
+// NGC's public Coin Explorer renders its guide from these same JSON tables.
+// Read the named grade fields directly rather than guessing flattened columns.
+export function ngcGuideEvidence(coin,rows,identity,condition,grade,url,now=Date.now(),category=null){
+  if(!safeSource(url)||new URL(url).hostname!=='www.ngccoin.com'||!['united states','usa','us','united states of america'].includes(identity.country.toLowerCase())||String(coin?.CoinYear)!==identity.year||!Array.isArray(rows))return [];
+  const words=identity.name.toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>2&&!['coin','coins','cent','cents','dollar','dollars'].includes(w));
+  const series=category?.Coins?.some(c=>c.CoinID===coin.CoinID)?category.SEOShortName:'';
+  const context=[coin.Description,series,coin.CoinSpecification?.Composition].filter(Boolean).join(' ');
+  if(!words.length||!words.every(w=>new RegExp('\\b'+w+'\\b','i').test(context)))return [];
+  const denominations=[[/half dollar/i,/\b50\s?C\b/i],[/quarter/i,/\b25\s?C\b/i],[/dime/i,/\b10\s?C\b/i],[/nickel/i,/\b5\s?C\b/i],[/\bcent\b|penny/i,/\b1\s?C\b/i],[/\bdollar\b/i,/\$1\b/]];
+  const denomination=denominations.find(([name])=>name.test(identity.name));if(denomination&&!denomination[1].test(coin.Description||''))return [];
+  const mintNames={'none visible':'philadelphia',p:'philadelphia',d:'denver',s:'san francisco',cc:'carson city',o:'new orleans',w:'west point',c:'charlotte'};
+  if(!mintNames[identity.mint.toLowerCase()]||mintNames[identity.mint.toLowerCase()]!==coin.CoinSpecification?.MintName?.toLowerCase())return [];
+  const row=rows.find(r=>r.CoinID===coin.CoinID&&r.CoinDescription===coin.Description&&r.GradeType==='Base'&&r.ProofStrikeChar?.trim()==='MS'&&!r.StrikeChar?.trim());if(!row)return [];
+  const sourceDate=String(row.LastUpdated||'').slice(0,10),updated=Date.parse(sourceDate);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(sourceDate)||!Number.isFinite(updated)||updated>now||now-updated>180*86400000)return [];
+  const groups={worn:[['PrAg','AG3'],['G','G4'],['VG','VG8']],circulated:[['F','F12'],['VF','VF20']],lightWear:[['40','XF40'],['45','XF45'],['50','AU50'],['53','AU53'],['55','AU55'],['58','AU58']]};
+  let fields=groups[condition]||[];
+  if(condition==='certified'){const match=/^(?:NGC\s+)?MS\s?(6[0-9]|70)$/i.exec(grade);if(!match)return [];fields=[[match[1],'MS'+match[1]]];}
+  return fields.flatMap(([key,label])=>{const price=row['Grade_'+key];if(typeof price!=='string'||!/^\$[\d,]+(?:\.\d{1,2})?$/.test(price))return [];const amount=Number(price.slice(1).replaceAll(',',''));return amount>0&&amount<=10000000?[{url,title:coin.Description+' · NGC',amount,currency:'USD',condition:label,basis:'guide',sourceDate,provenance:'source_table',quote:JSON.stringify(row)}]:[];});
+}
+async function ngcGuide(url,identity,condition,grade){
+  const match=/^https:\/\/www\.ngccoin\.com\/coin-explorer\/united-states\/([a-z0-9-]+)\/([a-z0-9-]+)\/(\d+)(?:\/|$)/i.exec(url);if(!match)return [];
+  try{const base='https://www.ngccoin.com/coin-explorer/data/coins/'+match[3]+'/';const categoryUrl='https://www.ngccoin.com/coin-explorer/data/categories/'+match[1]+'/subcategories/'+match[2]+'/';const responses=await Promise.all([base,base+'price-guide/',categoryUrl].map(u=>fetch(u,{redirect:'manual',signal:AbortSignal.timeout(12000),headers:{Accept:'application/json'}})));if(responses.some(r=>!r.ok||!r.headers.get('content-type')?.includes('json')))return [];const [coin,rows,category]=await Promise.all(responses.map(r=>r.json()));return ngcGuideEvidence(coin,rows,identity,condition,grade,url,Date.now(),category);}catch{return [];}
 }
 export function validateEvidence(raw,documents,identity,now=Date.now(),condition='circulated',grade=''){
   if(!Array.isArray(raw))return [];const evidence=[];const seen=new Set();
@@ -37,21 +61,25 @@ export function validateEvidence(raw,documents,identity,now=Date.now(),condition
     if(mint==='none visible'&&new RegExp('\\b'+identity.year.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[- ](?:D|S|CC|O|C|W)\\b','i').test(quote))continue;
     const described=trim(e.condition,100);if(!described||!quote.toLowerCase().includes(described.toLowerCase()))continue;
     if(condition==='certified'){if(!grade||!described.toLowerCase().includes(grade.toLowerCase()))continue;}
-    else{if(/\b(?:MS|PR|PF)[- ]?\d|uncirculated|mint state|proof/i.test(described))continue;const pattern=condition==='worn'?/\b(?:G|VG|AG|F)[- ]?\d|worn|circulated/i:condition==='lightWear'?/\b(?:XF|EF|AU)[- ]?\d|light wear|about uncirculated/i:/\b(?:F|VF)[- ]?\d|circulated/i;if(!pattern.test(described))continue;}
+    else{if(/\b(?:MS|PR|PF)[- ]?\d|\buncirculated\b|mint state|proof/i.test(described.replace(/about uncirculated/gi,'AU')))continue;const pattern=condition==='worn'?/\b(?:G|VG|AG|F)[- ]?\d|worn|\bcirculated\b/i:condition==='lightWear'?/\b(?:XF|EF|AU)[- ]?\d|light wear|about uncirculated/i:/\b(?:F|VF)[- ]?\d|\bcirculated\b/i;if(!pattern.test(described))continue;}
     let sourceDate=null;
     if(e.sourceDate&&/^\d{4}-\d{2}-\d{2}$/.test(e.sourceDate)&&typeof e.dateQuote==='string'&&e.dateQuote.length>=6&&doc.text.includes(normalize(e.dateQuote))){const parsed=Date.parse(e.sourceDate);if(Number.isFinite(parsed)&&parsed<=now&&(e.dateQuote.includes(e.sourceDate)||Date.parse(e.dateQuote+' UTC')===parsed))sourceDate=e.sourceDate;}
     // Completed sales must have a source-backed recent date. An undated
     // live guide is explicitly displayed as an undated guide, never a sale.
-    if(e.basis==='sale'&&(!sourceDate||now-Date.parse(sourceDate)>180*86400000))continue;
+    if(e.basis==='sale'&&!sourceDate||sourceDate&&now-Date.parse(sourceDate)>180*86400000)continue;
     const key=e.url+'|'+e.amount+'|'+trim(e.condition,60);if(seen.has(key))continue;seen.add(key);
     evidence.push({url:doc.url,title:doc.title,amount:e.amount,currency:'USD',condition:described,basis:e.basis,sourceDate,provenance:doc.provenance||'source_page',quote});
   }return evidence.slice(0,6);
 }
 async function value(env,body){const identity=normalizeIdentity({...body.identity,isCoin:true});if(!identity.country||!identity.name||!identity.year)return null;
   const condition=['worn','circulated','lightWear','certified'].includes(body.condition)?body.condition:'circulated';const grade=trim(body.grade,25);const today=new Date().toISOString().slice(0,10);
-  const query=`${identity.country} ${identity.name} ${identity.year} ${identity.mint==='none visible'?'':identity.mint} ${condition==='certified'?grade:condition} coin value price guide recent auction sold PCGS NGC Numista`.slice(0,800);
+  if(!identity.mint)return {status:'unavailable',reason:'no_comparables',checkedAt:new Date().toISOString()};
+  const query=`${identity.year} ${identity.mint==='none visible'?'':identity.mint} ${identity.name} ${identity.country} ${condition==='certified'?grade:condition} current coin price guide`.slice(0,800);
   const results=await search(env,query);await env.BUDGET.get(env.BUDGET.idFromName('global')).fetch('https://budget/market',{method:'POST',body:JSON.stringify({ready:results!==null})});if(results===null)return {status:'unavailable',reason:'market_unavailable',checkedAt:new Date().toISOString()};
-  const candidates=[...new Set(results.map(r=>r.url).filter(safeSource))].slice(0,5);const docs=(await Promise.all(candidates.map(fetchDocument))).filter(Boolean);
+  const candidates=[...new Set(results.map(r=>r.url).filter(safeSource))].slice(0,5);
+  const tableEvidence=(await Promise.all(candidates.map(url=>ngcGuide(url,identity,condition,grade)))).flat().slice(0,6);
+  if(tableEvidence.length)return {status:'available',currency:'USD',low:Math.min(...tableEvidence.map(e=>e.amount)),high:Math.max(...tableEvidence.map(e=>e.amount)),evidence:tableEvidence,checkedAt:new Date().toISOString()};
+  const docs=(await Promise.all(candidates.map(fetchDocument))).filter(Boolean);
   // If an authoritative page cannot be fetched, a linked search excerpt can
   // provide a guide reference. Its provenance stays visible to the user.
   for(const r of results){if(safeSource(r.url)&&typeof r.description==='string'&&r.description.length>30&&!docs.some(d=>d.url===r.url))docs.push({url:r.url,title:trim(r.title,180),text:normalize(r.description),provenance:'search_excerpt'});}

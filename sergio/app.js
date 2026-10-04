@@ -9,7 +9,7 @@ let lang = 'es'; try { lang = localStorage.getItem('sergio-language') === 'en' ?
 const t = key => text[lang][key] || key;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = n => new Intl.NumberFormat(lang === 'es' ? 'es-US' : 'en-US', {style:'currency',currency:'USD',maximumFractionDigits:2}).format(n);
-const date = value => new Intl.DateTimeFormat(lang === 'es' ? 'es-US' : 'en-US',{dateStyle:'medium'}).format(new Date(value));
+const date = value => new Intl.DateTimeFormat(lang === 'es' ? 'es-US' : 'en-US',{dateStyle:'medium',...(/^\d{4}-\d{2}-\d{2}$/.test(value)?{timeZone:'UTC'}:{})}).format(new Date(value));
 const price = v => v.low === v.high ? money(v.low) : `${money(v.low)} – ${money(v.high)}`;
 let db, records=[], photos={front:null,back:null}, selected=null, busy=false, view='scan', pageSize=30, toastTimer, deleteId;
 function toast(message){$('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,6500);}
