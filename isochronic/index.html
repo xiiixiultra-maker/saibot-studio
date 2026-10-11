@@ -1389,28 +1389,71 @@ function mp4Audio(buf) {                        // AAC-LC in MP4 → what decode
   } catch (e) { return null; }
 }
 // Reads a download into one buffer sized from its Content-Length, so the MP4 can be parsed and decoded while the
-// rest is still arriving. null when the length is unknown or the body is re-encoded in transit; read() handles those.
-function streamBody(r, tick) {
+// rest is still arriving. When the connection drops it picks up where it stopped with a Range request (If-Range keeps
+// a changed file from being stitched onto the old one), up to five tries in a row with a growing pause.
+// null when the length is unknown or the body is re-encoded in transit; read() handles those.
+const RESUME_WAITS = [0.5, 1, 2, 4, 8];                  // seconds before each try after a drop
+function streamBody(r, tick, url, signal, onNet) {
   const total = +r.headers.get("content-length") || 0;
   if (!total || !r.body || !r.body.getReader || (r.headers.get("content-encoding") || "identity") !== "identity") return null;
+  const tag = r.headers.get("etag"), since = tag && !/^W\//.test(tag) ? tag : r.headers.get("last-modified");
   const buf = new Uint8Array(total); let waiters = [];
   const wake = () => { const w = waiters; waiters = []; for (const f of w) f(); };
   const body = {
-    buf, total, got: 0, done: false, err: null,
+    buf, total, got: 0, done: false, err: null, drops: 0, reconnecting: false,
     more() { return this.done ? Promise.resolve() : new Promise(f => waiters.push(f)); },   // the next chunk, the end, or a failure
     whole() { return this.finished.then(() => buf.buffer); },
   };
+  const net = v => { if (body.reconnecting !== v) { body.reconnecting = v; if (onNet) onNet(v); } };
+  const fatal = m => Object.assign(new Error(m), { fatal: true });
+  const pump = async (res, skip) => {                   // one response into the buffer, past the bytes already in
+    const rd = res.body.getReader();
+    for (;;) {
+      const { done, value } = await rd.read(); if (done) return;
+      let v = value;
+      if (skip) { const k = Math.min(skip, v.length); skip -= k; v = v.subarray(k); if (!v.length) continue; }
+      if (body.got + v.length > total) throw fatal("the download ran past its length");
+      buf.set(v, body.got); body.got += v.length; net(false); tick(Math.min(99, Math.floor(body.got / total * 100))); wake();
+    }
+  };
+  const reopen = async () => {                          // the rest of the file, from body.got on
+    const headers = { Range: "bytes=" + body.got + "-" }; if (since) headers["If-Range"] = since;
+    const res = await fetch(url, { signal, headers });
+    if (res.status === 206) {
+      const m = /^bytes (\d+)-\d+\/(\d+|\*)$/.exec(res.headers.get("content-range") || "");
+      if (!m || +m[1] !== body.got || (m[2] !== "*" && +m[2] !== total)) throw fatal("the server sent the wrong part of the file");
+      return [res, 0];
+    }
+    if (res.ok && +res.headers.get("content-length") === total && (!tag || res.headers.get("etag") === tag)) return [res, body.got];   // no ranges: read from the top, skip what is in
+    throw fatal(res.ok ? "the file changed on the server" : "the server answered " + res.status);
+  };
+  const pause = n => new Promise(f => {                 // offline waits for the network to come back, up to 30 s
+    const end = () => { clearTimeout(t); removeEventListener("online", end); if (signal) signal.removeEventListener("abort", end); f(); };
+    const t = setTimeout(end, (navigator.onLine === false ? 30 : RESUME_WAITS[n]) * 1000);
+    addEventListener("online", end); if (signal) signal.addEventListener("abort", end);
+  });
   body.finished = (async () => {
-    const rd = r.body.getReader();
+    let res = r, skip = 0, fails = 0;
     try {
       for (;;) {
-        const { done, value } = await rd.read(); if (done) break;
-        if (body.got + value.length > total) throw new Error("the download ran past its length");
-        buf.set(value, body.got); body.got += value.length; tick(Math.min(99, Math.floor(body.got / total * 100))); wake();
+        const before = body.got;
+        try {
+          if (!res) [res, skip] = await reopen();
+          await pump(res, skip);
+          if (body.got === total) return;
+          throw new Error("the download ended early");
+        } catch (e) {
+          res = null;
+          if (e.fatal || (signal && signal.aborted)) throw e;
+          if (body.got - before >= 262144) fails = 0;   // real progress since the last drop earns a fresh set of tries
+          if (fails >= RESUME_WAITS.length) throw e;
+          body.drops++; net(true);
+          await pause(fails++);
+          if (signal && signal.aborted) throw e;
+        }
       }
-      if (body.got !== total) throw new Error("the download ended early");
     } catch (e) { body.err = e; throw e; }
-    finally { body.done = true; wake(); }
+    finally { body.done = true; net(false); wake(); }
   })();
   body.finished.catch(() => {});                // failures surface through whole() and body.err
   return body;
@@ -1489,7 +1532,7 @@ async function canStreamAAC(info) {
   return aacOK[k];
 }
 const Beds = {
-  files: new Map(), current: null, loading: null, missing: null, dirHandle: null, needsReconnect: false, abort: null, tok: null,
+  files: new Map(), current: null, loading: null, missing: null, dirHandle: null, needsReconnect: false, abort: null, tok: null, reconnecting: false,
   get filling() { return !!this.current && this.current.done === false; },   // playable, still decoding the rest
   get busy() { return !!this.loading || this.filling; },
   covers(t) {                                            // decoded far enough to start a session t seconds in? mirrors the engine's bed position
@@ -1566,14 +1609,15 @@ const Beds = {
     if (this.loading && this.loading.key === key && (this.loading.local || !local)) return;   // already on its way, unless a linked file can now replace a download
     if (this.abort && !(key && this.current && this.current.name.toLowerCase() === key)) { this.abort.abort(); this.abort = null; }   // a newer pick wins, stop downloading the old one (the playing bed may still be arriving)
     this.loading = null;
-    if (!key) { this.tok = null; if (this.current) { this.current = null; Player.update(); } renderBedUI(); Player.bedSettled(); return; }
+    if (!key) { this.tok = null; this.reconnecting = false; if (this.current) { this.current = null; Player.update(); } renderBedUI(); Player.bedSettled(); return; }
     if (this.current && this.current.name.toLowerCase() === key) { renderBedUI(); Player.bedSettled(); return; }
     const token = Symbol(), alive = () => !!this.loading && this.loading.token === token;
-    this.tok = token;                                                  // a bed still filling in behind its session stops here
+    this.tok = token; this.reconnecting = false;                                                  // a bed still filling in behind its session stops here
     this.loading = { name, key, token, local, pct: null, decoding: false };
     if (this.current) { this.current = null; Player.update(); }         // never play the old track under the new session
     renderBedUI(); Player.pump();
     const tick = pct => { if (alive() && this.loading.pct !== pct) { this.loading.pct = pct; renderCallouts(); } };
+    const net = on => { if (this.tok === token) { this.reconnecting = on; renderCallouts(); } };   // a dropped download is being picked up again
     try {
       let ab = null, ceil = 0, body = null;
       const h = this.files.get(key);
@@ -1581,7 +1625,7 @@ const Beds = {
       else if (/^https?:$/.test(location.protocol)) {
         const stem = name.replace(/\.[^.]+$/, ""), ac = this.abort = new AbortController();   // online copies of the beds are compressed m4a
         for (const u of ["beds/" + stem + ".m4a", "beds/" + name, "beds/" + stem + ".mp3", name]) {
-          try { const r = await fetch(u, { signal: ac.signal }); if (r.ok) { if (u !== "beds/" + name && u !== name) { ceil = BED_PEAK; body = streamBody(r, tick); } if (!body) ab = await this.read(r, tick); break; } }
+          try { const r = await fetch(u, { signal: ac.signal }); if (r.ok) { if (u !== "beds/" + name && u !== name) { ceil = BED_PEAK; body = streamBody(r, tick, u, ac.signal, net); } if (!body) ab = await this.read(r, tick); break; } }
           catch (e) { if (!alive()) return; }
         }
         const drop = () => { if (this.abort === ac) this.abort = null; };   // a download still arriving behind its session stays cancellable
@@ -2065,7 +2109,8 @@ function renderCallouts() {
     if (chip) out.push(`<span class="callout agent${s === "needs" ? " needs" : ""}" data-act="agent" role="button" tabindex="0" title="Agent mode"><i class="agdot" data-s="${s}"></i>${chip}</span>`);
   }
   if (needsPhones()) out.push(`<span class="callout">${ICON.phones}Headphones on for this one</span>`);
-  if (Beds.loading) { const L = Beds.loading; out.push(`<span class="callout">${ICON.wait}${L.decoding ? "Getting the music ready" : "Loading the music" + (L.pct != null ? ` ${L.pct}%` : "")}</span>`); }
+  if (Beds.reconnecting) out.push(`<span class="callout">${ICON.wait}Reconnecting to ${Beds.loading ? "load" : "finish"} the music</span>`);
+  else if (Beds.loading) { const L = Beds.loading; out.push(`<span class="callout">${ICON.wait}${L.decoding ? "Getting the music ready" : "Loading the music" + (L.pct != null ? ` ${L.pct}%` : "")}</span>`); }
   else if (Beds.missing) out.push(`<span class="callout">${ICON.music}Plays over ${esc(Beds.missing)}<button class="btn small" data-act="link">${Beds.needsReconnect ? "Reconnect beds" : "Link beds folder"}</button></span>`);
   box.innerHTML = out.join("");
 }
