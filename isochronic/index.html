@@ -1383,6 +1383,15 @@ function mp4Audio(buf) {                        // AAC-LC in MP4 → what decode
         if (mt < 0) continue;                                            // an empty edit, no audio of its own
         skip = Math.round(mt * sr / scale); total = Math.round(seg * sr / movieScale); break;
       }
+    } else {                                     // Apple's encoders keep it in iTunes metadata instead: iTunSMPB = priming, padding, real length (hex)
+      const meta = find(["udta", "meta"], moov[0], moov[1]), ilst = meta && find(["ilst"], meta[0] + 4, meta[1]);   // meta is a full box
+      if (ilst) each(ilst[0], ilst[1], (t, a, b) => {
+        const nm = t === "----" && find(["name"], a, b), dt = nm && find(["data"], a, b);
+        if (!dt || String.fromCharCode(...d.subarray(nm[0] + 4, nm[1])) !== "iTunSMPB") return null;
+        const f = String.fromCharCode(...d.subarray(dt[0] + 8, dt[1])).trim().split(/\s+/).map(x => parseInt(x, 16));
+        if (f.length >= 4 && f[3] > 0) { skip = f[1]; total = f[3]; }
+        return true;
+      });
     }
     total = Math.min(total, count * 1024 - skip);
     return total > 0 ? { codec: "mp4a.40.2", sampleRate: sr, channels, asc, count, offs, sizes, skip, len: total, data: d } : null;
@@ -1531,6 +1540,15 @@ async function canStreamAAC(info) {
   }
   return aacOK[k];
 }
+// decode()'s ending for float planes: mono when both sides match, then peak-normalized 16-bit. Your own songs use it.
+async function packFloat(chans, n, name, alive) {
+  const [L, R] = chans; let same = !!R; if (R) for (let i = 0; i < n; i += 997) if (L[i] !== R[i]) { same = false; break; }
+  const cs = R && !same ? [L, R] : [L], SL = 1 << 20; let pk = 0;
+  for (const X of cs) for (let o = 0; o < n; o += SL) { const e = Math.min(n, o + SL); for (let i = o; i < e; i++) { const a = X[i] < 0 ? -X[i] : X[i]; if (a > pk) pk = a; } await breathe(); if (!alive()) return null; }
+  const k = pk > 0 ? 32767 / pk : 1, out = cs.map(() => new Int16Array(n));
+  for (let c = 0; c < cs.length; c++) { const X = cs[c], Y = out[c]; for (let o = 0; o < n; o += SL) { const e = Math.min(n, o + SL); for (let i = o; i < e; i++) { const v = Math.round(X[i] * k); Y[i] = v > 32767 ? 32767 : v < -32767 ? -32767 : v; } await breathe(); if (!alive()) return null; } }
+  return { name, L: out[0], R: out[1] || null, len: n, scale: 1 / 32767, dur: n / SR, stereo: cs.length > 1 };
+}
 const Beds = {
   files: new Map(), current: null, loading: null, missing: null, dirHandle: null, needsReconnect: false, abort: null, tok: null, reconnecting: false,
   get filling() { return !!this.current && this.current.done === false; },   // playable, still decoding the rest
@@ -1645,7 +1663,7 @@ const Beds = {
         if (body) { ab = await body.whole(); if (!alive()) return; }   // the fast path failed before the music started: finish the download for the old path
       }
       this.loading.decoding = true; renderCallouts();
-      const b = await this.decode(ab, name, ceil, alive);
+      const b = (!ceil && await this.decodeFast(ab, name, alive)) || (alive() ? await this.decode(ab, name, ceil, alive) : null);   // your own files try the fast path first
       if (!b || !alive()) return;
       this.loading = null; this.current = b; Player.update(); renderBedUI(); Player.bedSettled();
     } catch (e) {
@@ -1684,6 +1702,21 @@ const Beds = {
         bed.done = true; if (live()) { toast("Could not read all of " + name); renderBedUI(); Player.bedSettled(); }   // keeps what was decoded, the rest stays silent
       });
     });
+  },
+  // Your own songs. WebKit's decodeAudioData is slow for one kind of file, 48 kHz AAC (.m4a): about 27 s for ten minutes
+  // of mono, 58 s for stereo, while 44.1 kHz AAC, MP3 and WAV take under two seconds. So only 48 kHz AAC comes through
+  // WebCodecs here, decoded whole and then peak-normalized like decode(); everything else, and any failure, returns null
+  // and keeps decodeAudioData.
+  async decodeFast(ab, name, alive) {
+    if (ab.byteLength < 12 || String.fromCharCode(...new Uint8Array(ab, 4, 4)) !== "ftyp") return null;
+    const info = mp4Audio(ab);
+    if (!info || !(await canStreamAAC(info))) return null;
+    try {
+      const C = Math.min(2, info.channels), out = Array.from({ length: C }, () => new Float32Array(info.len));
+      const sink = (pl, at, from, m) => { for (let c = 0; c < C; c++) out[c].set(pl[c].subarray(from, from + m), at); };
+      if (!(await decodeAAC(info, sink, alive))) return null;
+      return await packFloat(out, info.len, name, alive);
+    } catch (e) { console.warn("fast decode failed, using decodeAudioData", e); return null; }
   },
   async useFile(file) {
     if (!file) return;
