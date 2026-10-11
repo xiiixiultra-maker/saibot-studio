@@ -1388,6 +1388,47 @@ function mp4Audio(buf) {                        // AAC-LC in MP4 → what decode
     return total > 0 ? { codec: "mp4a.40.2", sampleRate: sr, channels, asc, count, offs, sizes, skip, len: total, data: d } : null;
   } catch (e) { return null; }
 }
+// Reads a download into one buffer sized from its Content-Length, so the MP4 can be parsed and decoded while the
+// rest is still arriving. null when the length is unknown or the body is re-encoded in transit; read() handles those.
+function streamBody(r, tick) {
+  const total = +r.headers.get("content-length") || 0;
+  if (!total || !r.body || !r.body.getReader || (r.headers.get("content-encoding") || "identity") !== "identity") return null;
+  const buf = new Uint8Array(total); let waiters = [];
+  const wake = () => { const w = waiters; waiters = []; for (const f of w) f(); };
+  const body = {
+    buf, total, got: 0, done: false, err: null,
+    more() { return this.done ? Promise.resolve() : new Promise(f => waiters.push(f)); },   // the next chunk, the end, or a failure
+    whole() { return this.finished.then(() => buf.buffer); },
+  };
+  body.finished = (async () => {
+    const rd = r.body.getReader();
+    try {
+      for (;;) {
+        const { done, value } = await rd.read(); if (done) break;
+        if (body.got + value.length > total) throw new Error("the download ran past its length");
+        buf.set(value, body.got); body.got += value.length; tick(Math.min(99, Math.floor(body.got / total * 100))); wake();
+      }
+      if (body.got !== total) throw new Error("the download ended early");
+    } catch (e) { body.err = e; throw e; }
+    finally { body.done = true; wake(); }
+  })();
+  body.finished.catch(() => {});                // failures surface through whole() and body.err
+  return body;
+}
+// Waits for the top-level boxes up to the end of moov, then parses it. Every shipped bed keeps moov at the front.
+// null when the audio comes first (the whole file has to arrive) or the download stops before the index.
+async function mp4Head(body) {
+  const d = body.buf, need = async n => { while (body.got < n && !body.done) await body.more(); return body.got >= n; };
+  for (let o = 0; o + 8 <= body.total;) {
+    if (!await need(Math.min(body.total, o + 16))) return null;
+    const dv = new DataView(d.buffer, o), t = String.fromCharCode(d[o + 4], d[o + 5], d[o + 6], d[o + 7]);
+    let sz = dv.getUint32(0); if (sz === 1) sz = dv.getUint32(8) * 4294967296 + dv.getUint32(12); else if (sz === 0) sz = body.total - o;
+    if (sz < 8 || t === "mdat") return null;
+    if (t === "moov") { if (!await need(o + sz)) return null; const info = mp4Audio(d.buffer); if (info) info.src = body; return info; }
+    o += sz;
+  }
+  return null;
+}
 // Decodes in order. sink(planes, at, from, n) receives float planes whose frames [from, from + n) belong at
 // bed position at, already past the priming and cut to the real length. Resolves true when everything is
 // decoded, false when live() turned false first, and rejects if the decoder fails.
@@ -1421,7 +1462,13 @@ async function decodeAAC(info, sink, live) {
     for (let i = 0; i < info.count;) {
       if (failed) throw failed;
       if (!live()) return false;
-      for (const end = Math.min(info.count, i + 128); i < end; i++)
+      const src = info.src;                                              // a download still arriving: feed only the frames already in
+      if (src && src.got < info.offs[i] + info.sizes[i]) {
+        if (src.err) throw src.err;
+        if (src.done) throw new Error("the download ended early");
+        await src.more(); continue;
+      }
+      for (const end = Math.min(info.count, i + 128); i < end && (!src || src.got >= info.offs[i] + info.sizes[i]); i++)
         dec.decode(new EncodedAudioChunk({ type: "key", timestamp: Math.round(i * step), data: d.subarray(info.offs[i], info.offs[i] + info.sizes[i]) }));
       while (!failed && live() && i * 1024 - got > 512 * 1024) await more();  // keep about 11 s of audio in flight, the main thread stays free
     }
@@ -1517,7 +1564,7 @@ const Beds = {
     this.missing = null;
     const key = name ? name.toLowerCase() : null, local = !!key && this.files.has(key);
     if (this.loading && this.loading.key === key && (this.loading.local || !local)) return;   // already on its way, unless a linked file can now replace a download
-    if (this.abort) { this.abort.abort(); this.abort = null; }          // a newer pick wins, stop downloading the old one
+    if (this.abort && !(key && this.current && this.current.name.toLowerCase() === key)) { this.abort.abort(); this.abort = null; }   // a newer pick wins, stop downloading the old one (the playing bed may still be arriving)
     this.loading = null;
     if (!key) { this.tok = null; if (this.current) { this.current = null; Player.update(); } renderBedUI(); Player.bedSettled(); return; }
     if (this.current && this.current.name.toLowerCase() === key) { renderBedUI(); Player.bedSettled(); return; }
@@ -1528,22 +1575,32 @@ const Beds = {
     renderBedUI(); Player.pump();
     const tick = pct => { if (alive() && this.loading.pct !== pct) { this.loading.pct = pct; renderCallouts(); } };
     try {
-      let ab = null, ceil = 0;
+      let ab = null, ceil = 0, body = null;
       const h = this.files.get(key);
       if (h) ab = await (await this.fileOf(h)).arrayBuffer();
       else if (/^https?:$/.test(location.protocol)) {
         const stem = name.replace(/\.[^.]+$/, ""), ac = this.abort = new AbortController();   // online copies of the beds are compressed m4a
         for (const u of ["beds/" + stem + ".m4a", "beds/" + name, "beds/" + stem + ".mp3", name]) {
-          try { const r = await fetch(u, { signal: ac.signal }); if (r.ok) { ab = await this.read(r, tick); if (u !== "beds/" + name && u !== name) ceil = BED_PEAK; break; } }
+          try { const r = await fetch(u, { signal: ac.signal }); if (r.ok) { if (u !== "beds/" + name && u !== name) { ceil = BED_PEAK; body = streamBody(r, tick); } if (!body) ab = await this.read(r, tick); break; } }
           catch (e) { if (!alive()) return; }
         }
-        if (this.abort === ac) this.abort = null;
+        const drop = () => { if (this.abort === ac) this.abort = null; };   // a download still arriving behind its session stays cancellable
+        if (body) body.finished.then(drop, drop); else drop();
       }
       if (!alive()) return;
-      if (!ab) { this.loading = null; this.missing = name; renderBedUI(); Player.bedSettled(); return; }
+      if (!ab && !body) { this.loading = null; this.missing = name; renderBedUI(); Player.bedSettled(); return; }
+      let info = null;                                                   // shipped beds stream through WebCodecs when they can
+      if (body) {                                                        // the MP4 index comes first, so decoding starts mid-download
+        info = await mp4Head(body); if (!alive()) return;
+        if (!info || !(await canStreamAAC(info))) { info = null; ab = await body.whole(); body = null; if (!alive()) return; }
+      } else if (ceil) { info = mp4Audio(ab); if (info && !(await canStreamAAC(info))) info = null; }
+      if (!alive()) return;
+      if (!body) { this.loading.decoding = true; renderCallouts(); }
+      if (info) {
+        if (await this.stream(info, name, ceil, token) || !alive()) return;
+        if (body) { ab = await body.whole(); if (!alive()) return; }   // the fast path failed before the music started: finish the download for the old path
+      }
       this.loading.decoding = true; renderCallouts();
-      const info = ceil ? mp4Audio(ab) : null;                           // shipped beds stream through WebCodecs when they can
-      if (info && await canStreamAAC(info)) { if (await this.stream(info, name, ceil, token) || !alive()) return; }
       const b = await this.decode(ab, name, ceil, alive);
       if (!b || !alive()) return;
       this.loading = null; this.current = b; Player.update(); renderBedUI(); Player.bedSettled();
