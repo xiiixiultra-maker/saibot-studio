@@ -1330,8 +1330,127 @@ function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { st
 /* ------------------------------------------------------------ beds */
 const breathe = () => new Promise(r => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });   // setTimeout crawls in a hidden tab
 const AUDIO_RE = /\.(wav|mp3|m4a|aac|flac|ogg|oga|opus|webm)$/i;
+/* ------------------------------------------------------------ fast AAC beds (WebCodecs) */
+// WebKit's decodeAudioData needs about 30 s for a 10-minute AAC bed and plays nothing until it is done.
+// WebCodecs decodes the same file in about 2 s and hands the audio back in order, so a session can start
+// once the first stretch is ready while the rest fills in behind it. mp4Audio reads just enough of the
+// MP4 to feed the decoder: the AAC setup, where every frame sits, and the encoder priming to skip.
+const BED_HEAD = 20 * SR;                       // frames a session needs past its start point before it may begin
+function mp4Audio(buf) {                        // AAC-LC in MP4 → what decodeAAC needs, or null for anything else
+  try {
+    const d = new Uint8Array(buf), dv = new DataView(buf), u32 = o => dv.getUint32(o), u64 = o => u32(o) * 4294967296 + u32(o + 4);
+    const fourcc = o => String.fromCharCode(d[o], d[o + 1], d[o + 2], d[o + 3]);
+    const each = (o, e, fn) => {
+      while (o + 8 <= e) {
+        let sz = u32(o), h = 8; if (sz === 1) { sz = u64(o + 8); h = 16; } else if (sz === 0) sz = e - o;
+        if (sz < h) return null;
+        const r = fn(fourcc(o + 4), o + h, o + sz); if (r) return r; o += sz;
+      }
+      return null;
+    };
+    const find = (path, o, e) => each(o, e, (t, a, b) => t !== path[0] ? null : path.length === 1 ? [a, b] : find(path.slice(1), a, b));
+    const moov = find(["moov"], 0, d.length); if (!moov) return null;
+    const mvhd = find(["mvhd"], moov[0], moov[1]), movieScale = u32(mvhd[0] + (d[mvhd[0]] === 1 ? 20 : 12));
+    const trak = each(moov[0], moov[1], (t, a, b) => { if (t !== "trak") return null; const h = find(["mdia", "hdlr"], a, b); return h && fourcc(h[0] + 8) === "soun" ? [a, b] : null; });
+    if (!trak) return null;
+    const mdhd = find(["mdia", "mdhd"], trak[0], trak[1]), v1 = d[mdhd[0]] === 1;
+    const scale = u32(mdhd[0] + (v1 ? 20 : 12)), mdur = v1 ? u64(mdhd[0] + 24) : u32(mdhd[0] + 16);
+    const stbl = find(["mdia", "minf", "stbl"], trak[0], trak[1]), box = t => find([t], stbl[0], stbl[1]);
+    const ent = box("stsd")[0] + 8; if (fourcc(ent + 4) !== "mp4a") return null;
+    const sr = u32(ent + 32) >>> 16, esds = find(["esds"], ent + 36, ent + u32(ent)); if (!esds) return null;
+    let p = esds[0] + 4;
+    const len = () => { let n = 0, b, k = 0; do { b = d[p++]; n = n * 128 + (b & 127); } while (b & 128 && ++k < 4); return n; };
+    if (d[p++] !== 3) return null; len(); p += 2; const fl = d[p++]; if (fl & 128) p += 2; if (fl & 64) p += d[p] + 1; if (fl & 32) p += 2;
+    if (d[p++] !== 4) return null; len(); if (d[p] !== 0x40) return null; p += 13;
+    if (d[p++] !== 5) return null; const n5 = len(), asc = d.slice(p, p + n5);
+    if (asc.length < 2 || asc[0] >> 3 !== 2) return null;            // plain AAC-LC only, everything else takes the old path
+    const channels = (asc[1] >> 3) & 15 || dv.getUint16(ent + 24);
+    const stsz = box("stsz")[0], fixed = u32(stsz + 4), count = u32(stsz + 8);
+    const co = box("stco"), c64 = box("co64"), nChunks = u32((co || c64)[0] + 4), stsc = box("stsc")[0], nRuns = u32(stsc + 4);
+    const offs = new Float64Array(count), sizes = new Uint32Array(count); let s = 0;
+    for (let i = 0; i < count; i++) sizes[i] = fixed || u32(stsz + 12 + 4 * i);
+    for (let r = 0; r < nRuns; r++) {
+      const first = u32(stsc + 8 + 12 * r) - 1, per = u32(stsc + 12 + 12 * r), last = r + 1 < nRuns ? u32(stsc + 8 + 12 * (r + 1)) - 1 : nChunks;
+      for (let c = first; c < last; c++) { let o = co ? u32(co[0] + 8 + 4 * c) : u64(c64[0] + 8 + 8 * c); for (let k = 0; k < per && s < count; k++) { offs[s] = o; o += sizes[s]; s++; } }
+    }
+    if (s !== count || !count || offs[count - 1] + sizes[count - 1] > d.length) return null;
+    let skip = 0, total = Math.round(mdur * sr / scale);               // the edit list says where the real audio starts and how long it runs
+    const elst = find(["edts", "elst"], trak[0], trak[1]);
+    if (elst) {
+      const ev1 = d[elst[0]] === 1, n = u32(elst[0] + 4);
+      for (let k = 0, q = elst[0] + 8; k < n; k++, q += ev1 ? 20 : 12) {
+        const seg = ev1 ? u64(q) : u32(q), mt = ev1 ? dv.getInt32(q + 8) * 4294967296 + u32(q + 12) : dv.getInt32(q + 4);
+        if (mt < 0) continue;                                            // an empty edit, no audio of its own
+        skip = Math.round(mt * sr / scale); total = Math.round(seg * sr / movieScale); break;
+      }
+    }
+    total = Math.min(total, count * 1024 - skip);
+    return total > 0 ? { codec: "mp4a.40.2", sampleRate: sr, channels, asc, count, offs, sizes, skip, len: total, data: d } : null;
+  } catch (e) { return null; }
+}
+// Decodes in order. sink(planes, at, from, n) receives float planes whose frames [from, from + n) belong at
+// bed position at, already past the priming and cut to the real length. Resolves true when everything is
+// decoded, false when live() turned false first, and rejects if the decoder fails.
+async function decodeAAC(info, sink, live) {
+  let got = 0, failed = null, kick = null, tmp = new Float32Array(0), planes = [];
+  const C = info.channels, wake = () => { if (kick) { const k = kick; kick = null; k(); } };
+  const dec = new AudioDecoder({
+    output: a => {
+      try {
+        const n = a.numberOfFrames, nc = a.numberOfChannels, f = a.format;
+        const from = Math.max(0, info.skip - got), to = Math.min(n, info.skip + info.len - got);
+        if (to > from && live()) {
+          if (!planes.length || planes[0].length < n) planes = Array.from({ length: C }, () => new Float32Array(n));
+          if (f === "f32") {                                              // interleaved, what WebKit hands back
+            if (tmp.length < n * nc) tmp = new Float32Array(n * nc);
+            a.copyTo(tmp, { planeIndex: 0 });
+            for (let c = 0; c < C; c++) { const P = planes[c], cc = Math.min(c, nc - 1); for (let i = from; i < to; i++) P[i] = tmp[i * nc + cc]; }
+          } else for (let c = 0; c < C; c++) a.copyTo(planes[c], { planeIndex: Math.min(c, nc - 1), format: "f32-planar" });
+          sink(planes, got + from - info.skip, from, to - from);
+        }
+        got += n;
+      } catch (e) { failed = failed || e; }
+      finally { a.close(); wake(); }
+    },
+    error: e => { failed = failed || e; wake(); },
+  });
+  try {
+    dec.configure({ codec: info.codec, sampleRate: info.sampleRate, numberOfChannels: C, description: info.asc });
+    const step = 1024e6 / info.sampleRate, d = info.data;
+    const more = () => new Promise(r => { kick = r; setTimeout(r, 1000); });   // the next output, or a second, whichever comes first
+    for (let i = 0; i < info.count;) {
+      if (failed) throw failed;
+      if (!live()) return false;
+      for (const end = Math.min(info.count, i + 128); i < end; i++)
+        dec.decode(new EncodedAudioChunk({ type: "key", timestamp: Math.round(i * step), data: d.subarray(info.offs[i], info.offs[i] + info.sizes[i]) }));
+      while (!failed && live() && i * 1024 - got > 512 * 1024) await more();  // keep about 11 s of audio in flight, the main thread stays free
+    }
+    if (!live()) return false;
+    await dec.flush();
+    if (failed) throw failed;
+    return live();
+  } finally { try { if (dec.state !== "closed") dec.close(); } catch (e) {} }
+}
+const aacOK = {};                               // isConfigSupported answers, per channel count
+async function canStreamAAC(info) {
+  if (typeof AudioDecoder === "undefined" || typeof EncodedAudioChunk === "undefined" || info.sampleRate !== SR) return false;
+  const k = info.channels;
+  if (!(k in aacOK)) {
+    try { aacOK[k] = !!(await AudioDecoder.isConfigSupported({ codec: info.codec, sampleRate: info.sampleRate, numberOfChannels: k, description: info.asc })).supported; }
+    catch (e) { aacOK[k] = false; }
+  }
+  return aacOK[k];
+}
 const Beds = {
-  files: new Map(), current: null, loading: null, missing: null, dirHandle: null, needsReconnect: false, abort: null,
+  files: new Map(), current: null, loading: null, missing: null, dirHandle: null, needsReconnect: false, abort: null, tok: null,
+  get filling() { return !!this.current && this.current.done === false; },   // playable, still decoding the rest
+  get busy() { return !!this.loading || this.filling; },
+  covers(t) {                                            // decoded far enough to start a session t seconds in? mirrors the engine's bed position
+    const b = this.current; if (!b || b.done !== false) return true;
+    const rate = (+patch.bedTune || 440) / 440, xf = Math.max(1, Math.min(Math.round(1.5 * SR), b.len >> 3)), Pd = b.len - xf;
+    let p = Math.max(0, t) * SR * rate; while (p >= 2 * Pd) p -= Pd;
+    return p < Pd && b.ready >= Math.min(b.len, p + BED_HEAD * rate);   // the loop seam needs the tail, which decodes last
+  },
   get count() { return this.files.size; },
   async fileOf(v) { return v instanceof File ? v : await v.getFile(); },
   async decode(ab, name, ceil = 0, alive = null) {
@@ -1400,9 +1519,10 @@ const Beds = {
     if (this.loading && this.loading.key === key && (this.loading.local || !local)) return;   // already on its way, unless a linked file can now replace a download
     if (this.abort) { this.abort.abort(); this.abort = null; }          // a newer pick wins, stop downloading the old one
     this.loading = null;
-    if (!key) { if (this.current) { this.current = null; Player.update(); } renderBedUI(); Player.bedSettled(); return; }
+    if (!key) { this.tok = null; if (this.current) { this.current = null; Player.update(); } renderBedUI(); Player.bedSettled(); return; }
     if (this.current && this.current.name.toLowerCase() === key) { renderBedUI(); Player.bedSettled(); return; }
     const token = Symbol(), alive = () => !!this.loading && this.loading.token === token;
+    this.tok = token;                                                  // a bed still filling in behind its session stops here
     this.loading = { name, key, token, local, pct: null, decoding: false };
     if (this.current) { this.current = null; Player.update(); }         // never play the old track under the new session
     renderBedUI(); Player.pump();
@@ -1422,6 +1542,8 @@ const Beds = {
       if (!alive()) return;
       if (!ab) { this.loading = null; this.missing = name; renderBedUI(); Player.bedSettled(); return; }
       this.loading.decoding = true; renderCallouts();
+      const info = ceil ? mp4Audio(ab) : null;                           // shipped beds stream through WebCodecs when they can
+      if (info && await canStreamAAC(info)) { if (await this.stream(info, name, ceil, token) || !alive()) return; }
       const b = await this.decode(ab, name, ceil, alive);
       if (!b || !alive()) return;
       this.loading = null; this.current = b; Player.update(); renderBedUI(); Player.bedSettled();
@@ -1429,6 +1551,38 @@ const Beds = {
       if (!alive()) return;
       console.warn(e); this.loading = null; this.missing = name; renderBedUI(); toast("Could not read " + name); Player.bedSettled();
     }
+  },
+  // Streams a shipped bed into 16-bit arrays (the same scaling as decode()). Resolves true once the bed is playable,
+  // false if this path failed before that, so the caller falls back to decodeAudioData.
+  stream(info, name, ceil, token) {
+    const live = () => this.tok === token, n = info.len, C = Math.min(2, info.channels), k = 32767 / ceil;
+    const bed = { name, L: new Int16Array(n), R: C > 1 ? new Int16Array(n) : null, len: n, scale: 1 / 32767, dur: n / SR, stereo: C > 1, ready: 0, done: false };
+    let playable = false;
+    return new Promise(resolve => {
+      const start = () => {
+        if (playable) return; playable = true; resolve(true);
+        if (!live()) return;
+        this.loading = null; this.current = bed; Player.update(); renderBedUI(); Player.bedSettled();
+      };
+      const sink = (pl, at, from, m) => {
+        for (let c = 0; c < C; c++) {
+          const X = pl[c], Y = c ? bed.R : bed.L;
+          for (let i = 0; i < m; i++) { const v = X[from + i] * k; Y[at + i] = v >= 32767 ? 32767 : v <= -32767 ? -32767 : v + (v < 0 ? -0.5 : 0.5); }
+        }
+        bed.ready = at + m;
+        if (!playable) { if (bed.ready >= Math.min(n, BED_HEAD)) start(); }
+        else if (Player.waiting) Player.bedSettled();                   // a start further in may be waiting on more of the bed
+      };
+      decodeAAC(info, sink, live).then(done => {
+        if (!done) { if (!playable) resolve(false); return; }             // cancelled by a newer pick
+        bed.ready = n; bed.done = true;
+        if (!playable) start(); else { renderBedUI(); Player.bedSettled(); }
+      }, e => {
+        console.warn("WebCodecs bed failed", e);
+        if (!playable) { resolve(false); return; }
+        bed.done = true; if (live()) { toast("Could not read all of " + name); renderBedUI(); Player.bedSettled(); }   // keeps what was decoded, the rest stays silent
+      });
+    });
   },
   async useFile(file) {
     if (!file) return;
@@ -1466,7 +1620,7 @@ const Player = {
     const tok = this.startTok = {};
     await this.ctx();                                     // unlock audio inside the tap, even if the music still has to load
     if (this.startTok !== tok) { if (!this.startTok) this.sleep(); return; }   // Pause or Stop came while the context was waking up
-    if (Beds.loading) {                                   // the session's music is still loading: start the moment it lands
+    if (Beds.loading || !Beds.covers(ui.mode === "journey" ? fromT : 0)) {   // the session's music is still loading: start the moment enough of it lands
       if (this.playing) this.halt();
       this.waiting = { fromT }; syncTransport(); return;
     }
@@ -1485,7 +1639,7 @@ const Player = {
     if (!this.playing) return;
     const ac = this.ac, now = ac.currentTime;
     if (!this.eng.ended && this.nextTime < now + 0.005) { this.underruns++; this.nextTime = Math.ceil((now + 0.03) * SR) / SR; }
-    const la = document.hidden ? 3.2 : Beds.loading ? 1.5 : 0.22;   // extra cushion while a bed decodes
+    const la = document.hidden ? 3.2 : Beds.loading ? 1.5 : Beds.filling ? 0.5 : 0.22;   // extra cushion while a bed decodes
     while (this.nextTime < now + la && !this.eng.ended) {
       const n = 2048, snap = this.eng.snapshot(), buf = ac.createBuffer(2, n, SR);
       this.eng.render(buf.getChannelData(0), buf.getChannelData(1), n);
@@ -1529,7 +1683,10 @@ const Player = {
     }, 80);
   },
   seek(t) { playT = clamp(t, 0, rateMapUI.total); if (this.waiting) this.waiting.fromT = playT; if (this.playing && ui.mode === "journey") this.play(playT); },
-  bedSettled() { if (this.waiting) { const w = this.waiting; this.waiting = null; this.play(ui.mode === "journey" ? w.fromT : 0); } },
+  bedSettled() {
+    const w = this.waiting; if (!w || Beds.loading || !Beds.covers(ui.mode === "journey" ? w.fromT : 0)) return;
+    this.waiting = null; this.play(ui.mode === "journey" ? w.fromT : 0);
+  },
   cancelWait() { this.waiting = null; this.startTok = null; this.sleep(); syncTransport(); },
   update() { if (this.eng) { this.eng.update(patch, { bed: Beds.current }); this.eng.setFree(patch.freeRate); } },
   // Lock screen play/pause and phone calls suspend or resume the AudioContext directly, so the player follows along
@@ -1671,7 +1828,7 @@ function openAgentTab() {
 let exporting = null;
 async function exportWav() {
   if (exporting) return;
-  if (Beds.loading) { toast("The music is still loading, export in a moment"); return; }
+  if (Beds.busy) { toast("The music is still loading, export in a moment"); return; }
   const p = copyPatch(patch), bed = Beds.current, chans = ui.chans === 1 ? 1 : 2;
   const probe = createEngine(p, { mode: "journey", bed, seed: 7 }), frames = Math.ceil(probe.endAt * SR);
   const job = exporting = { cancel: false };
