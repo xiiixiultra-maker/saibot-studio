@@ -321,11 +321,26 @@ html.light .file-art{background:#e7e4dc}
 .trust div{background:var(--bg-elevated);padding:22px 20px;transition:background .4s var(--ease)}
 .trust h4{font-family:'Syne';font-weight:700;font-size:17px;line-height:1.2;margin-bottom:8px}
 .trust p{font-size:13px;line-height:1.6;color:var(--l2)}
-.audit{margin-top:2px;background:var(--volt);color:#0A0A0B;padding:32px 28px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
+.audit{margin-top:2px;background:var(--volt);color:#0A0A0B;padding:32px 28px;display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:28px 40px;align-items:start}
 .audit h3{font-family:'Syne';font-weight:800;font-size:clamp(24px,3.4vw,46px);line-height:1;text-transform:uppercase;letter-spacing:-.01em}
 .audit p{font-size:13px;line-height:1.6;margin-top:10px;max-width:60ch;color:rgba(10,10,11,.75)}
-.audit a.btn{display:inline-block;font-family:'Space Mono';font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;background:#0A0A0B;color:#F4F1EA;padding:18px 26px;border-radius:99px;white-space:nowrap;transition:transform .25s var(--ease)}
-.audit a.btn:hover{transform:translateY(-3px)}
+.audit .btn{display:inline-block;font-family:'Space Mono';font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;background:#0A0A0B;color:#F4F1EA;padding:18px 26px;border-radius:99px;white-space:nowrap;border:0;cursor:pointer;transition:transform .25s var(--ease),opacity .25s}
+.audit .btn:hover{transform:translateY(-3px)}
+.audit .btn[disabled]{opacity:.6;cursor:wait;transform:none}
+.aform{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;align-content:start;min-width:0}
+.aform label{display:flex;flex-direction:column;gap:6px;font-family:'Space Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(10,10,11,.7);min-width:0}
+.aform label:nth-child(4),.aform label:nth-child(5){grid-column:1/3}
+.aform input,.aform select,.aform textarea{font:400 14px/1.4 'Space Mono',monospace;color:#0A0A0B;background:rgba(255,255,255,.55);border:1px solid rgba(10,10,11,.25);border-radius:8px;padding:12px 13px;width:100%;min-width:0;outline:0;transition:border-color .2s,background .2s}
+.aform select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230A0A0B' stroke-width='1.6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+.aform textarea{resize:vertical;min-height:84px}
+.aform input:focus,.aform select:focus,.aform textarea:focus{border-color:#0A0A0B;background:rgba(255,255,255,.85)}
+.aform .invalid{border-color:#c0261f;background:rgba(255,220,218,.7)}
+.aform .btn{grid-column:1/3;justify-self:start;margin-top:4px}
+.aform-note{grid-column:1/3;font-family:'Space Mono';font-size:11px;letter-spacing:.06em;color:rgba(10,10,11,.6);margin:0}
+.aform-note.err{color:#8a1a14}
+.athanks h3{font-family:'Syne';font-weight:800;font-size:clamp(28px,4vw,56px);line-height:1;text-transform:uppercase}
+.athanks p{font-size:14px;line-height:1.65;margin-top:12px;max-width:52ch;color:rgba(10,10,11,.8)}
+@media(max-width:600px){.aform{grid-template-columns:1fr}.aform label:nth-child(4),.aform label:nth-child(5),.aform .btn,.aform-note{grid-column:1}}
 .case-note{font-family:'Space Mono';font-size:11px;line-height:1.6;color:var(--l3);margin-top:14px;max-width:90ch}
 @media(max-width:600px){.findings li{grid-template-columns:1fr;gap:6px}}
 @media(max-width:920px){
@@ -465,12 +480,33 @@ footer{
       <div><h4>Profit, not vanity.</h4><p>I will not buy you revenue that costs more than it brings in. The payout is the scoreboard.</p></div>
     </div>
 
-    <div class="audit">
+    <div class="audit" id="auditBox">
       <div>
         <h3>Free Amazon audit</h3>
-        <p>Send your store name and your last payout statement. Within a few days you get a plain-English read of where the money is leaking, no obligation. If the account is healthy, I will say so.</p>
+        <p>Four questions, two minutes. Within a few days you get a plain-English read of where the money is leaking, no obligation. Read-only. If the account is healthy, I will say so.</p>
       </div>
-      <a class="btn" href="mailto:nastysaibot@me.com?subject=Free%20Amazon%20audit&body=Store%20name%3A%20%0AMarketplace%3A%20%0ARough%20monthly%20sales%3A%20%0ABiggest%20headache%20right%20now%3A%20">Request the audit</a>
+      <form class="aform" id="auditForm" novalidate>
+        <label><span>Store name on Amazon</span><input name="store" type="text" required autocomplete="organization" placeholder="Your brand or storefront"></label>
+        <label><span>Marketplace</span>
+          <select name="marketplace" required>
+            <option value="" disabled selected>Pick one</option>
+            <option>Amazon.com (US)</option><option>Amazon.ca</option><option>Amazon.com.mx</option><option>Amazon UK / EU</option><option>More than one</option><option>Other</option>
+          </select></label>
+        <label><span>Rough monthly sales</span>
+          <select name="sales" required>
+            <option value="" disabled selected>Pick one</option>
+            <option>Under $5K</option><option>$5K to $20K</option><option>$20K to $50K</option><option>$50K to $150K</option><option>Over $150K</option>
+          </select></label>
+        <label><span>Biggest headache right now</span><textarea name="headache" rows="3" required placeholder="Ad spend, fees, returns, a payout that never shows up, all of it..."></textarea></label>
+        <label><span>Where do I reply?</span><input name="email" type="email" required autocomplete="email" placeholder="you@brand.com"></label>
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+        <button class="btn" type="submit" id="auditSend">Request the audit</button>
+        <p class="aform-note" id="auditNote">Goes straight to Remmy. No list, no automation.</p>
+      </form>
+      <div class="athanks" id="auditThanks" hidden>
+        <h3>Got it.</h3>
+        <p>Your request is in. I read every one myself and reply within a few days with what I see. Nothing in your account gets touched. Meanwhile, the case file above is what a read looks like.</p>
+      </div>
     </div>
     <p class="case-note">Real client results, anonymized. Before = Jan to Jun 2026 under the previous setup; after = Aug to Oct 2026. Figures come from the client's Seller Central settlements and Ads console. Net payout = what Amazon pays out after fees, refunds and ads, before product cost. Top-line sales were lower after the change: the old revenue was bought with unprofitable ads. Results vary by store.</p>
   </section>
@@ -800,6 +836,38 @@ document.querySelectorAll('.file').forEach(f=>{
     })();
   }),{threshold:.5});
   io2.observe(sc);
+  /* audit form: posts to Formspree when AUDIT_ENDPOINT is set, otherwise opens a pre-filled email */
+  const AUDIT_ENDPOINT='';  /* e.g. 'https://formspree.io/f/xxxxxxx' */
+  const AUDIT_TO='nastysaibot@me.com';
+  const form=document.getElementById('auditForm'),note=document.getElementById('auditNote'),send=document.getElementById('auditSend');
+  form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    let ok=true;
+    form.querySelectorAll('[required]').forEach(el=>{
+      const bad=!el.value||(el.type==='email'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(el.value));
+      el.classList.toggle('invalid',bad);if(bad)ok=false;
+    });
+    if(!ok){note.textContent='Fill in the highlighted fields and try again.';note.classList.add('err');return}
+    note.classList.remove('err');
+    const d=Object.fromEntries(new FormData(form).entries());
+    if(d._gotcha)return;
+    if(!AUDIT_ENDPOINT){
+      const body=`Store name: ${d.store}\nMarketplace: ${d.marketplace}\nRough monthly sales: ${d.sales}\nBiggest headache: ${d.headache}\nReply to: ${d.email}`;
+      location.href=`mailto:${AUDIT_TO}?subject=${encodeURIComponent('Free Amazon audit: '+d.store)}&body=${encodeURIComponent(body)}`;
+      note.textContent='Your email app should open with the request filled in. Hit send there.';
+      return;
+    }
+    send.disabled=true;send.textContent='Sending...';
+    try{
+      const r=await fetch(AUDIT_ENDPOINT,{method:'POST',headers:{'Accept':'application/json'},body:new FormData(form)});
+      if(!r.ok)throw new Error(r.status);
+      form.hidden=true;document.getElementById('auditThanks').hidden=false;
+    }catch(err){
+      send.disabled=false;send.textContent='Request the audit';
+      note.textContent='That did not go through. Email '+AUDIT_TO+' instead and I will take it from there.';note.classList.add('err');
+    }
+  });
+  form.querySelectorAll('input,select,textarea').forEach(el=>el.addEventListener('input',()=>el.classList.remove('invalid')));
   /* phone */
   const shell=document.getElementById('phoneShell'),v=document.getElementById('caseVideo');
   shell.addEventListener('click',()=>{
