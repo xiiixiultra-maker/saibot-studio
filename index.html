@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SAIBOT©2026</title>
-<meta name="description" content="Saibot Studio — Creative Direction, Film, 3D & Events. Miami, FL.">
+<meta name="description" content="Saibot Studio, Miami. Amazon growth and rescue for stores that pay Amazon to sell, plus the films, 3D and events that sell them. Free read-only audit.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -258,6 +258,82 @@ html.light .file-art{background:#e7e4dc}
 .cta .mail{display:inline-block;margin-top:4vh;color:var(--l2);border-bottom:1px dotted var(--l3);padding-bottom:2px}
 .cta .mail:hover{color:var(--l1);border-color:var(--l1)}
 
+/* ---------- case file (Amazon) ---------- */
+.case{--volt:#D9FF3F;--red:#FF3D3D;padding-top:12vh}
+.case-head{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:end;margin-bottom:6vh}
+.case-head h2{font-family:'Syne';font-weight:800;text-transform:uppercase;font-size:clamp(34px,5.4vw,84px);line-height:.95;letter-spacing:-.01em}
+.case-head h2 .r{color:var(--red)}.case-head h2 .v{color:var(--volt)}
+.case-head p{font-size:14px;line-height:1.7;color:var(--l2);max-width:48ch}
+.case-head p b{color:var(--l1);font-weight:400}
+.case-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:2px;align-items:stretch}
+.case-panel{background:var(--bg-elevated);padding:28px 26px;position:relative;overflow:hidden;transition:background .4s var(--ease)}
+.case-panel .k{font-family:'Space Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--l2);display:flex;justify-content:space-between;gap:12px}
+.case-panel .k b{color:var(--l1);font-weight:400}
+/* scrubber */
+.scrub{margin:26px 0 8px;position:relative}
+.scrub input{-webkit-appearance:none;appearance:none;width:100%;height:36px;background:transparent;cursor:ew-resize;margin:0}
+.scrub input::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:linear-gradient(90deg,var(--red),var(--volt))}
+.scrub input::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:var(--l1);border:4px solid var(--b1);margin-top:-12px;box-shadow:0 0 0 2px var(--l1);transition:transform .2s}
+.scrub input::-moz-range-track{height:6px;border-radius:99px;background:linear-gradient(90deg,var(--red),var(--volt))}
+.scrub input::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--l1);border:4px solid var(--b1);box-shadow:0 0 0 2px var(--l1)}
+.scrub input:active::-webkit-slider-thumb{transform:scale(1.15)}
+.scrub-ends{display:flex;justify-content:space-between;font-family:'Space Mono';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--l2)}
+.scrub-ends span:first-child{color:var(--red)}.scrub-ends span:last-child{color:var(--volt)}
+.scrub-month{font-family:'Syne';font-weight:800;font-size:clamp(28px,4vw,54px);line-height:1;margin-top:18px;text-transform:uppercase}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:2px;margin-top:26px}
+.stat{background:var(--b1);padding:18px 14px 16px;min-width:0;transition:background .4s var(--ease)}
+.stat .k{display:block;margin-bottom:10px;min-height:2.6em}
+.stat .v{font-family:'Syne';font-weight:800;font-size:clamp(22px,2.3vw,36px);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat .v{display:block}
+.stat .d{display:block;font-size:12px;color:var(--l2);margin-top:8px;line-height:1.45}
+/* the dollar */
+.dollar{margin-top:26px}
+.dollar .bar{display:flex;height:34px;border-radius:6px;overflow:hidden;background:var(--l4)}
+.dollar .bar i{display:block;height:100%;transition:width .1s linear}
+.dollar .bar .cost{background:var(--red)}
+.dollar .bar .keep{background:var(--volt)}
+.dollar .lg{display:flex;justify-content:space-between;font-family:'Space Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--l2);margin-top:8px;gap:10px;flex-wrap:wrap}
+.dollar .lg b{font-weight:400;color:var(--l1)}
+/* findings */
+.findings{list-style:none;display:grid;gap:2px;margin-top:4px}
+.findings li{background:var(--b1);padding:16px 16px 14px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:baseline}
+.findings .n{font-family:'Syne';font-weight:800;font-size:clamp(24px,2.6vw,36px);color:var(--red);letter-spacing:-.02em;white-space:nowrap}
+.findings .t{font-size:13px;line-height:1.5;color:var(--l2)}
+.findings .t b{color:var(--l1);font-weight:400}
+.redact{display:inline-block;background:var(--l1);height:.85em;vertical-align:-.1em;border-radius:2px;margin:0 2px;transition:background .25s}
+.method{margin-top:22px;padding:18px 16px;border:1px dotted var(--l3);border-radius:8px;cursor:help;position:relative}
+.method .k{margin-bottom:10px}
+.method .lines{font-family:'Syne';font-weight:700;font-size:20px;line-height:1.5}
+.method .peek{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;background:var(--bg-elevated);font-family:'Syne';font-weight:700;font-size:clamp(16px,1.6vw,22px);opacity:0;transition:opacity .25s;border-radius:8px}
+.method:hover .peek,.method:focus-within .peek{opacity:1}
+/* phone */
+.phone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--bg-elevated);padding:28px 20px}
+.phone .shell{position:relative;width:min(280px,100%);aspect-ratio:9/16;border-radius:26px;overflow:hidden;background:#000;box-shadow:0 30px 60px rgba(0,0,0,.5),0 0 0 6px #1a1a1f,0 0 0 7px #2a2a30;cursor:pointer}
+.phone video{width:100%;height:100%;object-fit:cover;display:block}
+.phone .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);transition:opacity .3s}
+.phone .play span{width:74px;height:74px;border-radius:50%;background:var(--volt);display:flex;align-items:center;justify-content:center}
+.phone .play svg{margin-left:5px}
+.phone .shell.playing .play{opacity:0;pointer-events:none}
+.phone .cap{font-family:'Space Mono';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--l2);text-align:center;line-height:1.7}
+.phone .cap b{color:var(--l1);font-weight:400}
+/* trust + cta */
+.trust{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2px;margin-top:2px}
+.trust div{background:var(--bg-elevated);padding:22px 20px;transition:background .4s var(--ease)}
+.trust h4{font-family:'Syne';font-weight:700;font-size:17px;line-height:1.2;margin-bottom:8px}
+.trust p{font-size:13px;line-height:1.6;color:var(--l2)}
+.audit{margin-top:2px;background:var(--volt);color:#0A0A0B;padding:32px 28px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
+.audit h3{font-family:'Syne';font-weight:800;font-size:clamp(24px,3.4vw,46px);line-height:1;text-transform:uppercase;letter-spacing:-.01em}
+.audit p{font-size:13px;line-height:1.6;margin-top:10px;max-width:60ch;color:rgba(10,10,11,.75)}
+.audit a.btn{display:inline-block;font-family:'Space Mono';font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;background:#0A0A0B;color:#F4F1EA;padding:18px 26px;border-radius:99px;white-space:nowrap;transition:transform .25s var(--ease)}
+.audit a.btn:hover{transform:translateY(-3px)}
+.case-note{font-family:'Space Mono';font-size:11px;line-height:1.6;color:var(--l3);margin-top:14px;max-width:90ch}
+@media(max-width:600px){.findings li{grid-template-columns:1fr;gap:6px}}
+@media(max-width:920px){
+  .case-head{grid-template-columns:1fr}
+  .case-grid{grid-template-columns:1fr}
+  .audit{grid-template-columns:1fr}
+}
+
 /* footer */
 footer{
   display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
@@ -281,6 +357,7 @@ footer{
   <div class="row">
     <a class="brand hov" href="#top"><span>saibot</span><span class="dim">.studio</span></a>
     <nav>
+      <button class="hov" onclick="document.getElementById('amazon').scrollIntoView()">Amazon</button>
       <button class="hov desktop-only" onclick="document.getElementById('capabilities').scrollIntoView()">Capabilities</button>
       <button class="hov desktop-only" onclick="document.getElementById('work').scrollIntoView()">Work</button>
       <button class="hov desktop-only" onclick="document.getElementById('archive').scrollIntoView()">Archive</button>
@@ -301,10 +378,11 @@ footer{
   <div class="hero pad" id="hero">
     <div class="fallback"><span>Saibot<br>Studio</span></div>
     <div class="hero-meta">
-      <h1 class="scr" data-text="Creative direction & craft. Film, 3D, events — culture-first.">Creative direction &amp; craft. Film, 3D, events — culture-first.</h1>
+      <h1 class="scr" data-text="I fix Amazon stores that pay Amazon to sell. Then I make the films that sell them.">I fix Amazon stores that pay Amazon to sell. Then I make the films that sell them.</h1>
       <div class="side">
         Miami, FL<br>
-        Saibot Studio — Remmy Rivera<br>
+        Saibot Studio · Remmy Rivera<br>
+        Amazon growth + rescue · Film · 3D · Events<br>
         Scroll to dissolve ↓
       </div>
     </div>
@@ -312,27 +390,108 @@ footer{
 
   <div class="marquee">
     <div class="marquee-track" id="mtrack">
-      <span><b>Nike</b> ✦ Shoe Gallery ✦ <b>Sean Wotherspoon</b> ✦ Web3 ✦ <b>3D Worlds</b> ✦ Directed Events ✦ <b>Miami</b> ✦ Unseen Perfumes ✦ </span>
+      <span><b>Amazon Rescue</b> ✦ Case File 001 ✦ <b>Free Audit</b> ✦ Nike ✦ <b>Shoe Gallery</b> ✦ Sean Wotherspoon ✦ <b>3D Worlds</b> ✦ Directed Events ✦ <b>Miami</b> ✦ </span>
     </div>
   </div>
 
+  <section class="case pad" id="amazon">
+    <p class="sec-label">01 / Amazon Growth + Rescue</p>
+    <div class="case-head">
+      <h2>Case File 001: <span class="r">paying Amazon</span> to sell. Four months later, <span class="v">getting paid.</span></h2>
+      <p>A real store, anonymized. Healthy sales, and every two weeks the payout came back <b>negative</b>: ads and fees ate more than the store sold. I took the account over in July. <b>Drag the slider</b> to watch the same store move from June to October. The method stays in house. The numbers do not.</p>
+    </div>
+
+    <div class="case-grid">
+      <div class="case-panel">
+        <div class="k"><span>Before / after · same store, same products</span><b id="scrubLabel">Jun 2026</b></div>
+        <div class="scrub">
+          <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Scrub from June 2026 to October 2026">
+          <div class="scrub-ends"><span>Jun 2026 · old setup</span><span>Oct 2026 · Saibot</span></div>
+        </div>
+        <div class="scrub-month" id="scrubMonth">Paying Amazon to sell.</div>
+
+        <div class="stats">
+          <div class="stat"><span class="k">Ad spend / month</span><span class="v" id="sAds">$7,287</span><span class="d" id="sAdsD">Jan to Jun average</span></div>
+          <div class="stat"><span class="k">Back per $1 of ads</span><span class="v" id="sRoas">$1.37</span><span class="d" id="sRoasD">below break-even</span></div>
+          <div class="stat"><span class="k">Net payout / 2 weeks</span><span class="v" id="sNet">&minus;$377</span><span class="d" id="sNetD">the store paid Amazon</span></div>
+          <div class="stat"><span class="k">Costs per sales $</span><span class="v" id="sCost">97&cent;</span><span class="d" id="sCostD">fees + ads + refunds</span></div>
+        </div>
+
+        <div class="dollar">
+          <div class="bar"><i class="cost" id="dCost" style="width:97%"></i><i class="keep" id="dKeep" style="width:0%"></i></div>
+          <div class="lg"><span>Every sales dollar: <b id="dCostT">97&cent; to costs</b></span><span><b id="dKeepT">nothing kept</b></span></div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="shell" id="phoneShell">
+          <video id="caseVideo" src="assets/casefile-001.mp4" poster="assets/casefile-001-poster.jpg" playsinline preload="metadata"></video>
+          <div class="play"><span><svg width="28" height="28" viewBox="0 0 24 24" fill="#0A0A0B"><path d="M6 3l15 9-15 9z"/></svg></span></div>
+        </div>
+        <p class="cap"><b>Case File 001</b> · 32 s · sound on<br>What I show clients, and what I post.</p>
+      </div>
+    </div>
+
+    <div class="case-grid" style="margin-top:2px">
+      <div class="case-panel">
+        <div class="k"><span>Day one. What the audit found.</span><b>Jul 9, 2026</b></div>
+        <ul class="findings" style="margin-top:18px">
+          <li><span class="n">$20,948</span><span class="t"><b>46% of the year's ad spend</b> went to searches that never produced a single order.</span></li>
+          <li><span class="n">23</span><span class="t">separate campaigns were <b>bidding on the brand's own name</b>, against each other.</span></li>
+          <li><span class="n">65%</span><span class="t">of spend was <b>duplicated targeting</b>: the same searches bought by several campaigns at once.</span></li>
+          <li><span class="n">71</span><span class="t">search terms were <b>converting below break-even</b> and still running at full budget.</span></li>
+        </ul>
+        <div class="method" tabindex="0">
+          <div class="k"><span>Then I fixed it. How:</span></div>
+          <div class="lines"><span class="redact" style="width:38%"></span><span class="redact" style="width:22%"></span><br><span class="redact" style="width:15%"></span><span class="redact" style="width:46%"></span><br><span class="redact" style="width:58%"></span></div>
+          <div class="peek">That part stays in house.<br>The results are the proof.</div>
+        </div>
+      </div>
+      <div class="case-panel">
+        <div class="k"><span>What four months bought</span><b>Aug to Oct</b></div>
+        <ul class="findings" style="margin-top:18px">
+          <li><span class="n" style="color:var(--volt)">&minus;82%</span><span class="t">ad spend per month, <b>$7,287 to $1,299</b>.</span></li>
+          <li><span class="n" style="color:var(--volt)">+93%</span><span class="t">back per ad dollar, <b>$1.37 to $2.65</b>.</span></li>
+          <li><span class="n" style="color:var(--volt)">$3,181</span><span class="t">kept in September. <b>More than Jan to Jul combined</b> ($1,909).</span></li>
+          <li><span class="n" style="color:var(--volt)">0%</span><span class="t">order defect rate. <b>Account health: Healthy.</b></span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="trust">
+      <div><h4>Read-only first.</h4><p>The audit runs on view access. I touch nothing until you have the findings in writing.</p></div>
+      <div><h4>Your account stays yours.</h4><p>No shared logins, no agency sub-account. You invite me, you can remove me in one click.</p></div>
+      <div><h4>Every change is logged.</h4><p>What changed, why, the number before, the number after. A PDF you can read in two minutes.</p></div>
+      <div><h4>Profit, not vanity.</h4><p>I will not buy you revenue that costs more than it brings in. The payout is the scoreboard.</p></div>
+    </div>
+
+    <div class="audit">
+      <div>
+        <h3>Free Amazon audit</h3>
+        <p>Send your store name and your last payout statement. Within a few days you get a plain-English read of where the money is leaking, no obligation. If the account is healthy, I will say so.</p>
+      </div>
+      <a class="btn" href="mailto:nastysaibot@me.com?subject=Free%20Amazon%20audit&body=Store%20name%3A%20%0AMarketplace%3A%20%0ARough%20monthly%20sales%3A%20%0ABiggest%20headache%20right%20now%3A%20">Request the audit</a>
+    </div>
+    <p class="case-note">Real client results, anonymized. Before = Jan to Jun 2026 under the previous setup; after = Aug to Oct 2026. Figures come from the client's Seller Central settlements and Ads console. Net payout = what Amazon pays out after fees, refunds and ads, before product cost. Top-line sales were lower after the change: the old revenue was bought with unprofitable ads. Results vary by store.</p>
+  </section>
+
   <section class="profile pad" id="studio">
-    <p class="sec-label">01 — Profile</p>
-    <p class="statement">Saibot Studio turns sneakers, scent and street culture into <span class="grad-text">events people line up for</span> and films people replay. Today that same eye powers <span class="grad-text">AI-driven video</span> and ad performance that moves the numbers.</p>
+    <p class="sec-label">02 / Profile</p>
+    <p class="statement">Saibot Studio turns sneakers, scent and street culture into <span class="grad-text">events people line up for</span> and films people replay. The same eye now runs <span class="grad-text">Amazon accounts</span> and AI-driven video, where the scoreboard is the payout, not the applause.</p>
   </section>
 
   <section class="caps pad" id="capabilities">
-    <p class="sec-label">02 — Capabilities</p>
+    <p class="sec-label">03 / Capabilities</p>
     <div class="caps-grid">
+      <div class="cap">
+        <h3>Amazon Growth + Rescue</h3>
+        <p>For stores that sell but do not keep. A read-only audit of wasted ad spend, fees, refunds and listing leaks, then a rebuild you approve line by line. Weekly reads in a two-page PDF. Payout is the only metric I report first.</p>
+        <div class="tags"><span>Free audit</span><span>Account rescue</span><span>PPC rebuild</span><span>Listing fixes</span><span>Weekly PDF</span></div>
+      </div>
       <div class="cap">
         <h3>AI Video &amp; Generative Content</h3>
         <p>Custom AI-generated films built with the newest generative video models and finished frame by frame. Narrative mini-series, explainer series, viral short-form, product reveals, and talking-head spots with synced voice.</p>
         <div class="tags"><span>Mini-series</span><span>Explainers</span><span>Viral shorts</span><span>Product films</span><span>Lip-sync VO</span></div>
-      </div>
-      <div class="cap">
-        <h3>Amazon Advertising</h3>
-        <p>PPC management and account recovery for brands losing money on ad spend. I audit wasted budget, rebuild campaign structure, and lift ROAS across Sponsored Products, Brands, and Display.</p>
-        <div class="tags"><span>PPC management</span><span>Account recovery</span><span>ROAS lift</span><span>New-launch strategy</span></div>
       </div>
       <div class="cap">
         <h3>Social Content Systems</h3>
@@ -358,18 +517,18 @@ footer{
   </section>
 
   <section class="pad" id="work">
-    <p class="sec-label">03 — Selected Work</p>
+    <p class="sec-label">04 / Selected Work</p>
 
     <div class="work-row" data-video="yt:4dR68h-e8tc">
       <span class="idx">001</span><span class="type">Event</span>
       <span class="title">Air Max Day: Sean Wotherspoon AM1/97<span class="watch">▶ Watch</span></span><span class="year">2018</span>
-      <p class="desc">Live screen-printing activation for the Wotherspoon release with Nike, Shoe Gallery and AAO Print Shop. Faux thrift-store tees, licensed Nike × SW graphics — everyday shoppers turned into artists for a day.</p>
+      <p class="desc">Live screen-printing activation for the Wotherspoon release with Nike, Shoe Gallery and AAO Print Shop. Faux thrift-store tees, licensed Nike × SW graphics, everyday shoppers turned into artists for a day.</p>
       <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/4dR68h-e8tc/hqdefault.jpg')"></div>
     </div>
     <div class="work-row">
       <span class="idx">002</span><span class="type">Event</span>
       <span class="title">Apocalypse Awareness</span><span class="year">2018</span>
-      <p class="desc">Artistry meets activism at Shoe Gallery. Three artists, three South Florida threats — nuclear catastrophe, hurricanes, rising seas — told through interactive screen printing and water-dye design.</p>
+      <p class="desc">Artistry meets activism at Shoe Gallery. Three artists, three South Florida threats: nuclear catastrophe, hurricanes, rising seas — told through interactive screen printing and water-dye design.</p>
       <div class="thumb t-apoc">AA</div>
     </div>
     <div class="work-row" data-image="assets/nfl-jacket.jpg">
@@ -393,13 +552,13 @@ footer{
     <div class="work-row" data-video="yt:ideKaPnCofE">
       <span class="idx">006</span><span class="type">Film</span>
       <span class="title">Fear of God 1: Freestyle Remake<span class="watch">▶ Watch</span></span><span class="year">Nike</span>
-      <p class="desc">A street-level remake of Nike's classic Freestyle commercial — featuring Luis "Trikz" Da Silva Jr., an original Freestyle performer who walked into Shoe Gallery days before the shoot.</p>
+      <p class="desc">A street-level remake of Nike's classic Freestyle commercial, featuring Luis "Trikz" Da Silva Jr., an original Freestyle performer who walked into Shoe Gallery days before the shoot.</p>
       <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/ideKaPnCofE/hqdefault.jpg')"></div>
     </div>
     <div class="work-row" data-video="yt:DygCj4e9Kxw">
       <span class="idx">007</span><span class="type">3D</span>
       <span class="title">Uno AF1: A 3D Revival<span class="watch">▶ Watch</span></span><span class="year">SG</span>
-      <p class="desc">A rainy Miami beach collapses into a vibrant vortex revealing the Uno AF1 — the card game reborn as a sneaker world. The studio's entry into 3D advertising.</p>
+      <p class="desc">A rainy Miami beach collapses into a vibrant vortex revealing the Uno AF1: the card game reborn as a sneaker world. The studio's entry into 3D advertising.</p>
       <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/DygCj4e9Kxw/hqdefault.jpg')"></div>
     </div>
     <div class="work-row" data-video="yt:3e0-DylbfOA">
@@ -411,19 +570,19 @@ footer{
     <div class="work-row" data-video="assets/sneaker-grades.mp4">
       <span class="idx">009</span><span class="type">Web3</span>
       <span class="title">Sneaker Grades NFT<span class="watch">▶ Watch</span></span><span class="year">2021</span>
-      <p class="desc">A non-profit NFT initiative on Ethereum connecting digital art with academic recognition — proceeds reward high-performing students. Modeled, textured and rendered in-house.</p>
+      <p class="desc">A non-profit NFT initiative on Ethereum connecting digital art with academic recognition. Proceeds reward high-performing students. Modeled, textured and rendered in-house.</p>
       <div class="thumb t-img" style="background-image:url('assets/sneaker-grades-poster.jpg')"></div>
     </div>
     <div class="work-row" data-video="assets/unseen-film.mp4">
       <span class="idx">010</span><span class="type">Scent</span>
       <span class="title">Unseen: Perfumes<span class="watch">▶ Watch</span></span><span class="year">Soon</span>
-      <p class="desc">Scent as storytelling — an experiment in designing what you can't look at. Coming into focus.</p>
+      <p class="desc">Scent as storytelling: an experiment in designing what you can't look at. Coming into focus.</p>
       <div class="thumb t-img" style="background-image:url('assets/unseen-poster.jpg')"></div>
     </div>
     <div class="work-row" data-page="resin-culture/">
       <span class="idx">011</span><span class="type">3D</span>
       <span class="title">Resin Culture: Procedural Jar<span class="watch">◈ Launch</span></span><span class="year">2026</span>
-      <p class="desc">A jar rebuilt from five photographs, entirely in code. Every surface is drawn at runtime — no imported meshes, no downloaded textures, no scans. Lathe-revolved glass, swept helical threads, three canvas-drawn labels. The cap is a real screw: it can't lift without turning.</p>
+      <p class="desc">A jar rebuilt from five photographs, entirely in code. Every surface is drawn at runtime: no imported meshes, no downloaded textures, no scans. Lathe-revolved glass, swept helical threads, three canvas-drawn labels. The cap is a real screw: it can't lift without turning.</p>
       <div class="thumb t-img" style="background-image:url('assets/jar-3d.jpg')"></div>
     </div>
     <div class="work-row" data-page="resin-culture/rodman/">
@@ -435,8 +594,8 @@ footer{
   </section>
 
   <section class="pad" id="archive">
-    <p class="sec-label">04 — The Archive</p>
-    <p class="archive-sub">NFL × Nike × Shoe Gallery — the full Dade County drop, filed and catalogued. <b>Open any file.</b></p>
+    <p class="sec-label">05 / The Archive</p>
+    <p class="archive-sub">NFL × Nike × Shoe Gallery, the full Dade County drop, filed and catalogued. <b>Open any file.</b></p>
     <div class="archive-grid">
       <button class="file" data-image="assets/archive/helmet.png"><span class="file-tab"><b>01</b> Headwear</span><span class="file-art"><img src="assets/archive/helmet.png" alt="The Helmet"></span><span class="file-name">The Helmet<em>Nike × NFL</em></span></button>
       <button class="file" data-image="assets/archive/hands.png"><span class="file-tab"><b>02</b> Graphic</span><span class="file-art"><img src="assets/archive/hands.png" alt="Dade County Hands"></span><span class="file-name">Dade County Hands<em>Chrome</em></span></button>
@@ -453,9 +612,11 @@ footer{
   </section>
 
   <section class="cta pad" id="contact">
-    <p class="sec-label">05 — Contact</p>
-    <a class="big" href="mailto:nastysaibot@me.com">Create something<br>unforgettable</a><br>
-    <a class="mail" href="mailto:nastysaibot@me.com">nastysaibot@me.com</a>
+    <p class="sec-label">06 / Contact</p>
+    <a class="big" href="mailto:nastysaibot@me.com?subject=Free%20Amazon%20audit">Fix my<br>Amazon store</a><br>
+    <a class="mail" href="mailto:nastysaibot@me.com?subject=Free%20Amazon%20audit">Free audit · nastysaibot@me.com</a>
+    <span style="display:inline-block;margin:4vh 18px 0;color:var(--l3)">or</span>
+    <a class="mail" href="mailto:nastysaibot@me.com?subject=Let%27s%20make%20something" style="margin-top:4vh">Create something unforgettable</a>
   </section>
 
 </main>
@@ -592,6 +753,60 @@ document.querySelectorAll('.work-row').forEach(r=>{
 document.querySelectorAll('.file').forEach(f=>{
   f.addEventListener('click',()=>{const img=f.dataset.image;if(img)openImage(img);});
 });
+
+/* ============ case file: before/after scrubber ============ */
+(function(){
+  const sc=document.getElementById('scrub');if(!sc)return;
+  const $=id=>document.getElementById(id);
+  const lerp=(a,b,k)=>a+(b-a)*k;
+  const ease=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+  const money=v=>(v<0?'−':'')+'$'+Math.round(Math.abs(v)).toLocaleString('en-US');
+  const months=['Jun','Jul','Aug','Sep','Oct'];
+  const lines=['Paying Amazon to sell.','Handover. Audit in writing.','Waste cut. Payout turns positive.','Kept more than Jan to Jul combined.','Healthy. Getting paid.'];
+  const VOLT='#D9FF3F',RED='#FF3D3D';
+  function mix(a,b,k){const h=x=>[parseInt(x.slice(1,3),16),parseInt(x.slice(3,5),16),parseInt(x.slice(5,7),16)];const A=h(a),B=h(b);return `rgb(${A.map((v,i)=>Math.round(lerp(v,B[i],k))).join(',')})`}
+  function paint(){
+    const k=ease(sc.value/1000);
+    const mi=Math.min(4,Math.floor(sc.value/1000*5));
+    $('scrubLabel').textContent=months[mi]+' 2026';
+    $('scrubMonth').textContent=lines[mi];
+    const col=mix(RED,VOLT,k);
+    const ads=lerp(7287,1299,k),roas=lerp(1.37,2.65,k),net=lerp(-377,1988,k),cost=lerp(97,56,k);
+    $('sAds').textContent=money(ads);$('sAds').style.color=col;
+    $('sAdsD').textContent=k<.5?'Jan to Jun average':'30 days to Sep 21, down 82%';
+    $('sRoas').textContent='$'+roas.toFixed(2);$('sRoas').style.color=col;
+    $('sRoasD').textContent=k<.5?'below break-even':'up 93%';
+    $('sNet').textContent=(net>=0?'+':'')+money(net);$('sNet').style.color=col;
+    $('sNetD').textContent=net<0?'the store paid Amazon':'Amazon paid the store';
+    $('sCost').textContent=Math.round(cost)+'¢';$('sCost').style.color=col;
+    $('sCostD').textContent=k<.5?'fees + ads + refunds':'fees + ads + refunds, after cleanup';
+    const keep=Math.max(0,100-cost);
+    $('dCost').style.width=cost+'%';$('dKeep').style.width=keep+'%';
+    $('dCostT').textContent=Math.round(cost)+'¢ to costs';
+    $('dKeepT').textContent=keep<1?'nothing kept (it went negative)':Math.round(keep)+'¢ kept, before product cost';
+  }
+  sc.addEventListener('input',paint);paint();
+  /* play the slider once when it scrolls into view, then hand it to the visitor */
+  let played=false,touched=false;
+  sc.addEventListener('pointerdown',()=>touched=true);
+  const io2=new IntersectionObserver(es=>es.forEach(e=>{
+    if(!e.isIntersecting||played)return;played=true;io2.disconnect();
+    const t0=performance.now();
+    (function run(){
+      if(touched)return;
+      const p=Math.min(1,(performance.now()-t0)/3200);
+      sc.value=Math.round(1000*p);paint();
+      if(p<1)requestAnimationFrame(run);
+    })();
+  }),{threshold:.5});
+  io2.observe(sc);
+  /* phone */
+  const shell=document.getElementById('phoneShell'),v=document.getElementById('caseVideo');
+  shell.addEventListener('click',()=>{
+    if(v.paused){v.play();shell.classList.add('playing')}else{v.pause();shell.classList.remove('playing')}
+  });
+  v.addEventListener('ended',()=>{shell.classList.remove('playing');v.currentTime=0});
+})();
 
 /* ============ generative ambient sound ============ */
 let actx=null,soundOn=false;
