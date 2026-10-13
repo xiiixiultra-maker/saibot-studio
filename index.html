@@ -837,7 +837,7 @@ document.querySelectorAll('.file').forEach(f=>{
   }),{threshold:.5});
   io2.observe(sc);
   /* audit form: posts to Formspree when AUDIT_ENDPOINT is set, otherwise opens a pre-filled email */
-  const AUDIT_ENDPOINT='';  /* e.g. 'https://formspree.io/f/xxxxxxx' */
+  const AUDIT_ENDPOINT='https://formspree.io/f/mvkzwwwr';
   const AUDIT_TO='nastysaibot@me.com';
   const form=document.getElementById('auditForm'),note=document.getElementById('auditNote'),send=document.getElementById('auditSend');
   form.addEventListener('submit',async e=>{
