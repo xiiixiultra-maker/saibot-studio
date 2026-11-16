@@ -1,0 +1,195 @@
+{
+ "build": "2026-11-15 21:17",
+ "glb_bytes": 575040,
+ "fps": 30,
+ "duration": 38.5,
+ "ride": {
+  "ignition": [
+   0.0,
+   1.0
+  ],
+  "pullout": [
+   1.0,
+   2.4
+  ],
+  "drive": [
+   2.0,
+   3.6
+  ],
+  "ascent": [
+   3.9,
+   7.5
+  ],
+  "arrival": [
+   7.5,
+   8.8
+  ],
+  "lights": [
+   8.8,
+   10.0
+  ],
+  "end": 10.0
+ },
+ "segments": {
+  "brand": {
+   "in": [
+    11.0,
+    12.5
+   ],
+   "out": [
+    13.0,
+    14.5
+   ]
+  },
+  "content": {
+   "in": [
+    15.0,
+    16.5
+   ],
+   "out": [
+    17.0,
+    18.5
+   ]
+  },
+  "amazon": {
+   "in": [
+    19.0,
+    20.5
+   ],
+   "out": [
+    21.0,
+    22.5
+   ]
+  },
+  "3d": {
+   "in": [
+    23.0,
+    24.5
+   ],
+   "out": [
+    25.0,
+    26.5
+   ]
+  },
+  "apps": {
+   "in": [
+    27.0,
+    28.5
+   ],
+   "out": [
+    29.0,
+    30.5
+   ]
+  },
+  "automation": {
+   "in": [
+    31.0,
+    32.5
+   ],
+   "out": [
+    33.0,
+    34.5
+   ]
+  },
+  "contact": {
+   "in": [
+    35.0,
+    36.5
+   ],
+   "out": [
+    37.0,
+    38.5
+   ]
+  }
+ },
+ "studio_z": 68.0,
+ "floor_h": 4.0,
+ "cab": {
+  "node": "cab",
+  "y": -4.0
+ },
+ "offices": [
+  {
+   "slug": "brand",
+   "label": "BRAND",
+   "room": "The Gallery",
+   "color": "#FF6B2B"
+  },
+  {
+   "slug": "content",
+   "label": "CONTENT",
+   "room": "Screening Room",
+   "color": "#FF2E88"
+  },
+  {
+   "slug": "amazon",
+   "label": "AMAZON",
+   "room": "War Room",
+   "color": "#FFB000"
+  },
+  {
+   "slug": "3d",
+   "label": "3D + WEB",
+   "room": "The Lab",
+   "color": "#29D8FF"
+  },
+  {
+   "slug": "apps",
+   "label": "APPS",
+   "room": "The Workshop",
+   "color": "#7A5CFF"
+  },
+  {
+   "slug": "automation",
+   "label": "AUTOMATION",
+   "room": "Server Room",
+   "color": "#3DFF8F"
+  },
+  {
+   "slug": "contact",
+   "label": "RECEPTION",
+   "room": "Reception",
+   "color": "#F4F1EA"
+  }
+ ],
+ "floor": {
+  "eye": [
+   -0.28999999165534973,
+   12.199999809265137,
+   68.97000122070312
+  ],
+  "target": [
+   -0.20000000298023224,
+   18.5,
+   68.94999694824219
+  ],
+  "pivot": [
+   0.0,
+   12.5,
+   68.0
+  ]
+ },
+ "lights_up": {
+  "first": 8.8,
+  "step": 0.2,
+  "ring": 9.9
+ },
+ "car": {
+  "idle": [
+   0.0,
+   -17.0,
+   0.0
+  ],
+  "cockpit": [
+   -0.28999999165534973,
+   -0.30000001192092896,
+   0.9700000286102295
+  ],
+  "cockpit_at": [
+   -0.20000000298023224,
+   1.600000023841858,
+   0.6000000238418579
+  ]
+ },
+ "note": "Blender coordinates (Z up). three.js: x, z, -y."
+}

@@ -1,1072 +1,382 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SAIBOT©2026</title>
-<meta name="description" content="Saibot Studio, Miami. Amazon growth and rescue for stores that pay Amazon to sell, plus the films, 3D and events that sell them. Free read-only audit.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<script>
+  // the old homepage lives at /work/ now: links to its sections (saibot.studio/#amazon, #auditBox, ...)
+  // keep landing on them. The tower's own addresses are /amazon/ or #/amazon, never a bare #amazon.
+  (function () {
+    var ids = ["amazon", "archive", "auditBox", "auditForm", "auditNote", "auditSend", "auditThanks", "aurora", "boot", "bootFill", "capabilities", "caseVideo", "clock", "contact", "coords", "cursor", "dCost", "dCostT", "dKeep", "dKeepT", "gl", "hero", "lightbox", "mtrack", "phoneShell", "sAds", "sAdsD", "sCost", "sCostD", "sNet", "sNetD", "sRoas", "sRoasD", "scrub", "scrubLabel", "scrubMonth", "soundBtn", "studio", "themeBtn", "top", "work"];
+    var h = location.hash.slice(1);
+    if (h && ids.indexOf(h) >= 0) location.replace('/work/#' + h);
+  })();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#08090B">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23D9FF3F'/%3E%3C/svg%3E">
+<title>Saibot Studio | One desk in Miami</title>
+<!-- the front door's search and link-preview tags (each office's own page swaps in its own: _source/site/make_pages.py);
+     the title and robots above are the test build's, _source/site/build_launch.py sets the real ones -->
+<meta name="description" content="Saibot Studio, Miami. Content, Amazon, apps, 3D, brand and automation from one operator with a studio pipeline, no agency layers.">
+<link rel="canonical" href="https://saibot.studio/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Saibot Studio">
+<meta property="og:title" content="Saibot Studio">
+<meta property="og:description" content="Saibot Studio, Miami. Content, Amazon, apps, 3D, brand and automation from one operator with a studio pipeline, no agency layers.">
+<meta property="og:url" content="https://saibot.studio/">
+<meta property="og:image" content="https://saibot.studio/scene/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A green race car rolling into the lit Saibot Studio tower at night">
+<meta name="twitter:card" content="summary_large_image">
+<!-- the import map comes before any module load, or browsers ignore it -->
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/three.module.js",
+  "three/addons/": "./vendor/three/addons/"
+} }
+</script>
+<link rel="modulepreload" href="vendor/three/three.core.js">
+<link rel="modulepreload" href="vendor/three/three.module.js">
+<link rel="modulepreload" href="vendor/three/addons/loaders/GLTFLoader.js">
+<link rel="preload" href="scene/tower.glb" as="fetch" crossorigin="anonymous">
+<link rel="modulepreload" href="vendor/three/addons/loaders/DRACOLoader.js">
+<link rel="modulepreload" href="vendor/three/addons/postprocessing/UnrealBloomPass.js">
+<link rel="preload" href="fonts/Satoshi-Variable.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 <style>
-:root{
-  --bg-deep:10,10,12;
-  --bg-elevated:#17171c;
-  --label:255,255,255;
-  --label-d:230,232,232;
-  --pink:#ff2e88;
-  --orange:#ff6b2b;
-  --violet:#7a5cff;
-  --cyan:#29d8ff;
-  --grad:linear-gradient(100deg,var(--pink),var(--orange) 45%,var(--violet) 80%);
-  --ease:cubic-bezier(.66,0,.01,1);
-  --aurora-opacity:.55;
-}
-html.light{
-  --bg-deep:251,250,244;
-  --bg-elevated:#efede7;
-  --label:12,12,14;
-  --label-d:54,54,48;
-  --aurora-opacity:.28;
-}
-:root{
-  --b1:rgb(var(--bg-deep));
-  --l1:rgba(var(--label),1);
-  --l2:rgba(var(--label-d),.6);
-  --l3:rgba(var(--label-d),.32);
-  --l4:rgba(var(--label-d),.14);
-}
-*{margin:0;padding:0;box-sizing:border-box}
-::selection{background:var(--pink);color:var(--b1)}
-html{scroll-behavior:smooth}
-body{
-  background:var(--b1);color:var(--l1);
-  font-family:'Space Mono',monospace;font-size:15px;line-height:1.6;
-  transition:background .4s var(--ease),color .4s var(--ease);
-  overflow-x:hidden;
-}
-a{color:inherit;text-decoration:none}
-.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  /* Step 2 gray box. Plain on purpose: this proves the ride and the taps, not the look.
+     Logo = the reel end-card wordmark (Tigre Kults Slant) as an IMAGE: Tigre is a desktop license, never a webfont.
+     UI text = Satoshi (Fontshare, ITF Free Font License, files used as-is): round geometric shapes that echo Tigre,
+     upright and calm so the logo stays loudest; office names and START ENGINE in black italic lean with the wordmark. */
+  @font-face { font-family: "Satoshi"; src: url("fonts/Satoshi-Variable.woff2") format("woff2"); font-weight: 300 900; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Satoshi"; src: url("fonts/Satoshi-VariableItalic.woff2") format("woff2"); font-weight: 300 900; font-style: italic; font-display: swap; }
+  :root { --bg:#08090B; --ink:#F4F6F3; --dim:#9AA19E; --volt:#D9FF3F; --line:rgba(244,246,243,.2); --panel:rgba(10,11,14,.82);
+    --ui: "Satoshi", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; overscroll-behavior: none;
+    font: 500 15px/1.35 var(--ui); -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+  .mono { font-family: var(--ui); font-variant-numeric: tabular-nums; }
+  /* Tigre words: pre-rendered images in type/ (big text). Satoshi: everything small. */
+  .start img { display: block; width: 94px; height: auto; transform: translateX(3px); }
+  .skip img { display: block; height: 25px; width: auto; }
+  .enter img { display: block; height: 24px; width: auto; }
+  #back img { display: block; height: 24px; width: auto; }
+  #cname { display: block; height: 30px; width: auto; max-width: 100%; object-fit: contain; object-position: left center; }
+  #office h1 img { display: block; height: clamp(54px, 14vw, 96px); width: auto; max-width: 100%; object-fit: contain; object-position: left center; }
+  .lhead h2 img { display: block; height: 34px; width: auto; }
+  .pgrid button img { display: block; height: 17px; width: auto; max-width: 92%; margin: 0 auto; object-fit: contain; }
+  .pgrid button.on img { filter: brightness(0) saturate(100%); }
+  #bar .logo { display: block; height: 26px; width: auto; }
+  .dlogo { position: absolute; left: 50%; top: calc(26px + env(safe-area-inset-top)); transform: translateX(-50%);
+    width: min(62vw, 380px); height: auto; filter: drop-shadow(0 6px 18px rgba(0,0,0,.55)); }
+  #floorno .flogo { height: 20px; width: auto; margin-left: 10px; vertical-align: -3px; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+  .layer { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  /* the ride as a Blender film: over the 3D, under the ride's floor counter, panel and Skip */
+  #film { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 3; background: #000;
+    opacity: 0; transition: opacity .15s linear; pointer-events: none; }
+  #film.on { opacity: 1; }
+  #film.out { opacity: 0; transition: opacity .45s ease; }
+  /* the office flights (Blender films) and the room behind each office page (their last frame) */
+  #flight, #roomshot { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000;
+    opacity: 0; transition: opacity .15s linear; pointer-events: none; }
+  #roomshot { z-index: 3; }
+  #flight { z-index: 4; }
+  #flight.on, #roomshot.on { opacity: 1; }
+  /* the screen wall: his reels playing on the room's screen, laid over the still in perspective (app.js wallPlace) */
+  #wall { position: fixed; left: 0; top: 0; z-index: 3; transform-origin: 0 0; pointer-events: none; opacity: 0;
+    transition: opacity .35s ease; background: #06070A center / 100% 100% no-repeat; }
+  #wall.on { opacity: 1; }
+  #wall video { position: absolute; object-fit: cover; background: transparent; }
+  /* Step out, rendered: the film over the roof (#stepfilm) and the Cycles stills round the car (#orbitshot) */
+  #orbitshot, #stepfilm { position: fixed; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none;
+    transition: opacity .15s linear; background: #000; }
+  #stepfilm { object-fit: cover; z-index: 4; }
+  #orbitshot { z-index: 3; }
+  #orbitshot.on, #stepfilm.on { opacity: 1; }
+  .layer > * { pointer-events: auto; }
 
-/* ---------- grain ---------- */
-.grain{
-  position:fixed;inset:-50%;width:200%;height:200%;
-  pointer-events:none;z-index:9998;opacity:.06;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation:grain 8s steps(10) infinite;
-}
-@keyframes grain{
-  0%,100%{transform:translate(0,0)}10%{transform:translate(-5%,-8%)}
-  30%{transform:translate(3%,-6%)}50%{transform:translate(-7%,4%)}
-  70%{transform:translate(6%,8%)}90%{transform:translate(-3%,3%)}
-}
+  /* shot 0: the doorstep */
+  #doorstep { position: fixed; inset: 0; z-index: 30; background: #0B0E14; transition: opacity .7s ease; }
+  #doorstep img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  #doorstep.out { opacity: 0; pointer-events: none; }
+  .gauge { position: absolute; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    width: 210px; padding: 10px 10px 12px; border-radius: 22px; background: rgba(8,9,11,.72); text-align: center; }
+  .gauge svg { width: 190px; height: 118px; display: block; margin: 0 auto; }
+  .gauge .track { fill: none; stroke: rgba(244,246,243,.18); stroke-width: 9; stroke-linecap: round; }
+  .gauge .fill { fill: none; stroke: var(--volt); stroke-width: 9; stroke-linecap: round; }
+  #needle line { stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; }
+  #needle circle { fill: var(--ink); }
+  .gtxt b { display: block; font-size: 22px; font-weight: 800; }
+  .gtxt span { display: block; font-size: 13px; color: var(--dim); margin-top: 2px; }
 
-/* ---------- custom cursor ---------- */
-.cursor{
-  position:fixed;top:0;left:0;width:14px;height:14px;border-radius:50%;
-  background:#fff;pointer-events:none;z-index:9999;
-  mix-blend-mode:difference;transform:translate(-50%,-50%);
-  transition:width .25s,height .25s;
-}
-.cursor.big{width:64px;height:64px}
-@media (hover:none){body{cursor:auto}.cursor{display:none}}
+  /* shot 1: the driver's seat. START is the 3D button on the steering wheel; this ring sits right over it (app.js pins it every frame), pulses neon orange, and is the real <button>
+     for keyboards and screen readers. */
+  .start { position: absolute; left: 50%; top: 70%; width: 96px; height: 96px; margin: -48px 0 0 -48px; padding: 0;
+    border-radius: 50%; border: 0; background: transparent; }
+  .start::before, .start::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(255,95,0,.95);
+    box-shadow: 0 0 16px rgba(255,95,0,.6), inset 0 0 10px rgba(255,95,0,.35); animation: ping 1.8s ease-out infinite; pointer-events: none; }
+  .start::after { animation-delay: .9s; }
+  @keyframes ping { 0% { transform: scale(.6); opacity: 1; } 100% { transform: scale(1.45); opacity: 0; } }
+  .start:focus-visible { outline: 2px solid var(--volt); outline-offset: 6px; }
+  .textbtn { position: absolute; left: calc(14px + env(safe-area-inset-left)); bottom: calc(26px + env(safe-area-inset-bottom));
+    background: rgba(8,9,11,.7); border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; font-size: 14px; }
+  @media (prefers-reduced-motion: reduce) { .start::before, .start::after { animation: none; transform: scale(1.05); } }
+  .viewbtn { bottom: calc(118px + env(safe-area-inset-bottom)); }      /* floor 18: above the office card */
 
-/* ---------- boot loader ---------- */
-#boot{
-  position:fixed;inset:0;z-index:200;background:var(--b1);
-  display:flex;align-items:center;justify-content:center;
-  transition:opacity .5s var(--ease);
-}
-#boot.done{opacity:0;pointer-events:none}
-#boot .bar{width:150px;height:6px;border-radius:99px;background:var(--l4);overflow:hidden}
-#boot .fill{height:100%;width:0%;border-radius:99px;background:var(--grad);transition:width .5s cubic-bezier(.22,1,.36,1)}
+  /* the ride */
+  .skip { position: fixed; z-index: 25; top: calc(14px + env(safe-area-inset-top)); right: calc(14px + env(safe-area-inset-right));
+    min-width: 76px; height: 44px; border-radius: 999px; border: 1px solid var(--line); background: rgba(8,9,11,.72); font-weight: 700; padding: 0 16px; }
+  #floorno { position: absolute; top: calc(16px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left));
+    background: rgba(8,9,11,.6); border-radius: 10px; padding: 6px 10px; pointer-events: none; }
+  #floorno span { font-size: 13px; color: var(--dim); margin-right: 8px; }
+  #floorno b { font-size: 24px; font-weight: 800; color: var(--volt); }
+  #panel { position: absolute; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    width: min(440px, calc(100% - 24px)); background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 10px 12px 12px; }
+  .ptitle { font-size: 13px; color: var(--dim); text-align: center; margin-bottom: 8px; }
+  .pgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .pgrid button { height: 46px; border-radius: 12px; border: 1px solid var(--line); background: rgba(244,246,243,.06); font-weight: 700; font-size: 13px; }
+  .pgrid button.on { background: var(--volt); color: #0b0b0b; border-color: var(--volt); }
+  .plined { margin-top: 8px; text-align: center; font-size: 13px; font-weight: 600; color: var(--volt); min-height: 17px; }
 
-/* ---------- dotted hover ---------- */
-.hov{position:relative;padding:8px;cursor:pointer}
-.hov::before{content:"";position:absolute;inset:0;border:2px dotted transparent;pointer-events:none;transition:border-color .2s}
-.hov:hover::before{border-color:var(--l1)}
+  /* the floor */
+  .hint { position: absolute; left: 50%; top: calc(66px + env(safe-area-inset-top)); transform: translateX(-50%);
+    background: rgba(8,9,11,.6); border-radius: 999px; padding: 6px 12px; font-size: 13px; color: var(--dim); pointer-events: none; white-space: nowrap;
+    transition: opacity .5s; }
+  .hint.gone { opacity: 0; }
+  #card { position: absolute; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    width: min(460px, calc(100% - 24px)); display: flex; align-items: center; gap: 8px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 18px; padding: 10px; }
+  #card .ctext { flex: 1; min-width: 0; }
+  #card b { display: block; font-size: 21px; font-style: italic; font-weight: 900; }
+  #card span { display: block; color: var(--dim); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #card .nav { width: 40px; height: 52px; border-radius: 12px; border: 1px solid var(--line); background: transparent; font-size: 22px; }
+  .enter { height: 52px; padding: 0 18px; border-radius: 12px; border: 0; background: var(--volt); color: #0b0b0b; font-weight: 800; letter-spacing: .04em; }
 
-/* ---------- HUD ---------- */
-header{
-  position:fixed;inset:0;z-index:50;pointer-events:none;
-  display:flex;flex-direction:column;justify-content:space-between;
-  padding:16px clamp(16px,4vw,56px) 20px;
-  text-transform:uppercase;font-size:14px;
-}
-header .row{display:flex;justify-content:space-between;align-items:center}
-header a,header button{pointer-events:auto}
-.brand{font-family:'Syne';font-weight:800;letter-spacing:.06em}
-.brand .dim{color:var(--l2)}
-nav{display:flex;gap:14px;align-items:center}
-nav button{background:none;border:0;color:inherit;font:inherit;text-transform:uppercase}
-.hud-bottom{display:flex;justify-content:space-between;align-items:center;color:var(--l2)}
-#coords{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:var(--l2);pointer-events:none;font-size:13px;text-transform:uppercase}
-@media(max-width:820px){nav .desktop-only{display:none}#coords{display:none}}
+  /* top bar */
+  #bar { position: fixed; z-index: 20; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 8px;
+    padding: calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 10px calc(14px + env(safe-area-inset-left));
+    background: linear-gradient(rgba(8,9,11,.75), rgba(8,9,11,0)); pointer-events: none; }
+  #bar > * { pointer-events: auto; }
+  #bar .brand { font-size: 13px; letter-spacing: .14em; }
+  #bar .sp { flex: 1; }
+  #bar button { height: 38px; border-radius: 999px; border: 1px solid var(--line); background: rgba(8,9,11,.6); padding: 0 12px; font-size: 13px; }
+  #bar button.on { border-color: var(--volt); color: var(--volt); }
 
-/* ---------- canvases ---------- */
-#aurora{position:fixed;inset:0;z-index:0;width:100%;height:100%;filter:blur(70px) saturate(1.3);opacity:var(--aurora-opacity);pointer-events:none;transition:opacity .4s var(--ease)}
-#gl{position:fixed;inset:0;z-index:1;pointer-events:none}
+  /* an office page: plain HTML over the room */
+  #office { position: fixed; z-index: 22; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    background: rgba(8,9,11,.66); padding: calc(18px + env(safe-area-inset-top)) 22px calc(30px + env(safe-area-inset-bottom));
+    -webkit-user-select: text; user-select: text; animation: rise .35s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+  .opage { max-width: 640px; margin: 0 auto; }
+  #back { display: block; height: 48px; border-radius: 999px; border: 1px solid var(--volt); color: var(--volt); background: transparent; padding: 0 18px; font-weight: 700; margin: 0 0 22px; }
+  .otop { font-size: 13px; color: var(--dim); }
+  #office h1 { font-size: clamp(40px, 11vw, 76px); line-height: .95; margin: 8px auto 6px; font-style: italic; font-weight: 900; letter-spacing: -.01em; }
+  .oroom { color: var(--volt); font-weight: 700; margin: 0 auto 16px; }
+  #office p { font-size: 16px; line-height: 1.5; }
+  .ph { color: var(--dim); }
+  .cta { display: block; height: 50px; border-radius: 12px; border: 1px dashed var(--line); background: transparent; color: var(--dim); padding: 0 18px; margin-top: 20px; }
+  /* lit: the rendered room is behind the page and its screen plays the reels, so the page opens a window over the
+     screen (app.js sets --wTop/--wBot and the #ospace gap) and keeps its text above and below it */
+  #office.lit { background: linear-gradient(to bottom, rgba(8,9,11,.82) 0, rgba(8,9,11,.6) calc(var(--wTop) - 34px),
+    rgba(8,9,11,0) calc(var(--wTop) - 6px), rgba(8,9,11,0) calc(var(--wBot) + 6px), rgba(8,9,11,.74) calc(var(--wBot) + 44px),
+    rgba(8,9,11,.9) 100%); }
+  /* the office page (11/16): the reels on the screen, the lane, what you get, Start a project (Instagram DM or email),
+     on a dark sheet that scrolls up over the room (the room stays clear above it) */
+  #office { padding-bottom: 0; }
+  .obody { margin: 0 -22px; padding: 20px 22px calc(40px + env(safe-area-inset-bottom)); min-height: 50vh;
+    background: rgba(10,11,13,.975); border-radius: 22px 22px 0 0; box-shadow: 0 -18px 40px rgba(0,0,0,.35); }
+  .owork { list-style: none; padding: 0; margin: 0 0 22px; display: grid; gap: 10px; }
+  .owork li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center; }
+  .owork img { width: 40px; height: 71px; object-fit: cover; border-radius: 6px; background: #111; display: block; }
+  .owork b { display: block; font-size: 15px; line-height: 1.25; }
+  .owork span { display: block; font-size: 13px; line-height: 1.35; color: var(--dim); }
+  .opromise { font-size: clamp(26px, 7vw, 38px); line-height: 1.06; margin: 6px 0 10px; font-weight: 900; letter-spacing: -.012em; }
+  #office .oblurb { margin: 0; }
+  .ogets { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 9px; }
+  .ogets li { position: relative; padding-left: 20px; line-height: 1.4; }
+  .ogets li::before { content: ""; position: absolute; left: 0; top: .66em; width: 10px; height: 2px; background: var(--volt); }
+  #office .oguard { font-size: 13px; color: var(--dim); margin: 14px 0 0; }
+  .olinks { display: grid; gap: 10px; margin-top: 18px; }
+  .olinks:empty { display: none; }
+  .olink { display: block; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; color: var(--ink); text-decoration: none; }
+  .olink b { display: block; color: var(--volt); }
+  .olink span { display: block; font-size: 13px; color: var(--dim); margin-top: 2px; }
+  .octa { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .octah { margin: 0 0 12px; font-size: 18px; }
+  .obtns { display: flex; flex-wrap: wrap; gap: 10px; }
+  .obtn { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 22px; border-radius: 999px;
+    font-weight: 700; font-size: 15px; text-decoration: none; }
+  .obtn-volt { background: var(--volt); color: #0B0C0E; }
+  .obtn-line { border: 1px solid var(--line); color: var(--ink); }
+  #office .onote { font-size: 13px; color: var(--dim); margin: 10px 0 0; }
+  /* the credits link: Reception only, the last thing on the page */
+  #office .ofine { margin: 34px 0 0; font-size: 12px; }
+  .ofine a { color: var(--dim); text-decoration: none; }
+  .ofine a:hover, .ofine a:focus-visible { color: var(--ink); text-decoration: underline; }
+  @media (min-aspect-ratio: 1/1) {          /* wide: Back and the name share a row so the head clears the screen */
+    #office.lit .ohead { display: grid; grid-template-columns: auto auto; justify-content: start; align-items: center; column-gap: 18px; }
+    #office.lit #back { margin: 0; grid-row: 1; grid-column: 1; }
+    #office.lit h1 { margin: 0; grid-row: 1; grid-column: 2; }
+    #office.lit h1 img { height: 52px; }
+    #office.lit .otop { grid-row: 2; grid-column: 1 / 3; margin-top: 10px; }
+    #office.lit .oroom { grid-row: 3; grid-column: 1 / 3; margin: 2px 0 0; }
+  }
 
-/* ---------- layout ---------- */
-main{position:relative;z-index:10}
-.pad{padding-left:clamp(16px,4vw,56px);padding-right:clamp(16px,4vw,56px)}
+  /* plain list of every office (also what search engines read) */
+  #links { position: fixed; z-index: 26; inset: 0; overflow-y: auto; background: rgba(8,9,11,.95);
+    padding: calc(16px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom)); -webkit-user-select: text; user-select: text; }
+  #links > * { max-width: 560px; margin-left: auto; margin-right: auto; }
+  .lhead { display: flex; align-items: center; justify-content: space-between; }
+  .lhead h2 { margin: 6px 0 10px; font-size: 26px; }
+  #links ul { list-style: none; padding: 0; margin: 0 auto 18px; }
+  #links li { border-bottom: 1px solid var(--line); padding: 12px 0; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  #links a { color: var(--ink); font-size: 19px; font-weight: 700; text-decoration: none; }
+  #links a:hover { color: var(--volt); }
+  #links li span { color: var(--dim); font-size: 14px; }
+  #links button { height: 44px; border-radius: 999px; border: 1px solid var(--line); background: transparent; padding: 0 16px; }
+  .lopts { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+  .chk { display: flex; gap: 10px; align-items: center; font-size: 15px; }
+  .chk input { width: 22px; height: 22px; accent-color: var(--volt); }
 
-/* hero */
-.hero{height:100svh;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:11vh;position:relative;z-index:5;pointer-events:none}
-.hero *{pointer-events:auto}
-.hero .fallback{
-  font-family:'Syne';font-weight:800;text-transform:uppercase;
-  font-size:clamp(52px,11vw,170px);line-height:.9;letter-spacing:-.01em;display:none;
-}
-.hero.no-gl .fallback{display:block}
-.hero.no-gl .fallback span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero-meta{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-top:4vh}
-.hero-meta h1{font-family:'Syne';font-weight:700;font-size:clamp(20px,2.8vw,38px);line-height:1.15;max-width:19ch}
-.hero-meta h1 em{font-style:normal;color:var(--l2)}
-.hero-meta .side{color:var(--l2);font-size:13px;text-transform:uppercase;text-align:right;line-height:1.9}
-
-/* marquee */
-.marquee{border-top:1px solid var(--l4);border-bottom:1px solid var(--l4);overflow:hidden;padding:16px 0;position:relative;z-index:10;background:rgba(var(--label),.02)}
-.marquee-track{display:flex;width:max-content;animation:scroll 28s linear infinite}
-.marquee span{font-family:'Space Mono';font-weight:700;font-size:14px;letter-spacing:.3em;text-transform:uppercase;white-space:nowrap;padding:0 22px;color:var(--l2)}
-.marquee span b{color:var(--l1);font-weight:700}
-@keyframes scroll{to{transform:translateX(-50%)}}
-
-/* section scaffolding */
-section{padding-top:15vh;padding-bottom:6vh}
-.sec-label{color:var(--l2);text-transform:uppercase;font-size:13px;letter-spacing:.12em;margin-bottom:44px;display:flex;gap:12px;align-items:baseline}
-.sec-label::after{content:"";flex:1;border-top:1px solid var(--l4)}
-
-/* profile */
-.profile p.statement{
-  font-family:'Syne';font-weight:700;
-  font-size:clamp(24px,3.6vw,52px);line-height:1.22;max-width:26ch;letter-spacing:-.01em;
-}
-.profile .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:2px;margin-top:9vh}
-.profile .facts div{background:var(--bg-elevated);padding:20px;transition:background .4s var(--ease);position:relative;overflow:hidden}
-.profile .facts div::after{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--grad);opacity:0;transition:opacity .3s}
-.profile .facts div:hover::after{opacity:1}
-.profile .facts h3{font-size:12px;text-transform:uppercase;color:var(--l2);font-weight:400;margin-bottom:10px;font-family:'Space Mono'}
-.profile .facts p{font-size:14px;line-height:1.55;color:var(--l1)}
-
-/* capabilities */
-.caps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2px}
-.cap{background:var(--bg-elevated);padding:28px 26px;transition:background .4s var(--ease);position:relative;overflow:hidden}
-.cap::after{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--grad);opacity:0;transition:opacity .3s}
-.cap:hover::after{opacity:1}
-.cap h3{font-family:'Syne';font-weight:700;font-size:clamp(19px,2.1vw,27px);line-height:1.1;margin-bottom:14px}
-.cap p{font-size:14px;line-height:1.62;color:var(--l2)}
-.cap .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
-.cap .tags span{font-family:'Space Mono';font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--l1);border:1px dotted var(--l3);padding:4px 11px;border-radius:99px}
-
-/* work list */
-.work-row{
-  display:grid;grid-template-columns:56px 96px 1fr auto;gap:18px;align-items:baseline;
-  padding:22px 8px;border-bottom:1px dotted var(--l4);
-  position:relative;cursor:pointer;
-  opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--ease),background .25s;
-}
-.work-row.show{opacity:1;transform:none}
-.work-row:hover{background:var(--bg-elevated)}
-.work-row::before{content:"";position:absolute;inset:0;border:2px dotted transparent;pointer-events:none;transition:border-color .2s;z-index:2}
-.work-row:hover::before{border-color:var(--l1)}
-.work-row .idx,.work-row .type{color:var(--l2);font-size:13px;text-transform:uppercase}
-.work-row .title{font-family:'Syne';font-weight:700;font-size:clamp(18px,2.4vw,30px);line-height:1.15;transition:transform .35s var(--ease)}
-.work-row:hover .title{transform:translateX(12px)}
-.work-row .year{color:var(--l2);font-size:13px}
-.work-row .desc{grid-column:3/5;color:var(--l2);font-size:14px;line-height:1.6;max-width:70ch;
-  max-height:0;overflow:hidden;transition:max-height .5s var(--ease),margin .5s var(--ease)}
-.work-row:hover .desc,.work-row.open .desc{max-height:220px;margin-top:10px}
-.work-row .thumb{
-  position:absolute;right:8%;top:50%;transform:translateY(-50%) scale(.6) rotate(-6deg);
-  width:230px;height:150px;border-radius:10px;opacity:0;pointer-events:none;z-index:5;
-  transition:opacity .3s,transform .45s var(--ease);
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Syne';font-weight:800;font-size:44px;color:rgba(10,10,12,.85);
-}
-.work-row:hover .thumb{opacity:1;transform:translateY(-50%) scale(1) rotate(-3deg)}
-@media(max-width:920px){
-  .work-row{grid-template-columns:40px 1fr auto}
-  .work-row .type{display:none}
-  .work-row .desc{grid-column:2/4}
-  .work-row .thumb{display:none}
-}
-.thumb.t-img{background-size:cover;background-position:center;color:transparent}
-.watch{
-  display:inline-block;margin-left:14px;font-family:'Space Mono';font-weight:400;font-size:12px;
-  letter-spacing:.15em;color:var(--l2);border:1px dotted var(--l3);padding:3px 10px;border-radius:99px;
-  vertical-align:middle;white-space:nowrap;text-transform:uppercase;transition:color .2s,border-color .2s;
-}
-.work-row:hover .watch{color:var(--l1);border-color:var(--l1)}
-
-/* the archive — filing-cabinet grid */
-.archive-sub{font-family:'Space Mono';font-size:14px;color:var(--l2);max-width:52ch;margin-top:-24px;margin-bottom:8vh}
-.archive-sub b{color:var(--l1);font-weight:400;border-bottom:1px dotted var(--l3)}
-.archive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
-.file{
-  position:relative;display:flex;flex-direction:column;text-align:left;font:inherit;color:inherit;
-  min-width:0;aspect-ratio:3/4;background:var(--bg-elevated);border:1px solid var(--l4);border-radius:3px 3px 9px 9px;
-  cursor:pointer;overflow:hidden;padding:0;
-  box-shadow:0 10px 24px rgba(0,0,0,.35);
-  transition:transform .35s var(--ease),border-color .3s,box-shadow .35s var(--ease);
-}
-.file::before{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--grad);opacity:0;transition:opacity .3s;z-index:3}
-.file:hover{transform:translateY(-12px);border-color:var(--l2);box-shadow:0 28px 52px rgba(0,0,0,.5)}
-.file:hover::before{opacity:1}
-.file-tab{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 11px;
-  font-family:'Space Mono';font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--l2);border-bottom:1px solid var(--l4)}
-.file-tab b{color:var(--l1);font-weight:400}
-.file-art{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#0d0d10}
-html.light .file-art{background:#e7e4dc}
-.file-art img{width:100%;height:100%;object-fit:contain;padding:15px;transition:transform .4s var(--ease)}
-.file.cover .file-art img{object-fit:cover;padding:0}
-.file:hover .file-art img{transform:scale(1.05)}
-.file-name{padding:11px;font-family:'Syne';font-weight:700;font-size:14px;line-height:1.15}
-.file-name em{display:block;font-style:normal;font-family:'Space Mono';font-weight:400;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--l2);margin-top:4px}
-
-/* lightbox */
-#lightbox{
-  position:fixed;inset:0;z-index:150;background:rgba(5,5,7,.9);
-  display:none;align-items:center;justify-content:center;padding:4vw;
-  backdrop-filter:blur(10px);
-}
-#lightbox.on{display:flex}
-#lightbox .frame{position:relative;width:min(1100px,94vw);aspect-ratio:16/9;background:#000}
-#lightbox iframe,#lightbox video,#lightbox img{width:100%;height:100%;border:0;display:block;object-fit:contain}
-#lightbox .close{
-  position:absolute;top:-42px;right:0;background:none;border:0;color:#fff;
-  font-family:'Space Mono';font-size:13px;letter-spacing:.15em;cursor:pointer;text-transform:uppercase;
-}
-.t-wotherspoon{background:linear-gradient(135deg,#ff6b2b,#ffd23f 55%,#3ec96f)}
-.t-apoc{background:linear-gradient(135deg,#29d8ff,#7a5cff 60%,#0a0a0c)}
-.t-neymar{background:linear-gradient(135deg,#3ec96f,#ffd23f)}
-.t-fog{background:linear-gradient(135deg,#d8d4cb,#8d8a83)}
-.t-uno{background:linear-gradient(135deg,#ff2e88,#ff6b2b)}
-.t-kukini{background:linear-gradient(135deg,#7a5cff,#29d8ff)}
-.t-sg{background:linear-gradient(135deg,#ffd23f,#ff2e88)}
-.t-unseen{background:linear-gradient(135deg,#1b1b22,#4a4657);color:rgba(244,241,234,.8)}
-
-/* cta */
-.cta{padding-bottom:10vh}
-.cta .big{
-  font-family:'Syne';font-weight:800;text-transform:uppercase;
-  font-size:clamp(32px,6.8vw,110px);line-height:.98;letter-spacing:-.01em;display:inline-block;max-width:100%;
-  background-image:var(--grad);-webkit-background-clip:text;background-clip:text;
-  transition:color .4s;
-}
-.cta .big:hover{color:transparent}
-.cta .mail{display:inline-block;margin-top:4vh;color:var(--l2);border-bottom:1px dotted var(--l3);padding-bottom:2px}
-.cta .mail:hover{color:var(--l1);border-color:var(--l1)}
-
-/* ---------- case file (Amazon) ---------- */
-.case{--volt:#D9FF3F;--red:#FF3D3D;padding-top:12vh}
-.case-head{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:end;margin-bottom:6vh}
-.case-head h2{font-family:'Syne';font-weight:800;text-transform:uppercase;font-size:clamp(34px,5.4vw,84px);line-height:.95;letter-spacing:-.01em}
-.case-head h2 .r{color:var(--red)}.case-head h2 .v{color:var(--volt)}
-.case-head p{font-size:14px;line-height:1.7;color:var(--l2);max-width:48ch}
-.case-head p b{color:var(--l1);font-weight:400}
-.case-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:2px;align-items:stretch}
-.case-panel{background:var(--bg-elevated);padding:28px 26px;position:relative;overflow:hidden;transition:background .4s var(--ease)}
-.case-panel .k{font-family:'Space Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--l2);display:flex;justify-content:space-between;gap:12px}
-.case-panel .k b{color:var(--l1);font-weight:400}
-/* scrubber */
-.scrub{margin:26px 0 8px;position:relative}
-.scrub input{-webkit-appearance:none;appearance:none;width:100%;height:36px;background:transparent;cursor:ew-resize;margin:0}
-.scrub input::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:linear-gradient(90deg,var(--red),var(--volt))}
-.scrub input::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:var(--l1);border:4px solid var(--b1);margin-top:-12px;box-shadow:0 0 0 2px var(--l1);transition:transform .2s}
-.scrub input::-moz-range-track{height:6px;border-radius:99px;background:linear-gradient(90deg,var(--red),var(--volt))}
-.scrub input::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--l1);border:4px solid var(--b1);box-shadow:0 0 0 2px var(--l1)}
-.scrub input:active::-webkit-slider-thumb{transform:scale(1.15)}
-.scrub-ends{display:flex;justify-content:space-between;font-family:'Space Mono';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--l2)}
-.scrub-ends span:first-child{color:var(--red)}.scrub-ends span:last-child{color:var(--volt)}
-.scrub-month{font-family:'Syne';font-weight:800;font-size:clamp(28px,4vw,54px);line-height:1;margin-top:18px;text-transform:uppercase}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:2px;margin-top:26px}
-.stat{background:var(--b1);padding:18px 14px 16px;min-width:0;transition:background .4s var(--ease)}
-.stat .k{display:block;margin-bottom:10px;min-height:2.6em}
-.stat .v{font-family:'Syne';font-weight:800;font-size:clamp(22px,2.3vw,36px);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
-.stat .v{display:block}
-.stat .d{display:block;font-size:12px;color:var(--l2);margin-top:8px;line-height:1.45}
-/* the dollar */
-.dollar{margin-top:26px}
-.dollar .bar{display:flex;height:34px;border-radius:6px;overflow:hidden;background:var(--l4)}
-.dollar .bar i{display:block;height:100%;transition:width .1s linear}
-.dollar .bar .cost{background:var(--red)}
-.dollar .bar .keep{background:var(--volt)}
-.dollar .lg{display:flex;justify-content:space-between;font-family:'Space Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--l2);margin-top:8px;gap:10px;flex-wrap:wrap}
-.dollar .lg b{font-weight:400;color:var(--l1)}
-/* findings */
-.findings{list-style:none;display:grid;gap:2px;margin-top:4px}
-.findings li{background:var(--b1);padding:16px 16px 14px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:baseline}
-.findings .n{font-family:'Syne';font-weight:800;font-size:clamp(24px,2.6vw,36px);color:var(--red);letter-spacing:-.02em;white-space:nowrap}
-.findings .t{font-size:13px;line-height:1.5;color:var(--l2)}
-.findings .t b{color:var(--l1);font-weight:400}
-.redact{display:inline-block;background:var(--l1);height:.85em;vertical-align:-.1em;border-radius:2px;margin:0 2px;transition:background .25s}
-.method{margin-top:22px;padding:18px 16px;border:1px dotted var(--l3);border-radius:8px;cursor:help;position:relative}
-.method .k{margin-bottom:10px}
-.method .lines{font-family:'Syne';font-weight:700;font-size:20px;line-height:1.5}
-.method .peek{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;background:var(--bg-elevated);font-family:'Syne';font-weight:700;font-size:clamp(16px,1.6vw,22px);opacity:0;transition:opacity .25s;border-radius:8px}
-.method:hover .peek,.method:focus-within .peek{opacity:1}
-/* phone */
-.phone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--bg-elevated);padding:28px 20px}
-.phone .shell{position:relative;width:min(280px,100%);aspect-ratio:9/16;border-radius:26px;overflow:hidden;background:#000;box-shadow:0 30px 60px rgba(0,0,0,.5),0 0 0 6px #1a1a1f,0 0 0 7px #2a2a30;cursor:pointer}
-.phone video{width:100%;height:100%;object-fit:cover;display:block}
-.phone .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);transition:opacity .3s}
-.phone .play span{width:74px;height:74px;border-radius:50%;background:var(--volt);display:flex;align-items:center;justify-content:center}
-.phone .play svg{margin-left:5px}
-.phone .shell.playing .play{opacity:0;pointer-events:none}
-.phone .cap{font-family:'Space Mono';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--l2);text-align:center;line-height:1.7}
-.phone .cap b{color:var(--l1);font-weight:400}
-/* trust + cta */
-.trust{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2px;margin-top:2px}
-.trust div{background:var(--bg-elevated);padding:22px 20px;transition:background .4s var(--ease)}
-.trust h4{font-family:'Syne';font-weight:700;font-size:17px;line-height:1.2;margin-bottom:8px}
-.trust p{font-size:13px;line-height:1.6;color:var(--l2)}
-.audit{margin-top:2px;background:var(--volt);color:#0A0A0B;padding:32px 28px;display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:28px 40px;align-items:start}
-.audit h3{font-family:'Syne';font-weight:800;font-size:clamp(24px,3.4vw,46px);line-height:1;text-transform:uppercase;letter-spacing:-.01em}
-.audit p{font-size:13px;line-height:1.6;margin-top:10px;max-width:60ch;color:rgba(10,10,11,.75)}
-.audit .btn{display:inline-block;font-family:'Space Mono';font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;background:#0A0A0B;color:#F4F1EA;padding:18px 26px;border-radius:99px;white-space:nowrap;border:0;cursor:pointer;transition:transform .25s var(--ease),opacity .25s}
-.audit .btn:hover{transform:translateY(-3px)}
-.audit .btn[disabled]{opacity:.6;cursor:wait;transform:none}
-.aform{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;align-content:start;min-width:0}
-.audit [hidden]{display:none !important}
-.aform label{display:flex;flex-direction:column;gap:6px;font-family:'Space Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(10,10,11,.7);min-width:0}
-.aform label:nth-child(4),.aform label:nth-child(5){grid-column:1/3}
-.aform input,.aform select,.aform textarea{font:400 14px/1.4 'Space Mono',monospace;color:#0A0A0B;background:rgba(255,255,255,.55);border:1px solid rgba(10,10,11,.25);border-radius:8px;padding:12px 13px;width:100%;min-width:0;outline:0;transition:border-color .2s,background .2s}
-.aform select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230A0A0B' stroke-width='1.6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
-.aform textarea{resize:vertical;min-height:84px}
-.aform input:focus,.aform select:focus,.aform textarea:focus{border-color:#0A0A0B;background:rgba(255,255,255,.85)}
-.aform .invalid{border-color:#c0261f;background:rgba(255,220,218,.7)}
-.aform .btn{grid-column:1/3;justify-self:start;margin-top:4px}
-.aform-note{grid-column:1/3;font-family:'Space Mono';font-size:11px;letter-spacing:.06em;color:rgba(10,10,11,.6);margin:0}
-.aform-note.err{color:#8a1a14}
-.athanks h3{font-family:'Syne';font-weight:800;font-size:clamp(28px,4vw,56px);line-height:1;text-transform:uppercase}
-.athanks p{font-size:14px;line-height:1.65;margin-top:12px;max-width:52ch;color:rgba(10,10,11,.8)}
-@media(max-width:600px){.aform{grid-template-columns:1fr}.aform label:nth-child(4),.aform label:nth-child(5),.aform .btn,.aform-note{grid-column:1}}
-.case-note{font-family:'Space Mono';font-size:11px;line-height:1.6;color:var(--l3);margin-top:14px;max-width:90ch}
-@media(max-width:600px){.findings li{grid-template-columns:1fr;gap:6px}}
-@media(max-width:920px){
-  .case-head{grid-template-columns:1fr}
-  .case-grid{grid-template-columns:1fr}
-  .audit{grid-template-columns:1fr}
-}
-
-/* footer */
-footer{
-  display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
-  padding:24px clamp(16px,4vw,56px) 90px;
-  border-top:1px solid var(--l4);
-  color:var(--l2);font-size:13px;text-transform:uppercase;position:relative;z-index:10;
-}
-.scr{white-space:pre-wrap}
+  #fade { position: fixed; inset: 0; z-index: 28; background: #000; opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+  #fade.on { opacity: 1; }
+  #tag { position: fixed; z-index: 40; left: calc(8px + env(safe-area-inset-left)); bottom: calc(4px + env(safe-area-inset-bottom));
+    font-size: 10px; color: rgba(244,246,243,.55); pointer-events: none; white-space: nowrap; }
+  #nogl { position: fixed; inset: 0; z-index: 35; display: flex; align-items: center; justify-content: center; padding: 30px; text-align: center; background: var(--bg); }
 </style>
 </head>
 <body>
+<canvas id="gl" aria-label="Saibot Studio tower in 3D"></canvas>
+<video id="film" playsinline webkit-playsinline preload="auto" aria-hidden="true" disablepictureinpicture></video>
+<video id="flight" playsinline webkit-playsinline preload="auto" muted aria-hidden="true" disablepictureinpicture></video>
+<img id="roomshot" alt="" aria-hidden="true">
+<div id="wall" aria-hidden="true"></div>
+<canvas id="orbitshot" aria-hidden="true"></canvas>
+<video id="stepfilm" playsinline webkit-playsinline preload="auto" muted aria-hidden="true" disablepictureinpicture></video>
 
-<div class="grain"></div>
-<div class="cursor" id="cursor"></div>
-<div id="boot"><div class="bar"><div class="fill" id="bootFill"></div></div></div>
-
-<canvas id="aurora"></canvas>
-<canvas id="gl"></canvas>
-
-<header>
-  <div class="row">
-    <a class="brand hov" href="#top"><span>saibot</span><span class="dim">.studio</span></a>
-    <nav>
-      <button class="hov" onclick="document.getElementById('amazon').scrollIntoView()">Amazon</button>
-      <button class="hov desktop-only" onclick="document.getElementById('capabilities').scrollIntoView()">Capabilities</button>
-      <button class="hov desktop-only" onclick="document.getElementById('work').scrollIntoView()">Work</button>
-      <button class="hov desktop-only" onclick="document.getElementById('archive').scrollIntoView()">Archive</button>
-      <button class="hov desktop-only" onclick="document.getElementById('contact').scrollIntoView()">Contact</button>
-      <button class="hov" id="themeBtn" aria-label="Toggle theme">Theme[D]</button>
-      <button class="hov" id="soundBtn" aria-label="Toggle sound">Sound[&gt;]</button>
-    </nav>
+<section id="doorstep">
+  <picture>
+    <source media="(orientation: portrait)" srcset="scene/doorstep_tall.jpg">
+    <img src="scene/doorstep_wide.jpg" alt="In the driver's seat, the glowing elevator of the Saibot tower ahead">
+  </picture>
+  <img class="dlogo" src="brand/saibot-studio-wordmark.png" width="857" height="151" alt="Saibot Studio">
+  <div class="gauge" role="status" aria-live="polite">
+    <svg viewBox="0 0 200 124" aria-hidden="true">
+      <path class="track" d="M21.2 113.9 A80 80 0 1 1 178.8 113.9"/>
+      <path id="garc" class="fill" d="M21.2 113.9 A80 80 0 1 1 178.8 113.9" pathLength="100" stroke-dasharray="0 100"/>
+      <g id="needle"><line x1="100" y1="100" x2="100" y2="36"/><circle cx="100" cy="100" r="6"/></g>
+    </svg>
+    <div class="gtxt mono"><b id="gpct">&nbsp;</b><span id="gcap">Loading the tower</span></div>
   </div>
-  <div class="hud-bottom">
-    <span id="clock">GMT-4 MIA --:--:--</span>
-    <span class="desktop-only">EST.MMXVIII</span>
-  </div>
-</header>
-<span id="coords">0000 X 0000 Y</span>
-
-<main id="top">
-
-  <div class="hero pad" id="hero">
-    <div class="fallback"><span>Saibot<br>Studio</span></div>
-    <div class="hero-meta">
-      <h1 class="scr" data-text="Design and data. One sells it, the other proves it. I do both, from the first frame to the payout.">Design and data. One sells it, the other proves it. I do both, from the first frame to the payout.</h1>
-      <div class="side">
-        Miami, FL<br>
-        Saibot Studio · Remmy Rivera<br>
-        Amazon rescue · AI video · Film · 3D · Events · Brand<br>
-        Scroll to dissolve ↓
-      </div>
-    </div>
-  </div>
-
-  <div class="marquee">
-    <div class="marquee-track" id="mtrack">
-      <span><b>Amazon Rescue</b> ✦ Case Files ✦ <b>Free Audit</b> ✦ Nike ✦ <b>Shoe Gallery</b> ✦ Sean Wotherspoon ✦ <b>3D Worlds</b> ✦ Directed Events ✦ <b>Miami</b> ✦ </span>
-    </div>
-  </div>
-
-  <section class="case pad" id="amazon">
-    <p class="sec-label">01 / Amazon Growth + Rescue</p>
-    <div class="case-head">
-      <h2><span style="color:var(--l2)">Case file:</span> The Negative Payout. <span class="r">Paying Amazon</span> to sell. Four months later, <span class="v">getting paid.</span></h2>
-      <p>A real store, anonymized. Healthy sales, and every two weeks the payout came back <b>negative</b>: ads and fees ate more than the store sold. I took the account over in July. <b>Drag the slider</b> to watch the same store move from June to October. The method stays in house. The numbers do not.</p>
-    </div>
-
-    <div class="case-grid">
-      <div class="case-panel">
-        <div class="k"><span>Before / after · same store, same products</span><b id="scrubLabel">Jun 2026</b></div>
-        <div class="scrub">
-          <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Scrub from June 2026 to October 2026">
-          <div class="scrub-ends"><span>Jun 2026 · old setup</span><span>Oct 2026 · Saibot</span></div>
-        </div>
-        <div class="scrub-month" id="scrubMonth">Paying Amazon to sell.</div>
-
-        <div class="stats">
-          <div class="stat"><span class="k">Ad spend / month</span><span class="v" id="sAds">$7,287</span><span class="d" id="sAdsD">Jan to Jun average</span></div>
-          <div class="stat"><span class="k">Back per $1 of ads</span><span class="v" id="sRoas">$1.37</span><span class="d" id="sRoasD">below break-even</span></div>
-          <div class="stat"><span class="k">Net payout / 2 weeks</span><span class="v" id="sNet">&minus;$377</span><span class="d" id="sNetD">the store paid Amazon</span></div>
-          <div class="stat"><span class="k">Costs per sales $</span><span class="v" id="sCost">97&cent;</span><span class="d" id="sCostD">fees + ads + refunds</span></div>
-        </div>
-
-        <div class="dollar">
-          <div class="bar"><i class="cost" id="dCost" style="width:97%"></i><i class="keep" id="dKeep" style="width:0%"></i></div>
-          <div class="lg"><span>Every sales dollar: <b id="dCostT">97&cent; to costs</b></span><span><b id="dKeepT">nothing kept</b></span></div>
-        </div>
-      </div>
-
-      <div class="phone">
-        <div class="shell" id="phoneShell">
-          <video id="caseVideo" src="assets/casefile-negative-payout.mp4" poster="assets/casefile-negative-payout-poster.jpg" playsinline preload="metadata"></video>
-          <div class="play"><span><svg width="28" height="28" viewBox="0 0 24 24" fill="#0A0A0B"><path d="M6 3l15 9-15 9z"/></svg></span></div>
-        </div>
-        <p class="cap"><b>The Negative Payout</b> · 32 s · sound on<br>What I show clients, and what I post.</p>
-      </div>
-    </div>
-
-    <div class="case-grid" style="margin-top:2px">
-      <div class="case-panel">
-        <div class="k"><span>Day one. What the audit found.</span><b>Jul 9, 2026</b></div>
-        <ul class="findings" style="margin-top:18px">
-          <li><span class="n">$20,948</span><span class="t"><b>46% of the year's ad spend</b> went to searches that never produced a single order.</span></li>
-          <li><span class="n">23</span><span class="t">separate campaigns were <b>bidding on the brand's own name</b>, against each other.</span></li>
-          <li><span class="n">65%</span><span class="t">of spend was <b>duplicated targeting</b>: the same searches bought by several campaigns at once.</span></li>
-          <li><span class="n">71</span><span class="t">search terms were <b>converting below break-even</b> and still running at full budget.</span></li>
-        </ul>
-        <div class="method" tabindex="0">
-          <div class="k"><span>Then I fixed it. How:</span></div>
-          <div class="lines"><span class="redact" style="width:38%"></span><span class="redact" style="width:22%"></span><br><span class="redact" style="width:15%"></span><span class="redact" style="width:46%"></span><br><span class="redact" style="width:58%"></span></div>
-          <div class="peek">That part stays in house.<br>The results are the proof.</div>
-        </div>
-      </div>
-      <div class="case-panel">
-        <div class="k"><span>What four months bought</span><b>Aug to Oct</b></div>
-        <ul class="findings" style="margin-top:18px">
-          <li><span class="n" style="color:var(--volt)">&minus;82%</span><span class="t">ad spend per month, <b>$7,287 to $1,299</b>.</span></li>
-          <li><span class="n" style="color:var(--volt)">+93%</span><span class="t">back per ad dollar, <b>$1.37 to $2.65</b>.</span></li>
-          <li><span class="n" style="color:var(--volt)">$3,181</span><span class="t">kept in September. <b>More than Jan to Jul combined</b> ($1,909).</span></li>
-          <li><span class="n" style="color:var(--volt)">0%</span><span class="t">order defect rate. <b>Account health: Healthy.</b></span></li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="trust">
-      <div><h4>Read-only first.</h4><p>The audit runs on view access. I touch nothing until you have the findings in writing.</p></div>
-      <div><h4>Your account stays yours.</h4><p>No shared logins, no agency sub-account. You invite me, you can remove me in one click.</p></div>
-      <div><h4>Every change is logged.</h4><p>What changed, why, the number before, the number after. A PDF you can read in two minutes.</p></div>
-      <div><h4>Profit, not vanity.</h4><p>I will not buy you revenue that costs more than it brings in. The payout is the scoreboard.</p></div>
-    </div>
-
-    <div class="audit" id="auditBox">
-      <div>
-        <h3>Free Amazon audit</h3>
-        <p>Four questions, two minutes. Within a few days you get a plain-English read of where the money is leaking, no obligation. Read-only. If the account is healthy, I will say so.</p>
-      </div>
-      <form class="aform" id="auditForm" novalidate>
-        <label><span>Store name on Amazon</span><input name="store" type="text" required autocomplete="organization" placeholder="Your brand or storefront"></label>
-        <label><span>Marketplace</span>
-          <select name="marketplace" required>
-            <option value="" disabled selected>Pick one</option>
-            <option>Amazon.com (US)</option><option>Amazon.ca</option><option>Amazon.com.mx</option><option>Amazon UK / EU</option><option>More than one</option><option>Other</option>
-          </select></label>
-        <label><span>Rough monthly sales</span>
-          <select name="sales" required>
-            <option value="" disabled selected>Pick one</option>
-            <option>Under $5K</option><option>$5K to $20K</option><option>$20K to $50K</option><option>$50K to $150K</option><option>Over $150K</option>
-          </select></label>
-        <label><span>Biggest headache right now</span><textarea name="headache" rows="3" required placeholder="Ad spend, fees, returns, a payout that never shows up, all of it..."></textarea></label>
-        <label><span>Where do I reply?</span><input name="email" type="email" required autocomplete="email" placeholder="you@brand.com"></label>
-        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
-        <button class="btn" type="submit" id="auditSend">Request the audit</button>
-        <p class="aform-note" id="auditNote">Goes straight to Remmy. No list, no automation.</p>
-      </form>
-      <div class="athanks" id="auditThanks" hidden>
-        <h3>Got it.</h3>
-        <p>Your request is in. I read every one myself and reply within a few days with what I see. Nothing in your account gets touched. Meanwhile, the case file above is what a read looks like.</p>
-      </div>
-    </div>
-    <p class="case-note">Real client results, anonymized. Before = Jan to Jun 2026 under the previous setup; after = Aug to Oct 2026. Figures come from the client's Seller Central settlements and Ads console. Net payout = what Amazon pays out after fees, refunds and ads, before product cost. Top-line sales were lower after the change: the old revenue was bought with unprofitable ads. Results vary by store.</p>
-  </section>
-
-  <section class="profile pad" id="studio">
-    <p class="sec-label">02 / Profile</p>
-    <p class="statement">Saibot Studio turns sneakers, scent and street culture into <span class="grad-text">events people line up for</span> and films people replay. The same eye now runs <span class="grad-text">Amazon accounts</span> and AI-driven video, where the scoreboard is the payout, not the applause.</p>
-  </section>
-
-  <section class="caps pad" id="capabilities">
-    <p class="sec-label">03 / Capabilities</p>
-    <div class="caps-grid">
-      <div class="cap">
-        <h3>Amazon Growth + Rescue</h3>
-        <p>For stores that sell but do not keep. A read-only audit of wasted ad spend, fees, refunds and listing leaks, then a rebuild you approve line by line. Weekly reads in a two-page PDF. Payout is the only metric I report first.</p>
-        <div class="tags"><span>Free audit</span><span>Account rescue</span><span>PPC rebuild</span><span>Listing fixes</span><span>Weekly PDF</span></div>
-      </div>
-      <div class="cap">
-        <h3>AI Video &amp; Generative Content</h3>
-        <p>Custom AI-generated films built with the newest generative video models and finished frame by frame. Narrative mini-series, explainer series, viral short-form, product reveals, and talking-head spots with synced voice.</p>
-        <div class="tags"><span>Mini-series</span><span>Explainers</span><span>Viral shorts</span><span>Product films</span><span>Lip-sync VO</span></div>
-      </div>
-      <div class="cap">
-        <h3>Social Content Systems</h3>
-        <p>End-to-end content engines. Monthly calendars, recurring reel series, and character-driven serials, scripted, generated, captioned, and scheduled. Bilingual EN and ES on request.</p>
-        <div class="tags"><span>Content calendars</span><span>Reel series</span><span>Karaoke captions</span><span>EN / ES</span></div>
-      </div>
-      <div class="cap">
-        <h3>Branded Games &amp; Microsites</h3>
-        <p>Playable launches built for the browser. A customer scans a code and plays, no app. Rhythm runners, mini-games and build-your-own characters, with names on a live leaderboard, a big-screen board for the store and a prize by a date.</p>
-        <div class="tags"><span>Browser games</span><span>Leaderboards</span><span>Contests</span><span>Microsites</span><span>Scan to play</span></div>
-      </div>
-      <div class="cap">
-        <h3>3D &amp; Motion</h3>
-        <p>Full-CG product worlds and motion design, photoreal or stylized, from concept to final render. Sneakers, packaging, and brand objects brought to life.</p>
-        <div class="tags"><span>Product CG</span><span>Motion design</span><span>Animation</span></div>
-      </div>
-      <div class="cap">
-        <h3>Directed Events &amp; Activations</h3>
-        <p>Live brand activations built around participation. Screen printing, customization, watch parties, and launch events with global brands and their partners.</p>
-        <div class="tags"><span>Activations</span><span>Launch events</span><span>Experiential</span></div>
-      </div>
-      <div class="cap">
-        <h3>Creative Direction &amp; Campaigns</h3>
-        <p>Culture-first creative direction. Concept, story, and art direction for release campaigns, brand films, and product launches.</p>
-        <div class="tags"><span>Concept</span><span>Art direction</span><span>Campaign films</span></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="pad" id="work">
-    <p class="sec-label">04 / Selected Work</p>
-
-    <div class="work-row" data-video="yt:4dR68h-e8tc">
-      <span class="idx">001</span><span class="type">Event</span>
-      <span class="title">Air Max Day: Sean Wotherspoon AM1/97<span class="watch">▶ Watch</span></span><span class="year">2018</span>
-      <p class="desc">Live screen-printing activation for the Wotherspoon release with Nike, Shoe Gallery and AAO Print Shop. Faux thrift-store tees, licensed Nike × SW graphics, everyday shoppers turned into artists for a day.</p>
-      <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/4dR68h-e8tc/hqdefault.jpg')"></div>
-    </div>
-    <div class="work-row">
-      <span class="idx">002</span><span class="type">Event</span>
-      <span class="title">Apocalypse Awareness</span><span class="year">2018</span>
-      <p class="desc">Artistry meets activism at Shoe Gallery. Three artists, three South Florida threats: nuclear catastrophe, hurricanes, rising seas — told through interactive screen printing and water-dye design.</p>
-      <div class="thumb t-apoc">AA</div>
-    </div>
-    <div class="work-row" data-image="assets/nfl-jacket.jpg">
-      <span class="idx">003</span><span class="type">Apparel</span>
-      <span class="title">NFL × Nike: Dade County Varsity Jacket<span class="watch">◉ View</span></span><span class="year">2025</span>
-      <p class="desc">Design and art direction for a Miami varsity jacket under Nike's NBHD NFL Rivalries program. Black wool body, navy leather sleeves, flame sleeve, a Dade County Dolphins back hit, and a full custom patch system with Shoe Gallery, produced with Settlemier's Jackets.</p>
-      <div class="thumb t-img" style="background-image:url('assets/nfl-jacket.jpg');background-position:22% center"></div>
-    </div>
-    <div class="work-row" data-image="assets/nfl-opening.jpg">
-      <span class="idx">004</span><span class="type">Capsule</span>
-      <span class="title">The Opening: Nike × NFL Capsule<span class="watch">◉ View</span></span><span class="year">2025</span>
-      <p class="desc">Custom capsule branding and event assets for Nike × NFL "The Opening," the high-school football showcase. Grunge wordmark, a chrome-and-green Nike helmet, Dade County graphics, and collateral across the tour.</p>
-      <div class="thumb t-img" style="background-image:url('assets/nfl-opening.jpg')"></div>
-    </div>
-    <div class="work-row" data-video="yt:PLi4puZ8SGU">
-      <span class="idx">005</span><span class="type">Film</span>
-      <span class="title">Neymar × Nike Shox<span class="watch">▶ Watch</span></span><span class="year">23K+</span>
-      <p class="desc">A visual story bridging Neymar's soccer roots and the Shox's basketball heritage on a Miami court. Shoe Gallery's most-watched release film to date.</p>
-      <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/PLi4puZ8SGU/hqdefault.jpg')"></div>
-    </div>
-    <div class="work-row" data-video="yt:ideKaPnCofE">
-      <span class="idx">006</span><span class="type">Film</span>
-      <span class="title">Fear of God 1: Freestyle Remake<span class="watch">▶ Watch</span></span><span class="year">Nike</span>
-      <p class="desc">A street-level remake of Nike's classic Freestyle commercial, featuring Luis "Trikz" Da Silva Jr., an original Freestyle performer who walked into Shoe Gallery days before the shoot.</p>
-      <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/ideKaPnCofE/hqdefault.jpg')"></div>
-    </div>
-    <div class="work-row" data-video="yt:DygCj4e9Kxw">
-      <span class="idx">007</span><span class="type">3D</span>
-      <span class="title">Uno AF1: A 3D Revival<span class="watch">▶ Watch</span></span><span class="year">SG</span>
-      <p class="desc">A rainy Miami beach collapses into a vibrant vortex revealing the Uno AF1: the card game reborn as a sneaker world. The studio's entry into 3D advertising.</p>
-      <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/DygCj4e9Kxw/hqdefault.jpg')"></div>
-    </div>
-    <div class="work-row" data-video="yt:3e0-DylbfOA">
-      <span class="idx">008</span><span class="type">3D</span>
-      <span class="title">Air Kukini: "Glitch" Game<span class="watch">▶ Watch</span></span><span class="year">Nike</span>
-      <p class="desc">Laceless icon, rubber cage, CRT glow. A 3D animation weaving the Kukini's design language through retro gaming and analog-TV aesthetics.</p>
-      <div class="thumb t-img" style="background-image:url('https://img.youtube.com/vi/3e0-DylbfOA/hqdefault.jpg')"></div>
-    </div>
-    <div class="work-row" data-video="assets/sneaker-grades.mp4">
-      <span class="idx">009</span><span class="type">Web3</span>
-      <span class="title">Sneaker Grades NFT<span class="watch">▶ Watch</span></span><span class="year">2021</span>
-      <p class="desc">A non-profit NFT initiative on Ethereum connecting digital art with academic recognition. Proceeds reward high-performing students. Modeled, textured and rendered in-house.</p>
-      <div class="thumb t-img" style="background-image:url('assets/sneaker-grades-poster.jpg')"></div>
-    </div>
-    <div class="work-row" data-video="assets/unseen-film.mp4">
-      <span class="idx">010</span><span class="type">Scent</span>
-      <span class="title">Unseen: Perfumes<span class="watch">▶ Watch</span></span><span class="year">Soon</span>
-      <p class="desc">Scent as storytelling: an experiment in designing what you can't look at. Coming into focus.</p>
-      <div class="thumb t-img" style="background-image:url('assets/unseen-poster.jpg')"></div>
-    </div>
-    <div class="work-row" data-page="resin-culture/">
-      <span class="idx">011</span><span class="type">3D</span>
-      <span class="title">Resin Culture: Procedural Jar<span class="watch">◈ Launch</span></span><span class="year">2026</span>
-      <p class="desc">A jar rebuilt from five photographs, entirely in code. Every surface is drawn at runtime: no imported meshes, no downloaded textures, no scans. Lathe-revolved glass, swept helical threads, three canvas-drawn labels. The cap is a real screw: it can't lift without turning.</p>
-      <div class="thumb t-img" style="background-image:url('assets/jar-3d.jpg')"></div>
-    </div>
-    <div class="work-row" data-page="resin-culture/rodman/">
-      <span class="idx">012</span><span class="type">3D</span>
-      <span class="title">Resin Culture: Rodman<span class="watch">◈ Launch</span></span><span class="year">2026</span>
-      <p class="desc">Gary Payton x Rainbow Guava. The second release on the same procedural jar, proving the point of building it in code: one mould, one thread, one screw rig, and a label pack swapped underneath. This one is holographic foil instead of printed paper, so the colour is mostly what it reflects and the flash lives in the roughness map. Turn it and the sheen sweeps.</p>
-      <div class="thumb t-img" style="background-image:url('assets/jar-3d-rodman.jpg')"></div>
-    </div>
-  </section>
-
-  <section class="pad" id="archive">
-    <p class="sec-label">05 / The Archive</p>
-    <p class="archive-sub">NFL × Nike × Shoe Gallery, the full Dade County drop, filed and catalogued. <b>Open any file.</b></p>
-    <div class="archive-grid">
-      <button class="file" data-image="assets/archive/helmet.png"><span class="file-tab"><b>01</b> Headwear</span><span class="file-art"><img src="assets/archive/helmet.png" alt="The Helmet"></span><span class="file-name">The Helmet<em>Nike × NFL</em></span></button>
-      <button class="file" data-image="assets/archive/hands.png"><span class="file-tab"><b>02</b> Graphic</span><span class="file-art"><img src="assets/archive/hands.png" alt="Dade County Hands"></span><span class="file-name">Dade County Hands<em>Chrome</em></span></button>
-      <button class="file" data-image="assets/archive/flag.png"><span class="file-tab"><b>03</b> Textile</span><span class="file-art"><img src="assets/archive/flag.png" alt="Rivalries Flag"></span><span class="file-name">Rivalries Flag<em>US vs Them</em></span></button>
-      <button class="file cover" data-image="assets/archive/photo1.jpg"><span class="file-tab"><b>04</b> Activation</span><span class="file-art"><img src="assets/archive/photo1.jpg" alt="The Drop"></span><span class="file-name">The Drop<em>Event</em></span></button>
-      <button class="file" data-image="assets/archive/towel.jpg"><span class="file-tab"><b>05</b> Textile</span><span class="file-art"><img src="assets/archive/towel.jpg" alt="Rally Towel"></span><span class="file-name">Rally Towel<em>The Crib</em></span></button>
-      <button class="file" data-image="assets/archive/cup.png"><span class="file-tab"><b>06</b> Drinkware</span><span class="file-art"><img src="assets/archive/cup.png" alt="Game Cups"></span><span class="file-name">Game Cups<em>Scratch-off</em></span></button>
-      <button class="file" data-image="assets/archive/koozie.png"><span class="file-tab"><b>07</b> Drinkware</span><span class="file-art"><img src="assets/archive/koozie.png" alt="Koozie"></span><span class="file-name">Koozie<em>US vs Them</em></span></button>
-      <button class="file" data-image="assets/archive/napkin.png"><span class="file-tab"><b>08</b> Tabletop</span><span class="file-art"><img src="assets/archive/napkin.png" alt="Napkins"></span><span class="file-name">Napkins<em>Rivalries</em></span></button>
-      <button class="file" data-image="assets/archive/stickers.jpg"><span class="file-tab"><b>09</b> Graphic</span><span class="file-art"><img src="assets/archive/stickers.jpg" alt="Sticker Pack"></span><span class="file-name">Sticker Pack<em>Miami Dolphins</em></span></button>
-      <button class="file" data-image="assets/archive/blimp.png"><span class="file-tab"><b>10</b> Signage</span><span class="file-art"><img src="assets/archive/blimp.png" alt="305 Blimp"></span><span class="file-name">305 Blimp<em>Shoe Gallery</em></span></button>
-      <button class="file cover" data-image="assets/archive/photo2.jpg"><span class="file-tab"><b>11</b> Activation</span><span class="file-art"><img src="assets/archive/photo2.jpg" alt="Game Day"></span><span class="file-name">Game Day<em>Event</em></span></button>
-    </div>
-  </section>
-
-  <section class="cta pad" id="contact">
-    <p class="sec-label">06 / Contact</p>
-    <a class="big" href="mailto:nastysaibot@me.com?subject=Free%20Amazon%20audit">Fix my<br>Amazon store</a><br>
-    <a class="mail" href="mailto:nastysaibot@me.com?subject=Free%20Amazon%20audit">Free audit · nastysaibot@me.com</a>
-    <span style="display:inline-block;margin:4vh 18px 0;color:var(--l3)">or</span>
-    <a class="mail" href="mailto:nastysaibot@me.com?subject=Let%27s%20make%20something" style="margin-top:4vh">Create something unforgettable</a>
-  </section>
-
-</main>
-
-<div id="lightbox" aria-hidden="true"><div class="frame"></div></div>
-
-<footer>
-  <span>© 2026 Saibot Studio</span>
-  <span>Miami, FL</span>
-  <span>Design &amp; Direction: Remmy Rivera</span>
-</footer>
-
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+</section>
 <script>
-/* ============ boot loader ============ */
-const bootFill=document.getElementById('bootFill');
-let bootP=0;
-const bootTick=setInterval(()=>{bootP=Math.min(bootP+Math.random()*14,92);bootFill.style.width=bootP+'%'},180);
-function bootDone(){
-  clearInterval(bootTick);bootFill.style.width='100%';
-  setTimeout(()=>{document.getElementById('boot').classList.add('done');scrambleAll()},450);
-}
-window.addEventListener('load',()=>setTimeout(bootDone,600));
-setTimeout(bootDone,6000);
-
-/* ============ theme ============ */
-const themeBtn=document.getElementById('themeBtn');
-if(localStorage.getItem('saibot-theme')==='light')document.documentElement.classList.add('light');
-updateThemeLabel();
-themeBtn.addEventListener('click',()=>{
-  document.documentElement.classList.toggle('light');
-  localStorage.setItem('saibot-theme',document.documentElement.classList.contains('light')?'light':'dark');
-  updateThemeLabel();
-});
-function updateThemeLabel(){themeBtn.textContent=document.documentElement.classList.contains('light')?'THEME[L]':'THEME[D]'}
-
-/* ============ clock (Miami) ============ */
-const clockEl=document.getElementById('clock');
-function tickClock(){
-  const now=new Date();
-  const t=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(now);
-  const off=-(new Date(now.toLocaleString('en-US',{timeZone:'UTC'})) - new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'})))/3600000;
-  clockEl.textContent=`GMT${off>=0?'+':''}${off} MIA ${t}`;
-}
-setInterval(tickClock,1000);tickClock();
-
-/* ============ cursor + coords ============ */
-const cursor=document.getElementById('cursor');
-const coords=document.getElementById('coords');
-let mx=innerWidth/2,my=innerHeight/2,cx=mx,cy=my;
-addEventListener('mousemove',e=>{
-  mx=e.clientX;my=e.clientY;
-  coords.textContent=String(Math.round(mx)).padStart(4,'0')+' X '+String(Math.round(my)).padStart(4,'0')+' Y';
-});
-(function moveCursor(){cx+=(mx-cx)*.2;cy+=(my-cy)*.2;cursor.style.transform=`translate(${cx}px,${cy}px) translate(-50%,-50%)`;requestAnimationFrame(moveCursor)})();
-document.querySelectorAll('a,button,.work-row').forEach(el=>{
-  el.addEventListener('mouseenter',()=>cursor.classList.add('big'));
-  el.addEventListener('mouseleave',()=>cursor.classList.remove('big'));
-});
-
-/* ============ marquee ============ */
-const mt=document.getElementById('mtrack');
-mt.innerHTML+=mt.innerHTML;
-
-/* ============ scramble text ============ */
-const CHARS='!<>-_\\/[]{}—=+*^?#________';
-function scramble(el){
-  const target=el.dataset.text||el.textContent;
-  const total=Math.min(target.length*2,60);
-  let frame=0,done=false;
-  function step(){
-    if(done)return;
-    frame++;
-    let out='';
-    for(let i=0;i<target.length;i++){
-      const reveal=(i/target.length)*total*.9;
-      out+=frame>reveal?target[i]:(target[i]===' '?' ':CHARS[Math.floor(Math.random()*CHARS.length)]);
+  // the dash gauge sweeps from the first paint, before three.js arrives; app.js feeds it real progress
+  (function () {
+    var n = document.getElementById('needle'), arc = document.getElementById('garc'), pct = document.getElementById('gpct');
+    var real = -1, shown = 0, t0 = performance.now();
+    window.__gauge = function (p) { real = Math.max(real, Math.min(1, p)); };
+    function tick(t) {
+      var e = t - t0, target = real >= 0 ? real : (e < 700 ? e / 700 * 0.35 : 0.2 + 0.12 * Math.sin(e / 240));
+      shown += (target - shown) * 0.2;
+      n.setAttribute('transform', 'rotate(' + (-100 + 200 * shown).toFixed(1) + ' 100 100)');
+      arc.setAttribute('stroke-dasharray', (shown * 100).toFixed(1) + ' 100');
+      if (real >= 0) pct.textContent = Math.round(real * 100) + '%';
+      if (!window.__gaugeDone) requestAnimationFrame(tick);
     }
-    el.textContent=out;
-    if(frame>=total){el.textContent=target;done=true;return}
-    requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-  /* guarantee final text even if frames are throttled */
-  setTimeout(()=>{if(!done){done=true;el.textContent=target}},3000);
-}
-function scrambleAll(){document.querySelectorAll('.scr').forEach(scramble)}
-
-/* ============ work rows + video lightbox ============ */
-const lb=document.getElementById('lightbox');
-const lbFrame=lb.querySelector('.frame');
-function openVideo(spec){
-  lbFrame.innerHTML='';
-  if(spec.startsWith('yt:')){
-    const f=document.createElement('iframe');
-    f.src='https://www.youtube.com/embed/'+spec.slice(3)+'?autoplay=1&rel=0';
-    f.allow='autoplay; fullscreen; encrypted-media';
-    f.allowFullscreen=true;
-    lbFrame.appendChild(f);
-  }else{
-    const v=document.createElement('video');
-    v.src=spec;v.controls=true;v.autoplay=true;v.playsInline=true;
-    lbFrame.appendChild(v);
-  }
-  const btn=document.createElement('button');
-  btn.className='close';btn.textContent='Close [Esc]';btn.onclick=closeVideo;
-  lbFrame.appendChild(btn);
-  lb.classList.add('on');
-}
-function openImage(src){
-  lbFrame.innerHTML='';
-  const im=document.createElement('img');im.src=src;im.alt='';
-  lbFrame.appendChild(im);
-  const btn=document.createElement('button');
-  btn.className='close';btn.textContent='Close [Esc]';btn.onclick=closeVideo;
-  lbFrame.appendChild(btn);
-  lb.classList.add('on');
-}
-function closeVideo(){lb.classList.remove('on');lbFrame.innerHTML=''}
-lb.addEventListener('click',e=>{if(e.target===lb)closeVideo()});
-addEventListener('keydown',e=>{if(e.key==='Escape')closeVideo()});
-
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');io.unobserve(e.target)}}),{threshold:.1});
-document.querySelectorAll('.work-row').forEach(r=>{
-  io.observe(r);
-  r.addEventListener('click',()=>{
-    const v=r.dataset.video,img=r.dataset.image,page=r.dataset.page;
-    if(page)location.href=page;
-    else if(v)openVideo(v);else if(img)openImage(img);else r.classList.toggle('open');
-  });
-});
-
-/* ============ the archive — open file in lightbox ============ */
-document.querySelectorAll('.file').forEach(f=>{
-  f.addEventListener('click',()=>{const img=f.dataset.image;if(img)openImage(img);});
-});
-
-/* ============ case file: before/after scrubber ============ */
-(function(){
-  const sc=document.getElementById('scrub');if(!sc)return;
-  const $=id=>document.getElementById(id);
-  const lerp=(a,b,k)=>a+(b-a)*k;
-  const ease=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
-  const money=v=>(v<0?'−':'')+'$'+Math.round(Math.abs(v)).toLocaleString('en-US');
-  const months=['Jun','Jul','Aug','Sep','Oct'];
-  const lines=['Paying Amazon to sell.','Handover. Audit in writing.','Waste cut. Payout turns positive.','Kept more than Jan to Jul combined.','Healthy. Getting paid.'];
-  const VOLT='#D9FF3F',RED='#FF3D3D';
-  function mix(a,b,k){const h=x=>[parseInt(x.slice(1,3),16),parseInt(x.slice(3,5),16),parseInt(x.slice(5,7),16)];const A=h(a),B=h(b);return `rgb(${A.map((v,i)=>Math.round(lerp(v,B[i],k))).join(',')})`}
-  function paint(){
-    const k=ease(sc.value/1000);
-    const mi=Math.min(4,Math.floor(sc.value/1000*5));
-    $('scrubLabel').textContent=months[mi]+' 2026';
-    $('scrubMonth').textContent=lines[mi];
-    const col=mix(RED,VOLT,k);
-    const ads=lerp(7287,1299,k),roas=lerp(1.37,2.65,k),net=lerp(-377,1988,k),cost=lerp(97,56,k);
-    $('sAds').textContent=money(ads);$('sAds').style.color=col;
-    $('sAdsD').textContent=k<.5?'Jan to Jun average':'30 days to Sep 21, down 82%';
-    $('sRoas').textContent='$'+roas.toFixed(2);$('sRoas').style.color=col;
-    $('sRoasD').textContent=k<.5?'below break-even':'up 93%';
-    $('sNet').textContent=(net>=0?'+':'')+money(net);$('sNet').style.color=col;
-    $('sNetD').textContent=net<0?'the store paid Amazon':'Amazon paid the store';
-    $('sCost').textContent=Math.round(cost)+'¢';$('sCost').style.color=col;
-    $('sCostD').textContent=k<.5?'fees + ads + refunds':'fees + ads + refunds, after cleanup';
-    const keep=Math.max(0,100-cost);
-    $('dCost').style.width=cost+'%';$('dKeep').style.width=keep+'%';
-    $('dCostT').textContent=Math.round(cost)+'¢ to costs';
-    $('dKeepT').textContent=keep<1?'nothing kept (it went negative)':Math.round(keep)+'¢ kept, before product cost';
-  }
-  sc.addEventListener('input',paint);paint();
-  /* play the slider once when it scrolls into view, then hand it to the visitor */
-  let played=false,touched=false;
-  sc.addEventListener('pointerdown',()=>touched=true);
-  const io2=new IntersectionObserver(es=>es.forEach(e=>{
-    if(!e.isIntersecting||played)return;played=true;io2.disconnect();
-    const t0=performance.now();
-    (function run(){
-      if(touched)return;
-      const p=Math.min(1,(performance.now()-t0)/3200);
-      sc.value=Math.round(1000*p);paint();
-      if(p<1)requestAnimationFrame(run);
-    })();
-  }),{threshold:.5});
-  io2.observe(sc);
-  /* audit form: posts to Formspree when AUDIT_ENDPOINT is set, otherwise opens a pre-filled email */
-  const AUDIT_ENDPOINT='https://formspree.io/f/mvkzwwwr';
-  const AUDIT_TO='nastysaibot@me.com';
-  const form=document.getElementById('auditForm'),note=document.getElementById('auditNote'),send=document.getElementById('auditSend');
-  form.addEventListener('submit',async e=>{
-    e.preventDefault();
-    let ok=true;
-    form.querySelectorAll('[required]').forEach(el=>{
-      const bad=!el.value||(el.type==='email'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(el.value));
-      el.classList.toggle('invalid',bad);if(bad)ok=false;
-    });
-    if(!ok){note.textContent='Fill in the highlighted fields and try again.';note.classList.add('err');return}
-    note.classList.remove('err');
-    const d=Object.fromEntries(new FormData(form).entries());
-    if(d._gotcha)return;
-    if(!AUDIT_ENDPOINT){
-      const body=`Store name: ${d.store}\nMarketplace: ${d.marketplace}\nRough monthly sales: ${d.sales}\nBiggest headache: ${d.headache}\nReply to: ${d.email}`;
-      location.href=`mailto:${AUDIT_TO}?subject=${encodeURIComponent('Free Amazon audit: '+d.store)}&body=${encodeURIComponent(body)}`;
-      note.textContent='Your email app should open with the request filled in. Hit send there.';
-      return;
-    }
-    send.disabled=true;send.textContent='Sending...';
-    try{
-      const r=await fetch(AUDIT_ENDPOINT,{method:'POST',headers:{'Accept':'application/json'},body:new FormData(form)});
-      if(!r.ok)throw new Error(r.status);
-      form.hidden=true;document.getElementById('auditThanks').hidden=false;
-    }catch(err){
-      send.disabled=false;send.textContent='Request the audit';
-      note.textContent='That did not go through. Email '+AUDIT_TO+' instead and I will take it from there.';note.classList.add('err');
-    }
-  });
-  form.querySelectorAll('input,select,textarea').forEach(el=>el.addEventListener('input',()=>el.classList.remove('invalid')));
-  /* phone */
-  const shell=document.getElementById('phoneShell'),v=document.getElementById('caseVideo');
-  shell.addEventListener('click',()=>{
-    if(v.paused){v.play();shell.classList.add('playing')}else{v.pause();shell.classList.remove('playing')}
-  });
-  v.addEventListener('ended',()=>{shell.classList.remove('playing');v.currentTime=0});
-})();
-
-/* ============ generative ambient sound ============ */
-let actx=null,soundOn=false;
-const soundBtn=document.getElementById('soundBtn');
-soundBtn.addEventListener('click',()=>{
-  if(!actx){
-    actx=new (window.AudioContext||window.webkitAudioContext)();
-    const master=actx.createGain();master.gain.value=0;master.connect(actx.destination);
-    [110,164.81,220,329.63].forEach((f,i)=>{
-      const o=actx.createOscillator();o.type='sine';o.frequency.value=f;
-      const g=actx.createGain();g.gain.value=.05;
-      const lfo=actx.createOscillator();lfo.frequency.value=.05+i*.03;
-      const lg=actx.createGain();lg.gain.value=.04;
-      lfo.connect(lg);lg.connect(g.gain);
-      o.connect(g);g.connect(master);o.start();lfo.start();
-    });
-    actx._master=master;
-  }
-  soundOn=!soundOn;
-  actx.resume();
-  actx._master.gain.linearRampToValueAtTime(soundOn?.6:0,actx.currentTime+1.2);
-  soundBtn.innerHTML=soundOn?'SOUND[||]':'SOUND[&gt;]';
-});
-
-/* ============ aurora background (2D canvas) ============ */
-(function(){
-  const cv=document.getElementById('aurora'),ctx=cv.getContext('2d');
-  const blobs=[
-    {x:.2,y:.75,r:.35,c:'#ff2e88',s:1.0},
-    {x:.65,y:.35,r:.4,c:'#7a5cff',s:1.4},
-    {x:.85,y:.8,r:.3,c:'#ff6b2b',s:.8},
-    {x:.45,y:.15,r:.28,c:'#29d8ff',s:1.2},
-  ];
-  function size(){cv.width=innerWidth;cv.height=innerHeight}
-  size();addEventListener('resize',size);
-  let t=0;
-  (function draw(){
-    t+=.004;
-    ctx.clearRect(0,0,cv.width,cv.height);
-    ctx.globalCompositeOperation='lighter';
-    blobs.forEach((b,i)=>{
-      const x=(b.x+Math.sin(t*b.s+i*2)*.09)*cv.width;
-      const y=(b.y+Math.cos(t*b.s*.8+i)*.09)*cv.height;
-      const r=b.r*Math.max(cv.width,cv.height)*.6;
-      const g=ctx.createRadialGradient(x,y,0,x,y,r);
-      g.addColorStop(0,b.c+'aa');g.addColorStop(1,b.c+'00');
-      ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
-    });
-    requestAnimationFrame(draw);
+    requestAnimationFrame(tick);
   })();
-})();
-
-/* ============ gradient particle headline (three.js) ============ */
-(function(){
-  const heroEl=document.getElementById('hero');
-  if(!window.THREE){heroEl.classList.add('no-gl');return}
-  let renderer;
-  try{
-    renderer=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),alpha:true,antialias:false});
-  }catch(e){heroEl.classList.add('no-gl');return}
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  const scene=new THREE.Scene();
-  const cam=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,1,3000);
-  cam.position.z=900;
-
-  /* Miami gradient stops for particle colors */
-  const STOPS=[
-    [1.0,.18,.53],   /* #ff2e88 */
-    [1.0,.42,.17],   /* #ff6b2b */
-    [.48,.36,1.0],   /* #7a5cff */
-    [.16,.85,1.0],   /* #29d8ff */
-  ];
-  function gradAt(u){
-    const seg=Math.min(Math.floor(u*3),2);
-    const f=u*3-seg;
-    const a=STOPS[seg],b=STOPS[seg+1];
-    return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f];
-  }
-
-  let pts=null,homes=null,vels=null,count=0,TEXTW=1200;
-  function buildText(){
-    const oc=document.createElement('canvas');
-    /* measure first so wide glyphs never get clipped during sampling */
-    const meas=oc.getContext('2d');
-    meas.font='800 225px Syne, sans-serif';
-    const W=Math.ceil(Math.max(meas.measureText('SAIBOT').width,meas.measureText('STUDIO').width))+80;
-    const H=560;oc.width=W;oc.height=H;TEXTW=W;
-    const c=oc.getContext('2d');
-    c.fillStyle='#fff';
-    c.font='800 225px Syne, sans-serif';
-    c.textAlign='center';c.textBaseline='middle';
-    c.fillText('SAIBOT',W/2,H*0.27);
-    c.fillText('STUDIO',W/2,H*0.73);
-    const data=c.getImageData(0,0,W,H).data;
-    const positions=[],colors=[];
-    const gap=3;
-    for(let y=0;y<H;y+=gap)for(let x=0;x<W;x+=gap){
-      if(data[(y*W+x)*4+3]>128){
-        positions.push(x-W/2,-(y-H/2),0);
-        /* gradient sweeps diagonally across the wordmark */
-        const u=Math.max(0,Math.min(1,(x/W)*.85+(y/H)*.15));
-        const col=gradAt(u);
-        colors.push(col[0],col[1],col[2]);
-      }
-    }
-    count=positions.length/3;
-    homes=new Float32Array(positions);
-    pts=new Float32Array(positions);
-    vels=new Float32Array(count*3);
-    const geo=new THREE.BufferGeometry();
-    geo.setAttribute('position',new THREE.BufferAttribute(pts,3));
-    geo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(colors),3));
-    const mat=new THREE.PointsMaterial({size:2.6,transparent:true,opacity:.95,vertexColors:true});
-    const cloud=new THREE.Points(geo,mat);
-    scene.add(cloud);
-    window._geo=geo;window._mat=mat;window._cloud=cloud;
-    applyScale();
-  }
-  document.fonts.load('800 225px Syne').then(()=>document.fonts.ready).then(buildText).catch(buildText);
-
-  /* scale the wordmark so it always fits the viewport */
-  let pscale=1;
-  function applyScale(){
-    if(!window._cloud)return;
-    const visH=2*cam.position.z*Math.tan(THREE.MathUtils.degToRad(45/2));
-    const visW=visH*cam.aspect;
-    pscale=Math.min(1.15,(visW*.92)/TEXTW,(visH*.72)/560);
-    window._cloud.scale.set(pscale,pscale,pscale);
-    /* keep point size sensible as the mark shrinks */
-    window._mat.size=Math.max(1.6,2.6*Math.sqrt(pscale));
-  }
-  function size(){renderer.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();applyScale()}
-  size();addEventListener('resize',size);
-
-  function mouseWorld(){
-    const nx=(mx/innerWidth)*2-1,ny=-(my/innerHeight)*2+1;
-    const v=new THREE.Vector3(nx,ny,.5).unproject(cam);
-    const d=v.sub(cam.position).normalize();
-    const t=-cam.position.z/d.z;
-    return cam.position.clone().add(d.multiplyScalar(t));
-  }
-
-  let t=0;
-  function loop(){
-    requestAnimationFrame(loop);
-    t+=.01;
-    if(pts){
-      const mw=mouseWorld();
-      /* convert mouse to the cloud's local (scaled) space */
-      mw.x/=pscale;mw.y/=pscale;
-      const rad=110/pscale,rad2=rad*rad;
-      const scroll=Math.min(scrollY/(innerHeight*.9),1);
-      window._mat.opacity=.95*(1-scroll*.92);
-      for(let i=0;i<count;i++){
-        const ix=i*3;
-        let hx=homes[ix],hy=homes[ix+1],hz=homes[ix+2];
-        if(scroll>0){
-          const r1=Math.sin(i*12.9898)*43758.5453,rnd=(r1-Math.floor(r1));
-          hx+=(rnd-.5)*900*scroll;
-          hy+=(rnd*700+200)*scroll;
-          hz+=(rnd-.5)*600*scroll;
-        }
-        vels[ix]+=(hx-pts[ix])*.02;
-        vels[ix+1]+=(hy-pts[ix+1])*.02;
-        vels[ix+2]+=(hz-pts[ix+2])*.02;
-        vels[ix]+=Math.sin(t+pts[ix+1]*.01)*.05;
-        vels[ix+1]+=Math.cos(t+pts[ix]*.01)*.05;
-        const dx=pts[ix]-mw.x,dy=pts[ix+1]-mw.y;
-        const d2=dx*dx+dy*dy;
-        if(d2<rad2){
-          const f=(1-d2/rad2)*3.2;
-          const d=Math.sqrt(d2)||1;
-          vels[ix]+=dx/d*f;vels[ix+1]+=dy/d*f;
-        }
-        vels[ix]*=.86;vels[ix+1]*=.86;vels[ix+2]*=.86;
-        pts[ix]+=vels[ix];pts[ix+1]+=vels[ix+1];pts[ix+2]+=vels[ix+2];
-      }
-      window._geo.attributes.position.needsUpdate=true;
-      cam.position.x+=((mx-innerWidth/2)*.06-cam.position.x)*.05;
-      cam.position.y+=(-(my-innerHeight/2)*.06-cam.position.y)*.05;
-      cam.lookAt(0,0,0);
-    }
-    renderer.render(scene,cam);
-  }
-  loop();
-})();
 </script>
+
+<div id="curb" class="layer" hidden>
+  <div id="seathint" class="hint mono">Drag to look around</div>
+  <button id="skipcurb" class="textbtn" type="button">Skip to the floor</button>
+  <button id="start" class="start" type="button" aria-label="Start engine"></button>
+</div>
+
+<div id="ride" class="layer" hidden>
+  <div id="floorno" class="mono"><span>Floor</span><b>01</b><img id="flogo" class="flogo" src="brand/saibot-studio-wordmark.png" width="857" height="151" alt="Saibot Studio" hidden></div>
+  <div id="panel" hidden>
+    <div class="ptitle mono">Floor panel: pick an office to go straight there</div>
+    <div class="pgrid" id="pgrid"></div>
+    <div class="plined mono" id="plined"></div>
+  </div>
+</div>
+<button id="skip" class="skip" type="button" hidden aria-label="Skip"><img src="type/skip.png" width="261" height="144" alt="Skip"></button>
+
+<div id="floor" class="layer" hidden>
+  <div id="hint" class="hint mono">Tap an office</div>
+  <button id="viewbtn" class="textbtn viewbtn" type="button" aria-label="Step out of the car">Step out</button>
+  <div id="card" hidden>
+    <button class="nav" id="prev" type="button" aria-label="Previous office">&lsaquo;</button>
+    <div class="ctext"><img id="cname" alt=""><span id="croom"></span></div>
+    <button id="enter" class="enter" type="button" aria-label="Enter"><img src="type/enter.png" width="264" height="91" alt="Enter"></button>
+    <button class="nav" id="next" type="button" aria-label="Next office">&rsaquo;</button>
+  </div>
+</div>
+
+<header id="bar" hidden>
+  <img class="logo" src="brand/saibot-studio-wordmark.png" width="857" height="151" alt="Saibot Studio">
+  <span class="sp"></span>
+  <button id="snd" type="button">Sound off</button>
+  <button id="menu" type="button">All offices</button>
+</header>
+
+<article id="office" hidden>
+  <div class="opage">
+    <div class="ohead">
+      <button id="back" type="button" aria-label="Back to the floor"><img src="type/back.png" width="704" height="105" alt="Back to the floor"></button>
+      <div class="otop mono"><span id="oaddr"></span> &middot; floor 18</div>
+      <h1><img id="oname" alt=""></h1>
+      <p id="oroom" class="oroom"></p>
+    </div>
+    <div id="ospace" aria-hidden="true"></div>
+    <div class="obody">
+    <ul id="owork" class="owork" aria-label="On the screen" hidden></ul>
+    <h2 id="opromise" class="opromise"></h2>
+    <p id="oblurb" class="oblurb"></p>
+    <ul id="ogets" class="ogets"></ul>
+    <p id="oguard" class="oguard" hidden></p>
+    <div id="olinks" class="olinks"></div>
+    <section class="octa" aria-labelledby="octah">
+      <h3 id="octah" class="octah">Start a project</h3>
+      <div class="obtns">
+        <a id="odm" class="obtn obtn-volt" target="_blank" rel="noopener"></a>
+        <a id="omail" class="obtn obtn-line">Email</a>
+      </div>
+      <p id="onote" class="onote"></p>
+    </section>
+    <p id="ofine" class="ofine" hidden><a href="credits/index.html">Credits</a></p>
+    </div>
+  </div>
+</article>
+
+<nav id="links" hidden aria-label="All offices">
+  <div class="lhead"><h2><img src="type/all-offices.png" width="475" height="123" alt="All offices"></h2><button id="closelinks" type="button">Close</button></div>
+  <ul>
+    <li><a href="brand/" data-slug="brand">Brand</a><span>The Gallery</span></li>
+    <li><a href="content/" data-slug="content">Content</a><span>Screening Room</span></li>
+    <li><a href="amazon/" data-slug="amazon">Amazon</a><span>War Room</span></li>
+    <li><a href="3d/" data-slug="3d">3D + Web</a><span>The Lab</span></li>
+    <li><a href="apps/" data-slug="apps">Apps</a><span>The Workshop</span></li>
+    <li><a href="automation/" data-slug="automation">Automation</a><span>Server Room</span></li>
+    <li><a href="contact/" data-slug="contact">Reception</a><span>About, contact, the free Amazon audit</span></li>
+    <li><a href="https://saibot.studio/" target="_blank" rel="noopener">The classic site</a><span>today&rsquo;s site, moving to /work</span></li>
+  </ul>
+  <div class="lopts">
+    <button id="replay" type="button">Replay the ride</button>
+    <label class="chk"><input type="checkbox" id="calm"> Calm mode: fades, no camera flights</label>
+  </div>
+</nav>
+
+<div id="fade"></div>
+<div id="tag" class="mono"></div>
+<noscript><style>#links{display:block!important}#doorstep{display:none}</style></noscript>
+
+<script type="module" src="app.js"></script>
 </body>
 </html>

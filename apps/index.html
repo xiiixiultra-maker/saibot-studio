@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<base href="../">
+<link rel="canonical" href="https://saibot.studio/apps/">
+<meta name="description" content="From idea to TestFlight in one season. A paid product sprint first, then a fixed-scope build shipped in weeks, then we keep improving it after launch.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Saibot Studio">
+<meta property="og:title" content="Apps: The Workshop | Saibot Studio">
+<meta property="og:description" content="From idea to TestFlight in one season. A paid product sprint first, then a fixed-scope build shipped in weeks, then we keep improving it after launch.">
+<meta property="og:url" content="https://saibot.studio/apps/">
+<meta property="og:image" content="https://saibot.studio/scene/office/apps_wide.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#08090B">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23D9FF3F'/%3E%3C/svg%3E">
+<title>Apps: The Workshop | Saibot Studio</title>
+<!-- the import map comes before any module load, or browsers ignore it -->
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/three.module.js",
+  "three/addons/": "./vendor/three/addons/"
+} }
+</script>
+<link rel="modulepreload" href="vendor/three/three.core.js">
+<link rel="modulepreload" href="vendor/three/three.module.js">
+<link rel="modulepreload" href="vendor/three/addons/loaders/GLTFLoader.js">
+<link rel="preload" href="scene/tower.glb" as="fetch" crossorigin="anonymous">
+<link rel="modulepreload" href="vendor/three/addons/loaders/DRACOLoader.js">
+<link rel="modulepreload" href="vendor/three/addons/postprocessing/UnrealBloomPass.js">
+<link rel="preload" href="fonts/Satoshi-Variable.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<style>
+  /* Step 2 gray box. Plain on purpose: this proves the ride and the taps, not the look.
+     Logo = the reel end-card wordmark (Tigre Kults Slant) as an IMAGE: Tigre is a desktop license, never a webfont.
+     UI text = Satoshi (Fontshare, ITF Free Font License, files used as-is): round geometric shapes that echo Tigre,
+     upright and calm so the logo stays loudest; office names and START ENGINE in black italic lean with the wordmark. */
+  @font-face { font-family: "Satoshi"; src: url("fonts/Satoshi-Variable.woff2") format("woff2"); font-weight: 300 900; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Satoshi"; src: url("fonts/Satoshi-VariableItalic.woff2") format("woff2"); font-weight: 300 900; font-style: italic; font-display: swap; }
+  :root { --bg:#08090B; --ink:#F4F6F3; --dim:#9AA19E; --volt:#D9FF3F; --line:rgba(244,246,243,.2); --panel:rgba(10,11,14,.82);
+    --ui: "Satoshi", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; overscroll-behavior: none;
+    font: 500 15px/1.35 var(--ui); -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+  .mono { font-family: var(--ui); font-variant-numeric: tabular-nums; }
+  /* Tigre words: pre-rendered images in type/ (big text). Satoshi: everything small. */
+  .start img { display: block; width: 94px; height: auto; transform: translateX(3px); }
+  .skip img { display: block; height: 25px; width: auto; }
+  .enter img { display: block; height: 24px; width: auto; }
+  #back img { display: block; height: 24px; width: auto; }
+  #cname { display: block; height: 30px; width: auto; max-width: 100%; object-fit: contain; object-position: left center; }
+  #office h1 img { display: block; height: clamp(54px, 14vw, 96px); width: auto; max-width: 100%; object-fit: contain; object-position: left center; }
+  .lhead h2 img { display: block; height: 34px; width: auto; }
+  .pgrid button img { display: block; height: 17px; width: auto; max-width: 92%; margin: 0 auto; object-fit: contain; }
+  .pgrid button.on img { filter: brightness(0) saturate(100%); }
+  #bar .logo { display: block; height: 26px; width: auto; }
+  .dlogo { position: absolute; left: 50%; top: calc(26px + env(safe-area-inset-top)); transform: translateX(-50%);
+    width: min(62vw, 380px); height: auto; filter: drop-shadow(0 6px 18px rgba(0,0,0,.55)); }
+  #floorno .flogo { height: 20px; width: auto; margin-left: 10px; vertical-align: -3px; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+  .layer { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  /* the ride as a Blender film: over the 3D, under the ride's floor counter, panel and Skip */
+  #film { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 3; background: #000;
+    opacity: 0; transition: opacity .15s linear; pointer-events: none; }
+  #film.on { opacity: 1; }
+  #film.out { opacity: 0; transition: opacity .45s ease; }
+  /* the office flights (Blender films) and the room behind each office page (their last frame) */
+  #flight, #roomshot { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000;
+    opacity: 0; transition: opacity .15s linear; pointer-events: none; }
+  #roomshot { z-index: 3; }
+  #flight { z-index: 4; }
+  #flight.on, #roomshot.on { opacity: 1; }
+  /* the screen wall: his reels playing on the room's screen, laid over the still in perspective (app.js wallPlace) */
+  #wall { position: fixed; left: 0; top: 0; z-index: 3; transform-origin: 0 0; pointer-events: none; opacity: 0;
+    transition: opacity .35s ease; background: #06070A center / 100% 100% no-repeat; }
+  #wall.on { opacity: 1; }
+  #wall video { position: absolute; object-fit: cover; background: transparent; }
+  /* Step out, rendered: the film over the roof (#stepfilm) and the Cycles stills round the car (#orbitshot) */
+  #orbitshot, #stepfilm { position: fixed; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none;
+    transition: opacity .15s linear; background: #000; }
+  #stepfilm { object-fit: cover; z-index: 4; }
+  #orbitshot { z-index: 3; }
+  #orbitshot.on, #stepfilm.on { opacity: 1; }
+  .layer > * { pointer-events: auto; }
+
+  /* shot 0: the doorstep */
+  #doorstep { position: fixed; inset: 0; z-index: 30; background: #0B0E14; transition: opacity .7s ease; }
+  #doorstep img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  #doorstep.out { opacity: 0; pointer-events: none; }
+  .gauge { position: absolute; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    width: 210px; padding: 10px 10px 12px; border-radius: 22px; background: rgba(8,9,11,.72); text-align: center; }
+  .gauge svg { width: 190px; height: 118px; display: block; margin: 0 auto; }
+  .gauge .track { fill: none; stroke: rgba(244,246,243,.18); stroke-width: 9; stroke-linecap: round; }
+  .gauge .fill { fill: none; stroke: var(--volt); stroke-width: 9; stroke-linecap: round; }
+  #needle line { stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; }
+  #needle circle { fill: var(--ink); }
+  .gtxt b { display: block; font-size: 22px; font-weight: 800; }
+  .gtxt span { display: block; font-size: 13px; color: var(--dim); margin-top: 2px; }
+
+  /* shot 1: the driver's seat. START is the 3D button on the steering wheel; this ring sits right over it (app.js pins it every frame), pulses neon orange, and is the real <button>
+     for keyboards and screen readers. */
+  .start { position: absolute; left: 50%; top: 70%; width: 96px; height: 96px; margin: -48px 0 0 -48px; padding: 0;
+    border-radius: 50%; border: 0; background: transparent; }
+  .start::before, .start::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(255,95,0,.95);
+    box-shadow: 0 0 16px rgba(255,95,0,.6), inset 0 0 10px rgba(255,95,0,.35); animation: ping 1.8s ease-out infinite; pointer-events: none; }
+  .start::after { animation-delay: .9s; }
+  @keyframes ping { 0% { transform: scale(.6); opacity: 1; } 100% { transform: scale(1.45); opacity: 0; } }
+  .start:focus-visible { outline: 2px solid var(--volt); outline-offset: 6px; }
+  .textbtn { position: absolute; left: calc(14px + env(safe-area-inset-left)); bottom: calc(26px + env(safe-area-inset-bottom));
+    background: rgba(8,9,11,.7); border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; font-size: 14px; }
+  @media (prefers-reduced-motion: reduce) { .start::before, .start::after { animation: none; transform: scale(1.05); } }
+  .viewbtn { bottom: calc(118px + env(safe-area-inset-bottom)); }      /* floor 18: above the office card */
+
+  /* the ride */
+  .skip { position: fixed; z-index: 25; top: calc(14px + env(safe-area-inset-top)); right: calc(14px + env(safe-area-inset-right));
+    min-width: 76px; height: 44px; border-radius: 999px; border: 1px solid var(--line); background: rgba(8,9,11,.72); font-weight: 700; padding: 0 16px; }
+  #floorno { position: absolute; top: calc(16px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left));
+    background: rgba(8,9,11,.6); border-radius: 10px; padding: 6px 10px; pointer-events: none; }
+  #floorno span { font-size: 13px; color: var(--dim); margin-right: 8px; }
+  #floorno b { font-size: 24px; font-weight: 800; color: var(--volt); }
+  #panel { position: absolute; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    width: min(440px, calc(100% - 24px)); background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 10px 12px 12px; }
+  .ptitle { font-size: 13px; color: var(--dim); text-align: center; margin-bottom: 8px; }
+  .pgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .pgrid button { height: 46px; border-radius: 12px; border: 1px solid var(--line); background: rgba(244,246,243,.06); font-weight: 700; font-size: 13px; }
+  .pgrid button.on { background: var(--volt); color: #0b0b0b; border-color: var(--volt); }
+  .plined { margin-top: 8px; text-align: center; font-size: 13px; font-weight: 600; color: var(--volt); min-height: 17px; }
+
+  /* the floor */
+  .hint { position: absolute; left: 50%; top: calc(66px + env(safe-area-inset-top)); transform: translateX(-50%);
+    background: rgba(8,9,11,.6); border-radius: 999px; padding: 6px 12px; font-size: 13px; color: var(--dim); pointer-events: none; white-space: nowrap;
+    transition: opacity .5s; }
+  .hint.gone { opacity: 0; }
+  #card { position: absolute; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    width: min(460px, calc(100% - 24px)); display: flex; align-items: center; gap: 8px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 18px; padding: 10px; }
+  #card .ctext { flex: 1; min-width: 0; }
+  #card b { display: block; font-size: 21px; font-style: italic; font-weight: 900; }
+  #card span { display: block; color: var(--dim); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #card .nav { width: 40px; height: 52px; border-radius: 12px; border: 1px solid var(--line); background: transparent; font-size: 22px; }
+  .enter { height: 52px; padding: 0 18px; border-radius: 12px; border: 0; background: var(--volt); color: #0b0b0b; font-weight: 800; letter-spacing: .04em; }
+
+  /* top bar */
+  #bar { position: fixed; z-index: 20; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 8px;
+    padding: calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 10px calc(14px + env(safe-area-inset-left));
+    background: linear-gradient(rgba(8,9,11,.75), rgba(8,9,11,0)); pointer-events: none; }
+  #bar > * { pointer-events: auto; }
+  #bar .brand { font-size: 13px; letter-spacing: .14em; }
+  #bar .sp { flex: 1; }
+  #bar button { height: 38px; border-radius: 999px; border: 1px solid var(--line); background: rgba(8,9,11,.6); padding: 0 12px; font-size: 13px; }
+  #bar button.on { border-color: var(--volt); color: var(--volt); }
+
+  /* an office page: plain HTML over the room */
+  #office { position: fixed; z-index: 22; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    background: rgba(8,9,11,.66); padding: calc(18px + env(safe-area-inset-top)) 22px calc(30px + env(safe-area-inset-bottom));
+    -webkit-user-select: text; user-select: text; animation: rise .35s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+  .opage { max-width: 640px; margin: 0 auto; }
+  #back { display: block; height: 48px; border-radius: 999px; border: 1px solid var(--volt); color: var(--volt); background: transparent; padding: 0 18px; font-weight: 700; margin: 0 0 22px; }
+  .otop { font-size: 13px; color: var(--dim); }
+  #office h1 { font-size: clamp(40px, 11vw, 76px); line-height: .95; margin: 8px auto 6px; font-style: italic; font-weight: 900; letter-spacing: -.01em; }
+  .oroom { color: var(--volt); font-weight: 700; margin: 0 auto 16px; }
+  #office p { font-size: 16px; line-height: 1.5; }
+  .ph { color: var(--dim); }
+  .cta { display: block; height: 50px; border-radius: 12px; border: 1px dashed var(--line); background: transparent; color: var(--dim); padding: 0 18px; margin-top: 20px; }
+  /* lit: the rendered room is behind the page and its screen plays the reels, so the page opens a window over the
+     screen (app.js sets --wTop/--wBot and the #ospace gap) and keeps its text above and below it */
+  #office.lit { background: linear-gradient(to bottom, rgba(8,9,11,.82) 0, rgba(8,9,11,.6) calc(var(--wTop) - 34px),
+    rgba(8,9,11,0) calc(var(--wTop) - 6px), rgba(8,9,11,0) calc(var(--wBot) + 6px), rgba(8,9,11,.74) calc(var(--wBot) + 44px),
+    rgba(8,9,11,.9) 100%); }
+  /* the office page (11/16): the reels on the screen, the lane, what you get, Start a project (Instagram DM or email),
+     on a dark sheet that scrolls up over the room (the room stays clear above it) */
+  #office { padding-bottom: 0; }
+  .obody { margin: 0 -22px; padding: 20px 22px calc(40px + env(safe-area-inset-bottom)); min-height: 50vh;
+    background: rgba(10,11,13,.975); border-radius: 22px 22px 0 0; box-shadow: 0 -18px 40px rgba(0,0,0,.35); }
+  .owork { list-style: none; padding: 0; margin: 0 0 22px; display: grid; gap: 10px; }
+  .owork li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center; }
+  .owork img { width: 40px; height: 71px; object-fit: cover; border-radius: 6px; background: #111; display: block; }
+  .owork b { display: block; font-size: 15px; line-height: 1.25; }
+  .owork span { display: block; font-size: 13px; line-height: 1.35; color: var(--dim); }
+  .opromise { font-size: clamp(26px, 7vw, 38px); line-height: 1.06; margin: 6px 0 10px; font-weight: 900; letter-spacing: -.012em; }
+  #office .oblurb { margin: 0; }
+  .ogets { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 9px; }
+  .ogets li { position: relative; padding-left: 20px; line-height: 1.4; }
+  .ogets li::before { content: ""; position: absolute; left: 0; top: .66em; width: 10px; height: 2px; background: var(--volt); }
+  #office .oguard { font-size: 13px; color: var(--dim); margin: 14px 0 0; }
+  .olinks { display: grid; gap: 10px; margin-top: 18px; }
+  .olinks:empty { display: none; }
+  .olink { display: block; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; color: var(--ink); text-decoration: none; }
+  .olink b { display: block; color: var(--volt); }
+  .olink span { display: block; font-size: 13px; color: var(--dim); margin-top: 2px; }
+  .octa { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .octah { margin: 0 0 12px; font-size: 18px; }
+  .obtns { display: flex; flex-wrap: wrap; gap: 10px; }
+  .obtn { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 22px; border-radius: 999px;
+    font-weight: 700; font-size: 15px; text-decoration: none; }
+  .obtn-volt { background: var(--volt); color: #0B0C0E; }
+  .obtn-line { border: 1px solid var(--line); color: var(--ink); }
+  #office .onote { font-size: 13px; color: var(--dim); margin: 10px 0 0; }
+  /* the credits link: Reception only, the last thing on the page */
+  #office .ofine { margin: 34px 0 0; font-size: 12px; }
+  .ofine a { color: var(--dim); text-decoration: none; }
+  .ofine a:hover, .ofine a:focus-visible { color: var(--ink); text-decoration: underline; }
+  @media (min-aspect-ratio: 1/1) {          /* wide: Back and the name share a row so the head clears the screen */
+    #office.lit .ohead { display: grid; grid-template-columns: auto auto; justify-content: start; align-items: center; column-gap: 18px; }
+    #office.lit #back { margin: 0; grid-row: 1; grid-column: 1; }
+    #office.lit h1 { margin: 0; grid-row: 1; grid-column: 2; }
+    #office.lit h1 img { height: 52px; }
+    #office.lit .otop { grid-row: 2; grid-column: 1 / 3; margin-top: 10px; }
+    #office.lit .oroom { grid-row: 3; grid-column: 1 / 3; margin: 2px 0 0; }
+  }
+
+  /* plain list of every office (also what search engines read) */
+  #links { position: fixed; z-index: 26; inset: 0; overflow-y: auto; background: rgba(8,9,11,.95);
+    padding: calc(16px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom)); -webkit-user-select: text; user-select: text; }
+  #links > * { max-width: 560px; margin-left: auto; margin-right: auto; }
+  .lhead { display: flex; align-items: center; justify-content: space-between; }
+  .lhead h2 { margin: 6px 0 10px; font-size: 26px; }
+  #links ul { list-style: none; padding: 0; margin: 0 auto 18px; }
+  #links li { border-bottom: 1px solid var(--line); padding: 12px 0; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  #links a { color: var(--ink); font-size: 19px; font-weight: 700; text-decoration: none; }
+  #links a:hover { color: var(--volt); }
+  #links li span { color: var(--dim); font-size: 14px; }
+  #links button { height: 44px; border-radius: 999px; border: 1px solid var(--line); background: transparent; padding: 0 16px; }
+  .lopts { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+  .chk { display: flex; gap: 10px; align-items: center; font-size: 15px; }
+  .chk input { width: 22px; height: 22px; accent-color: var(--volt); }
+
+  #fade { position: fixed; inset: 0; z-index: 28; background: #000; opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+  #fade.on { opacity: 1; }
+  #tag { position: fixed; z-index: 40; left: calc(8px + env(safe-area-inset-left)); bottom: calc(4px + env(safe-area-inset-bottom));
+    font-size: 10px; color: rgba(244,246,243,.55); pointer-events: none; white-space: nowrap; }
+  #nogl { position: fixed; inset: 0; z-index: 35; display: flex; align-items: center; justify-content: center; padding: 30px; text-align: center; background: var(--bg); }
+</style>
+</head>
+<body>
+<canvas id="gl" aria-label="Saibot Studio tower in 3D"></canvas>
+<video id="film" playsinline webkit-playsinline preload="auto" aria-hidden="true" disablepictureinpicture></video>
+<video id="flight" playsinline webkit-playsinline preload="auto" muted aria-hidden="true" disablepictureinpicture></video>
+<img id="roomshot" alt="" aria-hidden="true">
+<div id="wall" aria-hidden="true"></div>
+<canvas id="orbitshot" aria-hidden="true"></canvas>
+<video id="stepfilm" playsinline webkit-playsinline preload="auto" muted aria-hidden="true" disablepictureinpicture></video>
+
+<section id="doorstep">
+  <picture>
+    <source media="(orientation: portrait)" srcset="scene/doorstep_tall.jpg">
+    <img src="scene/doorstep_wide.jpg" alt="In the driver's seat, the glowing elevator of the Saibot tower ahead">
+  </picture>
+  <img class="dlogo" src="brand/saibot-studio-wordmark.png" width="857" height="151" alt="Saibot Studio">
+  <div class="gauge" role="status" aria-live="polite">
+    <svg viewBox="0 0 200 124" aria-hidden="true">
+      <path class="track" d="M21.2 113.9 A80 80 0 1 1 178.8 113.9"/>
+      <path id="garc" class="fill" d="M21.2 113.9 A80 80 0 1 1 178.8 113.9" pathLength="100" stroke-dasharray="0 100"/>
+      <g id="needle"><line x1="100" y1="100" x2="100" y2="36"/><circle cx="100" cy="100" r="6"/></g>
+    </svg>
+    <div class="gtxt mono"><b id="gpct">&nbsp;</b><span id="gcap">Loading the tower</span></div>
+  </div>
+</section>
+<script>
+  // the dash gauge sweeps from the first paint, before three.js arrives; app.js feeds it real progress
+  (function () {
+    var n = document.getElementById('needle'), arc = document.getElementById('garc'), pct = document.getElementById('gpct');
+    var real = -1, shown = 0, t0 = performance.now();
+    window.__gauge = function (p) { real = Math.max(real, Math.min(1, p)); };
+    function tick(t) {
+      var e = t - t0, target = real >= 0 ? real : (e < 700 ? e / 700 * 0.35 : 0.2 + 0.12 * Math.sin(e / 240));
+      shown += (target - shown) * 0.2;
+      n.setAttribute('transform', 'rotate(' + (-100 + 200 * shown).toFixed(1) + ' 100 100)');
+      arc.setAttribute('stroke-dasharray', (shown * 100).toFixed(1) + ' 100');
+      if (real >= 0) pct.textContent = Math.round(real * 100) + '%';
+      if (!window.__gaugeDone) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
+</script>
+
+<div id="curb" class="layer" hidden>
+  <div id="seathint" class="hint mono">Drag to look around</div>
+  <button id="skipcurb" class="textbtn" type="button">Skip to the floor</button>
+  <button id="start" class="start" type="button" aria-label="Start engine"></button>
+</div>
+
+<div id="ride" class="layer" hidden>
+  <div id="floorno" class="mono"><span>Floor</span><b>01</b><img id="flogo" class="flogo" src="brand/saibot-studio-wordmark.png" width="857" height="151" alt="Saibot Studio" hidden></div>
+  <div id="panel" hidden>
+    <div class="ptitle mono">Floor panel: pick an office to go straight there</div>
+    <div class="pgrid" id="pgrid"></div>
+    <div class="plined mono" id="plined"></div>
+  </div>
+</div>
+<button id="skip" class="skip" type="button" hidden aria-label="Skip"><img src="type/skip.png" width="261" height="144" alt="Skip"></button>
+
+<div id="floor" class="layer" hidden>
+  <div id="hint" class="hint mono">Tap an office</div>
+  <button id="viewbtn" class="textbtn viewbtn" type="button" aria-label="Step out of the car">Step out</button>
+  <div id="card" hidden>
+    <button class="nav" id="prev" type="button" aria-label="Previous office">&lsaquo;</button>
+    <div class="ctext"><img id="cname" alt=""><span id="croom"></span></div>
+    <button id="enter" class="enter" type="button" aria-label="Enter"><img src="type/enter.png" width="264" height="91" alt="Enter"></button>
+    <button class="nav" id="next" type="button" aria-label="Next office">&rsaquo;</button>
+  </div>
+</div>
+
+<header id="bar" hidden>
+  <img class="logo" src="brand/saibot-studio-wordmark.png" width="857" height="151" alt="Saibot Studio">
+  <span class="sp"></span>
+  <button id="snd" type="button">Sound off</button>
+  <button id="menu" type="button">All offices</button>
+</header>
+
+<article id="office" hidden>
+  <div class="opage">
+    <div class="ohead">
+      <button id="back" type="button" aria-label="Back to the floor"><img src="type/back.png" width="704" height="105" alt="Back to the floor"></button>
+      <div class="otop mono"><span id="oaddr"></span> &middot; floor 18</div>
+      <h1><img id="oname" alt=""></h1>
+      <p id="oroom" class="oroom"></p>
+    </div>
+    <div id="ospace" aria-hidden="true"></div>
+    <div class="obody">
+    <ul id="owork" class="owork" aria-label="On the screen" hidden></ul>
+    <h2 id="opromise" class="opromise"></h2>
+    <p id="oblurb" class="oblurb"></p>
+    <ul id="ogets" class="ogets"></ul>
+    <p id="oguard" class="oguard" hidden></p>
+    <div id="olinks" class="olinks"></div>
+    <section class="octa" aria-labelledby="octah">
+      <h3 id="octah" class="octah">Start a project</h3>
+      <div class="obtns">
+        <a id="odm" class="obtn obtn-volt" target="_blank" rel="noopener"></a>
+        <a id="omail" class="obtn obtn-line">Email</a>
+      </div>
+      <p id="onote" class="onote"></p>
+    </section>
+    <p id="ofine" class="ofine" hidden><a href="credits/index.html">Credits</a></p>
+    </div>
+  </div>
+</article>
+
+<nav id="links" hidden aria-label="All offices">
+  <div class="lhead"><h2><img src="type/all-offices.png" width="475" height="123" alt="All offices"></h2><button id="closelinks" type="button">Close</button></div>
+  <ul>
+    <li><a href="brand/" data-slug="brand">Brand</a><span>The Gallery</span></li>
+    <li><a href="content/" data-slug="content">Content</a><span>Screening Room</span></li>
+    <li><a href="amazon/" data-slug="amazon">Amazon</a><span>War Room</span></li>
+    <li><a href="3d/" data-slug="3d">3D + Web</a><span>The Lab</span></li>
+    <li><a href="apps/" data-slug="apps">Apps</a><span>The Workshop</span></li>
+    <li><a href="automation/" data-slug="automation">Automation</a><span>Server Room</span></li>
+    <li><a href="contact/" data-slug="contact">Reception</a><span>About, contact, the free Amazon audit</span></li>
+    <li><a href="https://saibot.studio/" target="_blank" rel="noopener">The classic site</a><span>today&rsquo;s site, moving to /work</span></li>
+  </ul>
+  <div class="lopts">
+    <button id="replay" type="button">Replay the ride</button>
+    <label class="chk"><input type="checkbox" id="calm"> Calm mode: fades, no camera flights</label>
+  </div>
+</nav>
+
+<div id="fade"></div>
+<div id="tag" class="mono"></div>
+<noscript><style>#links{display:block!important}#doorstep{display:none}</style></noscript>
+
+<script>window.__startOffice = "apps";</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

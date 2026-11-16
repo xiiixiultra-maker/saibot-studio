@@ -1,0 +1,76 @@
+{
+ "_about": "Office page copy: the reels' titles and lines, and each office page's words. Read by app.js and by _source/site/make_pages.py (the per-office pages).",
+ "ig": "saibotstudioss",
+ "email": "nastysaibot@me.com",
+ "reels": {
+  "A": ["The Claw", "Amazon ads, as a claw machine"],
+  "B": ["Ask The Robot", "Product data for AI shopping"],
+  "C": ["Before The Sample", "Product films before the sample exists"],
+  "D": ["Walk In First", "Walk through a space before it opens"],
+  "E": ["Night Shift", "DMs answered overnight"],
+  "F": ["One Word", "A brand built from one word"],
+  "G": ["Before The First Nail", "Pop-ups, from the model to opening day"],
+  "H": ["Flat To Shelf", "Packaging, from flat to shelf"],
+  "I": ["Press Start", "Branded web games"],
+  "J": ["The Monday Paper", "Your numbers, every Monday"],
+  "K": ["Shape It", "Apps, from the sprint to the build"],
+  "L": ["The Whole Picture", "A feed planned as one picture"],
+  "N": ["Take It Apart", "3D explainers that open a product up"],
+  "O": ["See The Gap", "Competitor studies and market maps"],
+  "Q": ["Wi-Fi Off", "Backup AI that works with the Wi-Fi off"],
+  "R": ["Make It Yours", "3D product configurators"],
+  "S": ["Dive In", "Interactive 3D worlds in the browser"],
+  "T": ["Crash Test", "Checkout testing before customers find the bugs"]
+ },
+ "pages": {
+  "brand": {
+   "word": "BRAND",
+   "promise": "Launches people line up for.",
+   "blurb": "Launch kits, pop-ups, packaging and campaign copy written in your brand's own voice. Ten years inside Miami sneaker retail, now with a studio pipeline behind it.",
+   "gets": ["Launch kits: the visuals, the captions and the drop-day plan", "Pop-ups and in-store activations, from the floor plan to the recap", "Packaging and print-ready files", "Campaign copy that sounds like you, not like an agency"]
+  },
+  "content": {
+   "word": "CONTENT",
+   "promise": "A month of content, produced like a studio.",
+   "blurb": "For brands that need a steady feed without a film crew. Reels, statics and serial stories with voice-over, captions and a posting calendar. Bilingual when your audience is.",
+   "gets": ["Reels every month, ready to post", "A content calendar, captions and hashtags", "3D product films and explainers", "A grid that reads as one system"]
+  },
+  "amazon": {
+   "word": "AUDIT",
+   "promise": "Audit first. Then we touch the account.",
+   "blurb": "We start with read-only access and a written findings report you keep either way. Most accounts are paying for structure they don't need and missing the one listing fix that moves the number.",
+   "gets": ["A free read-only audit and findings report", "Listing overhauls: titles, bullets, A+ and images", "Ad cleanup with a weekly change log in plain English", "Rescue: takedowns, appeals and policy fixes"],
+   "guard": "No fake reviews, ever. Your account stays yours, and every change gets logged.",
+   "case": {"title": "Case file: The Negative Payout", "line": "Read the whole case on the classic site.", "url": "https://saibot.studio/work/#amazon"}
+  },
+  "3d": {
+   "word": "3D",
+   "promise": "3D you can walk into.",
+   "blurb": "Brand sites, product configurators, 3D films and interactive worlds that run in the browser. This tower is one of them.",
+   "gets": ["Brand sites and launch pages", "3D product configurators", "3D product and explainer films", "Walk-throughs and interactive worlds"]
+  },
+  "apps": {
+   "word": "APP",
+   "promise": "From idea to TestFlight in one season.",
+   "blurb": "A paid product sprint first, then a fixed-scope build shipped in weeks, then we keep improving it after launch.",
+   "gets": ["A product sprint: research, concept and a build plan", "A fixed-scope first version, shipped in 6 to 8 weeks", "Branded web games", "Checkout and QA testing before launch"]
+  },
+  "automation": {
+   "word": "AUTOMATE",
+   "promise": "The work that runs while you sleep.",
+   "blurb": "DMs answered overnight, your numbers delivered every Monday, and a backup AI that keeps working when the big models go down.",
+   "gets": ["Inbox and DM systems that answer around the clock", "Weekly reports that write themselves", "Backup AI: your own model, working with the Wi-Fi off", "An advisory line for founders"]
+  },
+  "contact": {
+   "word": "HELLO",
+   "desc": "One desk in Miami. Content, Amazon, apps, 3D, brand and automation from one operator with a studio pipeline, no agency layers.",
+   "promise": "One desk in Miami. Every lane under one roof.",
+   "blurb": "Saibot Studio is one operator with a studio pipeline: creative direction, content, Amazon, apps, 3D and automation, without agency layers. Tell us what you're building.",
+   "gets": [],
+   "links": [
+    {"title": "The free Amazon audit", "line": "Read-only, with a findings report you keep either way.", "url": "https://saibot.studio/work/#auditBox"},
+    {"title": "The classic site", "line": "Everything before the tower.", "url": "https://saibot.studio/work/"}
+   ]
+  }
+ }
+}

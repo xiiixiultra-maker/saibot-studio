@@ -1,0 +1,46 @@
+{
+ "v": 1,
+ "ride": {
+  "file": "ride.mp3",
+  "len": 12.0
+ },
+ "seat": {
+  "file": "seat.mp3",
+  "loop": [
+   0.25,
+   16.0
+  ]
+ },
+ "floor": {
+  "file": "floor.mp3",
+  "loop": [
+   0.25,
+   24.0
+  ]
+ },
+ "click": {
+  "file": "click.mp3"
+ },
+ "button": {
+  "file": "button.mp3"
+ },
+ "whoosh_in": {
+  "file": "whoosh_in.mp3"
+ },
+ "whoosh_out": {
+  "file": "whoosh_out.mp3"
+ },
+ "door": {
+  "file": "door.mp3"
+ },
+ "lights": {
+  "file": "lights.mp3"
+ },
+ "stereo": {
+  "file": "stereo.mp3",
+  "loop": [
+   0.25,
+   27.428571
+  ]
+ }
+}

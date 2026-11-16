@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Credits for outside assets whose licenses ask for one (CC BY 4.0). Linked from the Reception page; kept out of
+     search results because it is a notice, not a landing page. -->
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="theme-color" content="#08090B">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23D9FF3F'/%3E%3C/svg%3E">
+<title>Credits | Saibot Studio</title>
+<style>
+  @font-face { font-family: "Satoshi"; src: url("../fonts/Satoshi-Variable.woff2") format("woff2"); font-weight: 300 900; font-style: normal; font-display: swap; }
+  :root { --bg:#08090B; --ink:#F4F6F3; --dim:#9AA19E; --volt:#D9FF3F; --line:rgba(244,246,243,.2);
+    --ui: "Satoshi", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font: 500 15px/1.5 var(--ui);
+    -webkit-tap-highlight-color: transparent; }
+  main { max-width: 560px; margin: 0 auto;
+    padding: calc(26px + env(safe-area-inset-top)) calc(22px + env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) calc(22px + env(safe-area-inset-left)); }
+  .logo { display: inline-block; }
+  .logo img { display: block; height: 26px; width: auto; }
+  h1 { margin: 56px 0 14px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+  .credit { margin: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; overflow-wrap: anywhere; }
+  .credit a { color: var(--ink); text-decoration: underline; text-decoration-color: rgba(244,246,243,.35); text-underline-offset: 3px; }
+  .credit a:hover, .credit a:focus-visible { text-decoration-color: var(--volt); }
+  .back { display: inline-flex; align-items: center; min-height: 46px; margin-top: 26px; padding: 0 22px; border: 1px solid var(--line);
+    border-radius: 999px; color: var(--ink); font-weight: 700; text-decoration: none; }
+  a:focus-visible { outline: 2px solid var(--volt); outline-offset: 3px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="logo" href="../index.html"><img src="../brand/saibot-studio-wordmark.png" width="857" height="151" alt="Saibot Studio"></a>
+  <h1>Credits</h1>
+  <p class="credit">Car based on <a href="https://sketchfab.com/3d-models/2024-porsche-992-gt3-r-b76c9b2ae2d548c3869426eac4ab8a19" target="_blank" rel="noopener">a model</a>
+    by <a href="https://sketchfab.com/Tyler_Dave" target="_blank" rel="noopener">Dave Love</a> (Sketchfab),
+    <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.
+    Paint, livery and decals by Saibot Studio.</p>
+  <a id="back" class="back" href="../index.html">Back</a>
+</main>
+<script>
+  // Back = to the page they came from on this site (the Reception page, which reopens where they were); a visitor
+  // who opened this address directly goes to the tower's front door instead.
+  document.getElementById('back').addEventListener('click', (e) => {
+    let same = false;
+    try { same = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch (err) { /* no referrer */ }
+    if (same && history.length > 1) { e.preventDefault(); history.back(); }
+  });
+</script>
+</body>
+</html>
