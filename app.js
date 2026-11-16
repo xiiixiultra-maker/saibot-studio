@@ -15,7 +15,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 import { Sound, STATIONS } from './audio.js';
 
-const BUILD = '3p';
+const BUILD = '3q';
 // office names in the studio's end-card face: Tigre images in type/<slug>.png (Tigre is images only, never a webfont)
 const NAMES = { brand: 'Brand', content: 'Content', amazon: 'Amazon', '3d': '3D + Web', apps: 'Apps', automation: 'Automation', contact: 'Reception' };
 const $ = (id) => document.getElementById(id);
@@ -40,7 +40,7 @@ const ALL = [...ORDER, 'contact'];
 // ---------- sound: unlock on the finger lift only ----------
 const sound = new Sound();
 for (const ev of ['pointerup', 'touchend', 'click', 'keyup']) {
-  window.addEventListener(ev, () => sound.wake(), { capture: true, passive: true });
+  window.addEventListener(ev, () => { sound.wake(); primeVideos(); }, { capture: true, passive: true });
 }
 for (const ev of ['pointerdown', 'keydown']) {      // finger down: build the audio graph, start nothing
   window.addEventListener(ev, () => sound.prepare(), { capture: true, passive: true });
@@ -287,9 +287,13 @@ function flightStop() {
   flight.classList.remove('on');
   try { flight.pause(); } catch (e) { /* ignore */ }
 }
-function flightFail() {                     // this phone can't play it: the live flight, and no more films this visit
+// Films that won't start: the live 3D flight / orbit for that move. Two misses in a row and the visit stays live
+// (one used to switch every film off, and with it the rendered rooms: one refused play in Instagram's browser did it).
+let filmFails = 0;
+function filmStrike() { filmFails++; if (filmFails >= 2) flightBroken = true; }
+function flightFail() {                     // the film didn't play: the live flight this time
   const f = flightOn;
-  flightBroken = true;
+  filmStrike();
   ensureLive();
   flightStop();
   roomshot.classList.remove('on');
@@ -384,7 +388,7 @@ function renderPage(slug) {
 }
 const wallVids = () => Array.from(wallEl.querySelectorAll('video'));
 function wallPrep(slug) {                     // on the way in: the still and the three loops start loading
-  if (!WALLS || !WALLS.rooms[slug] || calm || flightBroken) return false;
+  if (!WALLS || !WALLS.rooms[slug] || calm) return false;     // (shown even after a flight film failed: they're stills + loops)
   wallEl.style.backgroundImage = 'url(scene/office/wall_' + slug + '.jpg)';
   wallVids().forEach((v, i) => {
     const s = 'scene/office/reels/' + WALLS.rooms[slug][i] + '.mp4';
@@ -522,12 +526,12 @@ function stepPlay(kind, done) {               // 'out' = step out, 'in' = get in
   stepWait = setTimeout(() => { if (stepFilm && !stepFilm.shown) stepFail(); }, 2500);
   return true;
 }
-function stepFail() {                         // the films won't play here: the live orbit, as before, for this visit
+function stepFail() {                         // the film didn't play: the live orbit this time (two misses: for the visit)
   const f = stepFilm;
   stepFilm = null;
   ensureLive();
   clearTimeout(stepWait);
-  flightBroken = true;
+  filmStrike();
   orbitLive = true;
   stepEl.classList.remove('on');
   orbitCv.classList.remove('on');
@@ -536,6 +540,30 @@ function stepFail() {                         // the films won't play here: the 
   viewTween = { t0: performance.now(), dur: 1200, to: f.kind === 'out' ? 'orbit' : 'seat', fromP: camera.position.clone(),
     fromQ: camera.quaternion.clone() };
   if (f.kind === 'in') { floorView = 'seat'; renderView(); setTimeout(() => f.done(true), 1250); }
+}
+// iPhone apps' web views (Instagram, Facebook...) need a tap to start EACH video element, so a film the code starts on
+// its own (a lined-up office after the ride, the flight after Get in, the screen reels) was refused there. The first
+// finger lift plays every film element once (a blank clip, or load() for one already holding a film) inside the tap;
+// from then on the code may start them. Sound unlocks the same way (sound.wake).
+const BLANK = 'scene/blank.mp4';
+function primeVideos() {
+  const reels = wallVids();
+  for (const v of [flight, stepEl, ...reels]) {
+    if (!v || v.dataset.primed) continue;
+    v.dataset.primed = '1';
+    if (!v.paused) continue;                                  // already playing: already allowed
+    v.muted = true;
+    if (wallSlug && reels.includes(v) && v.getAttribute('src')) {   // a room is up (a room's own link): its reels
+      const p = v.play();                                     // were held until this first tap; start them now
+      if (p && p.catch) p.catch(() => { delete v.dataset.primed; });
+    } else if (!v.getAttribute('src')) {
+      v.setAttribute('src', BLANK);
+      const p = v.play();
+      if (p && p.then) p.then(() => { if (v.getAttribute('src') === BLANK) v.pause(); }, () => { delete v.dataset.primed; });
+    } else {
+      try { v.load(); } catch (e) { delete v.dataset.primed; }
+    }
+  }
 }
 stepEl.addEventListener('ended', () => {
   if (!stepFilm) return;
@@ -1387,7 +1415,8 @@ function openOffice(slug) {
   $('oaddr').textContent = '/' + slug;
   $('office').hidden = false;
   $('office').scrollTop = 0;
-  if (!calm && !flightBroken) {             // the rendered room behind the page (the in-film's last frame)
+  if (!calm) {                              // the rendered room behind the page (the in-film's last frame; a JPG, so
+                                            // it shows even when the flight itself had to be live)
     roomshotFor(slug);
     roomshot.classList.add('on');
     flight.classList.remove('on');
@@ -1689,11 +1718,13 @@ function loop(now) {
   const seat18 = state === 'floor' && floorView === 'seat' && !viewTween && pano18;
   if (flightOn && !flightOn.shown && !flight.paused && flight.currentTime > 0.02) {   // an office flight is on screen
     flightOn.shown = true;
+    filmFails = 0;
     flight.classList.add('on');
     if (flightOn.kind === 'out') setTimeout(() => roomshot.classList.remove('on'), 170);
   }
   if (stepFilm && !stepFilm.shown && !stepEl.paused && stepEl.currentTime > 0.02) {      // a step film is on screen
     stepFilm.shown = true;
+    filmFails = 0;
     stepEl.classList.add('on');
     if (stepFilm.kind === 'in') setTimeout(() => orbitCv.classList.remove('on'), 170);   // Get in: the still goes under it
   }
