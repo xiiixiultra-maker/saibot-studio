@@ -13,9 +13,9 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
-import { Sound } from './audio.js';
+import { Sound, STATIONS } from './audio.js';
 
-const BUILD = '3o';
+const BUILD = '3p';
 // office names in the studio's end-card face: Tigre images in type/<slug>.png (Tigre is images only, never a webfont)
 const NAMES = { brand: 'Brand', content: 'Content', amazon: 'Amazon', '3d': '3D + Web', apps: 'Apps', automation: 'Automation', contact: 'Reception' };
 const $ = (id) => document.getElementById(id);
@@ -1041,10 +1041,13 @@ function floorCounter(rideT) {
   $('floorno').querySelector('b').textContent = String(f).padStart(2, '0');
   $('flogo').hidden = !arrived;                // arrival: the wordmark joins the floor number
 }
-function renderSnd() {
-  const on = sound.running && !sound.muted;
-  $('snd').textContent = on ? 'Sound on' : 'Sound off';
-  $('snd').classList.toggle('on', on);
+function renderSnd() {                       // sound on: the pill is the car radio (its station, an LED on the 808)
+  const on = sound.running && !sound.muted, b = $('snd'), st = STATIONS[sound.station];
+  b.classList.toggle('on', on);
+  b.classList.toggle('radio', on);
+  if (on) b.innerHTML = '<i class="led" aria-hidden="true"></i>' + st.name.split(' ')[0];
+  else b.textContent = 'Sound off';
+  b.setAttribute('aria-label', on ? `Car radio: ${st.name}. Open the radio` : 'Sound off. Turn on sound and the car radio');
 }
 let tagAt = 0, fpsNow = 0;
 // the build/fps line is for testing: hidden on saibot.studio unless the address has ?dbg (the test link and local
@@ -1316,7 +1319,8 @@ canvas.addEventListener('pointerup', endSeatDrag);
 canvas.addEventListener('pointercancel', endSeatDrag);
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (!$('links').hidden) closeLinks();
+    if (radioOpen) closeRadio();
+    else if (!$('links').hidden) closeLinks();
     else if (state === 'office') leaveOffice();
     else if (state === 'floor') setLit(null);
   } else if (state === 'curb' && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
@@ -1373,6 +1377,7 @@ function openOffice(slug) {
   openSlug = slug;
   clipT = META.segments[slug].in[1];        // the camera rests inside the room, behind the page
   setState('office');
+  closeRadio();                            // the page's head sits where the radio drops down
   sound.ambient(true, 'floor');            // offices share floor 18's room sound (a lined-up office skips the floor)
   sound.stereo(true);                      // (deep links land here first)
   $('oname').src = 'type/' + slug + '.png';
@@ -1451,7 +1456,7 @@ function onRoute() {
 }
 window.addEventListener('hashchange', onRoute);
 window.addEventListener('popstate', onRoute);
-$('menu').addEventListener('click', () => { $('calm').checked = calm; $('links').hidden = false; });
+$('menu').addEventListener('click', () => { closeRadio(); $('calm').checked = calm; $('links').hidden = false; });
 $('closelinks').addEventListener('click', closeLinks);
 function closeLinks() { $('links').hidden = true; }
 $('calm').addEventListener('change', (e) => {
@@ -1478,14 +1483,95 @@ $('replay').addEventListener('click', () => {
   enterCurb();
   filmPrep();
 });
+// ---------- the car radio (look D, "Race MFD"): four 808 stations (audio.js STATIONS) ----------
+// Sound off: the pill turns sound on and opens the radio. Sound on: the pill opens and closes it; MUTE is inside.
+const radioEl = $('radio'), rspec = $('rspec'), rctx = rspec.getContext('2d');
+const rleds = Array.from(radioEl.querySelectorAll('.leds i'));
+const rbins = new Uint8Array(1024);
+let radioOpen = false, rLevel = 0, rPeak = 0, rLed = 0;
+function renderRadio() {
+  const i = sound.station, st = STATIONS[i], on = sound.running && !sound.muted;
+  $('rch').textContent = String(i + 1);
+  $('rname').textContent = st.name;
+  $('rbpm').textContent = String(st.bpm);
+  $('rkey').textContent = st.short;
+  $('rfm').textContent = st.fm;
+  $('rmute').textContent = on ? 'MUTE' : 'SOUND ON';
+  $('rmute').classList.toggle('lit', !on);
+}
+function openRadio() {
+  radioOpen = true;
+  radioEl.hidden = false;
+  $('snd').setAttribute('aria-expanded', 'true');
+  renderRadio();
+}
+function closeRadio() {
+  if (!radioOpen) return;
+  radioOpen = false;
+  radioEl.hidden = true;
+  $('snd').setAttribute('aria-expanded', 'false');
+}
+function soundOn() {                          // a tap on the radio means "let me hear it"
+  sound.setMuted(false);
+  sound.wake();
+  film.muted = false;
+  if (sound.wantAmb) sound.ambient(true);
+  sound.stereo(true);
+}
+function tune(d) {
+  const playing = sound.running && !sound.muted && !!sound.stereoSrc;
+  sound.setStation(sound.station + d);        // playing: tuning static, then the next station from bar 1
+  if (!playing) soundOn();                    // silent: it comes on straight on the new station
+  sound.ui('tap');
+  renderRadio(); renderSnd(); tag(true);
+}
+function radioTick() {                        // every frame: the pill's LED; with the panel open, the lights + spectrum
+  const live = sound.radioLevels(rbins);
+  const binHz = (sound.ctx ? sound.ctx.sampleRate : 48000) / 2048;
+  let bass = 0;
+  if (live) {                                  // the 808's band, 35-120 Hz
+    const b0 = Math.max(1, Math.round(35 / binHz)), b1 = Math.round(120 / binHz);
+    for (let k = b0; k <= b1; k++) bass += rbins[k];
+    bass /= (b1 - b0 + 1) * 255;
+  }
+  rLevel += (bass - rLevel) * (bass > rLevel ? 0.55 : 0.12);
+  $('snd').style.setProperty('--lvl', rLevel.toFixed(3));
+  if (!radioOpen) return;
+  // the shift lights pump: a fast bass level against its own slow average (a held 808 sits mid-scale, a hit slams
+  // into the red, a gap drops out), since these 808s sustain and an absolute meter just sits full
+  rLed += (bass - rLed) * (bass > rLed ? 0.8 : 0.3);
+  rPeak += (bass - rPeak) * 0.03;
+  const ratio = rPeak > 0.02 ? rLed / rPeak : 0;
+  const lit = Math.round(Math.min(1, Math.max(0, (ratio - 0.86) / 0.26)) * rleds.length);
+  rleds.forEach((el, k) => el.classList.toggle('on', k < lit));
+  const W = rspec.width, H = rspec.height, n = 36, bw = W / n;
+  rctx.clearRect(0, 0, W, H);
+  rctx.fillStyle = '#ff3d3d';
+  for (let k = 0; k < n; k++) {                // 36 bars, log-spaced 30 Hz to 9 kHz (each the loudest bin in its band)
+    const a = Math.round(30 * Math.pow(300, k / n) / binHz), b = Math.max(a, Math.round(30 * Math.pow(300, (k + 1) / n) / binHz) - 1);
+    let v = 0;
+    if (live) for (let j = a; j <= b; j++) v = Math.max(v, rbins[j]);
+    const h = Math.max(3, (live ? v / 255 : 0.04) * H);
+    rctx.fillRect(k * bw + 2, H - h, bw - 5, h);
+  }
+}
 $('snd').addEventListener('click', () => {
-  if (sound.muted || !sound.running) { sound.setMuted(false); sound.wake(); }
-  else sound.setMuted(true);
-  film.muted = sound.muted;
-  renderSnd();
-  if (!sound.muted && sound.wantAmb) sound.ambient(true);
-  tag(true);
+  if (sound.muted || !sound.running) { soundOn(); openRadio(); }
+  else if (radioOpen) closeRadio();
+  else openRadio();
+  renderSnd(); renderRadio(); tag(true);
 });
+$('rprev').addEventListener('click', () => tune(-1));
+$('rnext').addEventListener('click', () => tune(1));
+$('rmute').addEventListener('click', () => {
+  if (sound.muted || !sound.running) soundOn();
+  else { sound.setMuted(true); film.muted = true; }
+  renderRadio(); renderSnd(); tag(true);
+});
+sound.onStation(() => { renderRadio(); renderSnd(); });
+document.addEventListener('pointerdown', (e) => {   // a tap anywhere else (the scene, a drag) closes it
+  if (radioOpen && !radioEl.contains(e.target) && !$('snd').contains(e.target)) closeRadio();
+}, true);
 
 // ---------- lights: ignition, the studio, offices one by one ----------
 function applyFx(now, rideT) {
@@ -1594,6 +1680,7 @@ function loop(now) {
   camera.updateProjectionMatrix();
   if (state === 'ride') floorCounter(rideT);
   { const [ic, far] = stereoPose(rideT, now); sound.stereoAt(ic, far); }
+  radioTick();
   if (state === 'curb') { camera.updateMatrixWorld(); placeStart(); }
   applyFx(now, rideT);
 
@@ -1674,6 +1761,11 @@ window.__tower = {
   live: () => ({ car: !!realCar, env: !!scene.environment, pano: !!pano, pano18: !!pano18 }),
   get state() { return state; }, get clipT() { return clipT; }, get queued() { return queued; }, get lit() { return lit; },
   get calm() { return calm; }, audio: () => sound.state, muted: () => sound.muted,
+  radio: () => ({ open: radioOpen, station: sound.station, name: STATIONS[sound.station].name, playing: !!sound.stereoSrc,
+    playingBuf: sound.stereoSrc && sound.stereoSrc.buffer ? Math.round(sound.stereoSrc.buffer.duration * 100) / 100 : null,
+    loaded: Object.keys(sound.buf).filter((k) => k.startsWith('stereo')).sort(), level: +rLevel.toFixed(3),
+    leds: rleds.filter((e) => e.classList.contains('on')).length, pill: $('snd').textContent, muted: sound.muted,
+    hiss: !!sound.staticSrc }),
   sounds: () => ({ loaded: Object.keys(sound.buf).sort(), ride: !!sound.rideSrc, loops: Object.keys(sound.loops), kind: sound.ambKind,
     stereo: !!sound.stereoSrc, stereoHz: Math.round(sound.stereoF || 0), stereoGain: +(sound.stereoG || 0).toFixed(2) }),
   seat: () => ({ yaw: +seatYaw.toFixed(3), pitch: +seatPitch.toFixed(3), pano: !!pano, hint: !$('seathint').classList.contains('gone') }),

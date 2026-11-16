@@ -42,5 +42,26 @@
    0.25,
    27.428571
   ]
+ },
+ "stereo_phonk": {
+  "file": "stereo_phonk.mp3",
+  "loop": [
+   0.25,
+   29.538462
+  ]
+ },
+ "stereo_miami": {
+  "file": "stereo_miami.mp3",
+  "loop": [
+   0.25,
+   30.47619
+  ]
+ },
+ "stereo_drill": {
+  "file": "stereo_drill.mp3",
+  "loop": [
+   0.25,
+   26.666667
+  ]
  }
 }

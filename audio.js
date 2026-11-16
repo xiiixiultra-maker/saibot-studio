@@ -9,8 +9,22 @@
 // touchend / click / keyup, never on pointerdown.
 
 const BASE = 'sound/';
-const NAMES = ['stereo', 'ride', 'seat', 'floor', 'click', 'button', 'whoosh_in', 'whoosh_out', 'door', 'lights'];
+const NAMES = ['ride', 'seat', 'floor', 'click', 'button', 'whoosh_in', 'whoosh_out', 'door', 'lights'];
 const LATE = new Set(['ride', 'floor']);   // not needed at the curb: fetched by loadLate() after START
+
+// the car radio: four 808 stations (_source/audio/radio.py + compose_radio.py; TRUNK is the original car stereo).
+// Only the station you're on loads at the start; the others load the first time you tune to them (static covers it).
+export const STATIONS = [
+  { id: 'trunk', file: 'stereo', name: 'TRUNK', fm: '88.8', bpm: 140, key: 'F minor', short: 'Fm' },
+  { id: 'phonk', file: 'stereo_phonk', name: 'PHONK', fm: '93.3', bpm: 130, key: 'C# minor', short: 'C#m' },
+  { id: 'miami', file: 'stereo_miami', name: 'MIAMI BASS', fm: '98.8', bpm: 126, key: 'A minor', short: 'Am' },
+  { id: 'drill', file: 'stereo_drill', name: 'DRILL', fm: '104.4', bpm: 144, key: 'D# minor', short: 'D#m' },
+];
+const RADIO_KEY = 'saibot.radio';
+function storedStation() {
+  try { const i = STATIONS.findIndex((s) => s.id === localStorage.getItem(RADIO_KEY)); return i < 0 ? 0 : i; }
+  catch (e) { return 0; }
+}
 
 const SILENT_WAV = (() => {
   // 0.5 s of 8 kHz 8-bit silence; looped by an <audio> element so iOS treats the page as
@@ -68,6 +82,8 @@ export class Sound {
     this.wantAmb = false;
     this.wasRunning = false;
     this.listeners = new Set();   // called with the AudioContext state on every change
+    this.station = storedStation();
+    this.stationListeners = new Set();
     this.load();                  // the files download while the scene loads; decoding needs no tap
   }
 
@@ -82,7 +98,7 @@ export class Sound {
       try {
         this.man = await (await fetch(BASE + 'sounds.json', { cache: 'no-cache' })).json();
       } catch (e) { console.warn('sound: no sounds.json', e && e.message); return; }
-      await this._fetch(NAMES.filter((k) => !LATE.has(k)));
+      await this._fetch([...NAMES.filter((k) => !LATE.has(k)), STATIONS[this.station].file]);
     })();
     return this.loading;
   }
@@ -283,29 +299,128 @@ export class Sound {
     else if (!on && this.stereoSrc) this._stopStereo();
   }
 
-  _startStereo() {
-    const b = this.buf.stereo, spec = this.man && this.man.stereo;
+  // the stereo's chain: [station source -> its own gain (crossfades, the analyser taps here)] -> lowpass -> level -> out
+  _stereoChain() {
+    if (this.stereoLp) return;
+    const c = this.ctx, now = c.currentTime;
+    this.stereoLp = c.createBiquadFilter();
+    this.stereoLp.type = 'lowpass'; this.stereoLp.Q.value = 0.8; this.stereoLp.frequency.value = this.stereoF || 18000;
+    this.stereoGain = c.createGain();
+    this.stereoGain.gain.setValueAtTime(0.0001, now);
+    this.stereoGain.gain.exponentialRampToValueAtTime(Math.max(0.0001, this.stereoG || 0.5), now + 1.2);
+    this.stereoLp.connect(this.stereoGain); this.stereoGain.connect(this.master);
+    this.analyser = c.createAnalyser();
+    this.analyser.fftSize = 2048; this.analyser.smoothingTimeConstant = 0.5;   // ~23 Hz bins: the 808 shows
+    this.analyser.minDecibels = -80; this.analyser.maxDecibels = -8;           // the default -30 top pins a loud 808
+  }
+
+  _startStereo(fadeIn = 0) {
+    const st = STATIONS[this.station], b = this.buf[st.file], spec = this.man && this.man[st.file];
     if (!b || !spec) {
-      this.load().then(() => { if (this.wantStereo && this.running && !this.stereoSrc && this.buf.stereo) this._startStereo(); });
+      const want = this.station;
+      (this.man ? this._fetch([st.file]) : this.load()).then(() => {
+        if (this.station === want && this.wantStereo && this.running && !this.stereoSrc && this.buf[st.file]) this._startStereo(0.3);
+      });
       return;
     }
-    const c = this.ctx, s = c.createBufferSource(), lp = c.createBiquadFilter(), g = c.createGain(), now = c.currentTime;
+    this._stereoChain();
+    const c = this.ctx, s = c.createBufferSource(), sg = c.createGain(), now = c.currentTime;
     const [M, L] = spec.loop;
     s.buffer = b; s.loop = true; s.loopStart = M; s.loopEnd = M + L;
-    lp.type = 'lowpass'; lp.Q.value = 0.8; lp.frequency.value = this.stereoF || 18000;
-    g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, this.stereoG || 0.5), now + 1.2);
-    s.connect(lp); lp.connect(g); g.connect(this.master);
+    sg.gain.setValueAtTime(fadeIn ? 0.0001 : 1, now);
+    if (fadeIn) sg.gain.exponentialRampToValueAtTime(1, now + fadeIn);
+    s.connect(sg); sg.connect(this.stereoLp); sg.connect(this.analyser);
     s.start(now, M);                // from bar 1
-    this.stereoSrc = s; this.stereoLp = lp; this.stereoGain = g;
+    this.stereoSrc = s; this.stereoSg = sg;
+    this._staticOff();
   }
 
   _stopStereo() {
     const s = this.stereoSrc, g = this.stereoGain, now = this.ctx.currentTime;
-    this.stereoSrc = this.stereoLp = this.stereoGain = null;
-    g.gain.cancelScheduledValues(now);
-    g.gain.setTargetAtTime(0.0001, now, 0.2);
-    try { s.stop(now + 1.2); } catch (e) { /* already stopped */ }
+    this.stereoSrc = this.stereoSg = null;
+    this._staticOff();
+    if (g) {
+      g.gain.cancelScheduledValues(now);
+      g.gain.setTargetAtTime(0.0001, now, 0.2);
+      setTimeout(() => {                                     // the chain fades out with it; a later start builds anew
+        if (this.stereoSrc) return;
+        try { g.disconnect(); } catch (e) { /* gone */ }
+        if (this.stereoGain === g) this.stereoLp = this.stereoGain = null;
+      }, 1300);
+    }
+    if (s) { try { s.stop(now + 1.2); } catch (e) { /* already stopped */ } }
+  }
+
+  // ---------- the radio: switch stations with a burst of tuning static (it keeps hissing while a station loads) ----------
+  onStation(fn) { this.stationListeners.add(fn); return () => this.stationListeners.delete(fn); }
+
+  setStation(i) {
+    i = ((i % STATIONS.length) + STATIONS.length) % STATIONS.length;
+    if (i === this.station) return;
+    this.station = i;
+    try { localStorage.setItem(RADIO_KEY, STATIONS[i].id); } catch (e) { /* private mode */ }
+    for (const fn of [...this.stationListeners]) fn(i);
+    if (!this.running || !this.wantStereo) {               // it comes on there when sound runs; start its download
+      if (this.man) this._fetch([STATIONS[i].file]);
+      return;
+    }
+    this._stereoChain();
+    const old = this.stereoSrc, osg = this.stereoSg, now = this.ctx.currentTime;
+    this.stereoSrc = this.stereoSg = null;
+    if (old) {
+      osg.gain.cancelScheduledValues(now);
+      osg.gain.setTargetAtTime(0.0001, now, 0.06);
+      try { old.stop(now + 0.4); } catch (e) { /* already stopped */ }
+      setTimeout(() => { try { osg.disconnect(); } catch (e) { /* gone */ } }, 600);
+    }
+    this._staticOn(!this.buf[STATIONS[i].file]);
+    const want = i;
+    const go = () => {
+      if (this.station !== want || this.stereoSrc || !this.running || !this.wantStereo) return;
+      this._startStereo(0.35);
+    };
+    if (this.buf[STATIONS[i].file]) setTimeout(go, 260);
+    else this._fetch([STATIONS[i].file]).then(go);
+  }
+
+  _staticOn(hold) {
+    const c = this.ctx, now = c.currentTime;
+    if (!this.noiseBuf) {
+      const n = Math.floor(c.sampleRate * 1.5), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+      for (let k = 0; k < n; k++) d[k] = Math.random() * 2 - 1;
+      this.noiseBuf = b;
+    }
+    this._staticOff();
+    const s = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = this.noiseBuf; s.loop = true;
+    bp.type = 'bandpass'; bp.Q.value = 1.4;
+    bp.frequency.setValueAtTime(500, now);
+    bp.frequency.exponentialRampToValueAtTime(2600, now + 0.18);
+    bp.frequency.exponentialRampToValueAtTime(900, now + 0.34);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.32, now + 0.03);
+    g.gain.exponentialRampToValueAtTime(hold ? 0.12 : 0.0001, now + 0.38);     // still loading: a low hiss stays
+    s.connect(bp); bp.connect(g); g.connect(this.stereoLp);
+    s.start(now);
+    if (!hold) s.stop(now + 0.42);
+    this.staticSrc = { s, g };
+  }
+
+  _staticOff() {
+    const st = this.staticSrc;
+    if (!st || !this.ctx) return;
+    this.staticSrc = null;
+    const now = this.ctx.currentTime;
+    st.g.gain.cancelScheduledValues(now);
+    st.g.gain.setTargetAtTime(0.0001, now, 0.05);
+    try { st.s.stop(now + 0.3); } catch (e) { /* already stopped */ }
+  }
+
+  // the radio's display: fills `out` (Uint8Array, 1024) with the playing station's spectrum; false when silent
+  radioLevels(out) {
+    if (!this.analyser || !this.stereoSrc || !this.running || this.muted) return false;
+    this.analyser.getByteFrequencyData(out);
+    return true;
   }
 
   // inCar 1 = in the seat (clear), 0 = outside the car (the 808s through the body: low-passed, felt more than heard);
@@ -334,7 +449,8 @@ export class Sound {
 }
 
 // sound is optional: an audio error on any phone must never stop the ride, a tap or Back
-for (const name of ['ride', 'stopRide', 'blip', 'lightsUp', 'ambient', 'stereo', 'stereoAt', 'ui', 'setMuted', 'pageHidden']) {
+for (const name of ['ride', 'stopRide', 'blip', 'lightsUp', 'ambient', 'stereo', 'stereoAt', 'ui', 'setMuted', 'pageHidden',
+  'setStation', 'radioLevels']) {
   const fn = Sound.prototype[name];
   Sound.prototype[name] = function (...args) {
     try { return fn.apply(this, args); } catch (e) { console.warn('sound ' + name + ':', e && e.message); return undefined; }

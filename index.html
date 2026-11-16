@@ -166,6 +166,34 @@
   #bar .sp { flex: 1; }
   #bar button { height: 38px; border-radius: 999px; border: 1px solid var(--line); background: rgba(8,9,11,.6); padding: 0 12px; font-size: 13px; }
   #bar button.on { border-color: var(--volt); color: var(--volt); }
+  /* the car radio (look D, "Race MFD"): with sound on, the sound pill is the radio and opens the car's own motorsport
+     dash screen: shift lights on the 808, channel / station / BPM / key / FM, the 808's spectrum, soft keys */
+  #bar #snd.radio { border-radius: 7px; border: 1.5px solid #3dc8ff; background: rgba(3,4,5,.84); color: #bfefff;
+    font-weight: 800; letter-spacing: .06em; display: inline-flex; align-items: center; gap: 7px; }
+  #snd .led { width: 7px; height: 7px; border-radius: 50%; background: #3dff6e;
+    box-shadow: 0 0 calc(2px + 10px * var(--lvl, 0)) #3dff6e; opacity: calc(.45 + .55 * var(--lvl, 0)); }
+  .radio-panel { position: fixed; z-index: 22; top: calc(58px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right));
+    width: min(366px, calc(100vw - 24px)); border-radius: 14px; padding: 10px; background: #1a1b1f;
+    border: 1px solid rgba(255,255,255,.12); box-shadow: 0 18px 40px rgba(0,0,0,.6); -webkit-user-select: none; user-select: none; }
+  .mfd { border-radius: 8px; background: #030405; padding: 10px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+  .leds { display: flex; gap: 4px; }
+  .leds i { flex: 1; height: 10px; border-radius: 3px; background: var(--c); opacity: .16; }
+  .leds i.on { opacity: 1; box-shadow: 0 0 10px var(--c); }
+  .mrow { display: grid; gap: 6px; margin-top: 6px; }
+  .mrow.r1 { grid-template-columns: 62px 1fr; margin-top: 9px; }
+  .mrow.r2 { grid-template-columns: 1fr 1fr 1fr; }
+  .mbox { border: 1.5px solid var(--c); border-radius: 4px; padding: 5px 7px 6px; min-width: 0; }
+  .mbox b { display: block; font-size: 8px; font-weight: 800; letter-spacing: .16em; color: var(--c); }
+  .mbox span { display: block; font-size: 16px; line-height: 1.25; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .04em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mbox.big span { font-size: 22px; }
+  .mbox.lvl { margin-top: 6px; }
+  .mbox.lvl canvas { display: block; width: 100%; height: 26px; margin-top: 5px; }
+  .mkeys { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .mkeys button { height: 42px; border: 0; border-radius: 6px; background: #26282d; font-weight: 800; font-size: 12px; letter-spacing: .08em;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,.4); }
+  .mkeys button:active { transform: translateY(1px); background: #30333a; }
+  .mkeys button.lit { color: #3dff6e; }
 
   /* an office page: plain HTML over the room */
   #office { position: fixed; z-index: 22; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -322,9 +350,29 @@
 <header id="bar" hidden>
   <img class="logo" src="brand/saibot-studio-wordmark.png" width="857" height="151" alt="Saibot Studio">
   <span class="sp"></span>
-  <button id="snd" type="button">Sound off</button>
+  <button id="snd" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radio">Sound off</button>
   <button id="menu" type="button">All offices</button>
 </header>
+<section id="radio" class="radio-panel" role="dialog" aria-label="Car radio" hidden>
+  <div class="mfd">
+    <div class="leds" aria-hidden="true"><i style="--c:#3dff6e"></i><i style="--c:#3dff6e"></i><i style="--c:#3dff6e"></i><i style="--c:#3dff6e"></i><i style="--c:#ffd23d"></i><i style="--c:#ffd23d"></i><i style="--c:#ffd23d"></i><i style="--c:#ff3d3d"></i><i style="--c:#ff3d3d"></i><i style="--c:#ff3d3d"></i></div>
+    <div class="mrow r1">
+      <div class="mbox big" style="--c:#3dff6e"><b>CH</b><span id="rch">1</span></div>
+      <div class="mbox big" style="--c:#f4f6f3"><b>STATION</b><span id="rname" aria-live="polite">TRUNK</span></div>
+    </div>
+    <div class="mrow r2">
+      <div class="mbox" style="--c:#3dc8ff"><b>BPM</b><span id="rbpm">140</span></div>
+      <div class="mbox" style="--c:#ffd23d"><b>KEY</b><span id="rkey">Fm</span></div>
+      <div class="mbox" style="--c:#ff8a3d"><b>FM</b><span id="rfm">88.8</span></div>
+    </div>
+    <div class="mbox lvl" style="--c:#ff3d3d"><b>808 LEVEL</b><canvas id="rspec" width="600" height="52" aria-hidden="true"></canvas></div>
+  </div>
+  <div class="mkeys">
+    <button id="rprev" type="button" aria-label="Previous station">&#9664; PREV</button>
+    <button id="rnext" type="button" aria-label="Next station">NEXT &#9654;</button>
+    <button id="rmute" type="button">MUTE</button>
+  </div>
+</section>
 
 <article id="office" hidden>
   <div class="opage">
